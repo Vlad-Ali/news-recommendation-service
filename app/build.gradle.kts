@@ -3,6 +3,8 @@ plugins {
     pmd
     jacoco
     id("com.gradleup.shadow") version "8.3.2"
+    id("org.springframework.boot") version "3.4.3"
+    id("io.spring.dependency-management") version "1.1.7"
 }
 
 repositories {
@@ -43,6 +45,9 @@ dependencies {
 
     implementation("com.microsoft.onnxruntime:onnxruntime:1.20.0")
     implementation("ai.djl.huggingface:tokenizers:0.31.0")
+
+    implementation("org.springframework.boot:spring-boot-starter")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 java {
