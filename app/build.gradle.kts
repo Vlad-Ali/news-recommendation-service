@@ -50,6 +50,8 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web")
 
+    implementation("io.jsonwebtoken:jjwt")
+
     implementation("org.projectlombok:lombok")
 }
 
