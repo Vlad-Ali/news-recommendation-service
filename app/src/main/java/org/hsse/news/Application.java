@@ -33,6 +33,7 @@ public class Application {
     }
 
     public static void main(final String[] args) {
+        initializeDatabase();
         SpringApplication.run(Application.class, args);
     }
 

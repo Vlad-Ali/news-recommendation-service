@@ -11,9 +11,11 @@ import org.hsse.news.database.user.repositories.JdbiUserRepository;
 import org.hsse.news.database.user.repositories.UserRepository;
 import org.hsse.news.database.util.JdbiTransactionManager;
 import org.hsse.news.database.util.TransactionManager;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Service
 public final class UserService {
     private final UserRepository userRepository;
     private final TransactionManager transactionManager;
@@ -23,10 +25,6 @@ public final class UserService {
     ) {
         this.userRepository = userRepository;
         this.transactionManager = transactionManager;
-    }
-
-    public UserService() {
-        this(new JdbiUserRepository(), new JdbiTransactionManager());
     }
 
     public Optional<User> findById(final UserId userId) {

@@ -2,9 +2,11 @@ package org.hsse.news.database.util;
 
 import org.hsse.news.util.JdbiProvider;
 import org.jdbi.v3.core.Jdbi;
+import org.springframework.stereotype.Component;
 
 import java.util.function.Supplier;
 
+@Component
 public final class JdbiTransactionManager implements TransactionManager {
     private final Jdbi jdbi;
 
