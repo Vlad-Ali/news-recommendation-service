@@ -28,9 +28,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String token = request.getHeader("Authorization");
 
-        String userName = Jwts.parser().verifyWith(secretKey).build()
-                .parseSignedClaims(token).getPayload().getSubject();
-
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
             Claims claims = Jwts.parser()

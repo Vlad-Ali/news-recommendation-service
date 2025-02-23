@@ -22,11 +22,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/user")
 @Slf4j
 public class SpringUserController {
     private final UserService userService;
@@ -36,7 +36,7 @@ public class SpringUserController {
     }
 
     @PostMapping("/register")
-    ResponseEntity<String> register(@RequestBody UserRegisterRequest userRegisterRequest,
+    public ResponseEntity<String> register(@RequestBody UserRegisterRequest userRegisterRequest,
                                     HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
 
@@ -54,11 +54,13 @@ public class SpringUserController {
     }
 
     @GetMapping
-    private ResponseEntity<UserInfo> get(HttpServletRequest httpServletRequest) {
+    public ResponseEntity<UserInfo> get(HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
 
-        final UserId userId = (UserId) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+        if (getCurrentUserId().isEmpty()) {
+            return ResponseEntity.status(401).build();
+        }
+        final UserId userId = getCurrentUserId().get();
 
         final Optional<User> userOptional = userService.findById(userId);
         if (userOptional.isEmpty()) {
@@ -75,12 +77,14 @@ public class SpringUserController {
     }
 
     @PutMapping
-    private ResponseEntity<String> update(@RequestBody UserInfo userInfo,
+    public ResponseEntity<String> update(@RequestBody UserInfo userInfo,
                                           HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
 
-        final UserId userId = (UserId) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+        if (getCurrentUserId().isEmpty()) {
+            return ResponseEntity.status(401).build();
+        }
+        final UserId userId = getCurrentUserId().get();
 
         try {
             userService.update(userId, userInfo.email(), userInfo.username());
@@ -93,13 +97,15 @@ public class SpringUserController {
     }
 
     @PutMapping("/password")
-    private ResponseEntity<String> changePassword(
+    public ResponseEntity<String> changePassword(
             @RequestBody UserPasswordChangeRequest userPasswordChangeRequest,
             HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
 
-        final UserId userId = (UserId) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+        if (getCurrentUserId().isEmpty()) {
+            return ResponseEntity.status(401).build();
+        }
+        final UserId userId = getCurrentUserId().get();
 
         try {
             userService.updatePassword(userId,
@@ -122,5 +128,14 @@ public class SpringUserController {
     private ResponseEntity<String> processEmailConflict(final EmailConflictException e) {
         log.debug("Email conflict: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
+    }
+
+    private Optional<UserId> getCurrentUserId() {
+        if (SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal() == "anonymousUser") {
+            return Optional.empty();
+        }
+        return Optional.of((UserId) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal());
     }
 }
