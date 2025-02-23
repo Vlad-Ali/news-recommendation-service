@@ -1,7 +1,6 @@
 package org.hsse.news.api.controllers;
 
 import lombok.extern.slf4j.Slf4j;
-import org.hsse.news.api.authorizers.Authorizer;
 import org.hsse.news.api.schemas.request.user.UserPasswordChangeRequest;
 import org.hsse.news.api.schemas.request.user.UserRegisterRequest;
 import org.hsse.news.api.schemas.shared.UserInfo;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 @RestController
@@ -36,12 +36,15 @@ public class SpringUserController {
     }
 
     @PostMapping("/register")
-    ResponseEntity<String> register(@RequestBody UserRegisterRequest request) {
-        ControllerUtil.logRequest(request, path);
+    ResponseEntity<String> register(@RequestBody UserRegisterRequest userRegisterRequest,
+                                    HttpServletRequest httpServletRequest) {
+        ControllerUtil.logRequest(httpServletRequest);
 
         try {
             final User user = userService.register(
-                    new User(request.email(), request.password(), request.username()));
+                    new User(userRegisterRequest.email(),
+                            userRegisterRequest.password(),
+                            userRegisterRequest.username()));
             log.debug("Registered user with id = {}", user.id());
             return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentServletMapping()
                     .path("/{id}").buildAndExpand(user.id()).toUri()).build();
@@ -51,8 +54,8 @@ public class SpringUserController {
     }
 
     @GetMapping
-    private ResponseEntity<UserInfo> get() {
-        ControllerUtil.logRequest(request, path);
+    private ResponseEntity<UserInfo> get(HttpServletRequest httpServletRequest) {
+        ControllerUtil.logRequest(httpServletRequest);
 
         final UserId userId = (UserId) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
@@ -72,8 +75,9 @@ public class SpringUserController {
     }
 
     @PutMapping
-    private ResponseEntity<String> update(@RequestBody UserInfo userInfo) {
-        ControllerUtil.logRequest(request, path);
+    private ResponseEntity<String> update(@RequestBody UserInfo userInfo,
+                                          HttpServletRequest httpServletRequest) {
+        ControllerUtil.logRequest(httpServletRequest);
 
         final UserId userId = (UserId) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
@@ -89,14 +93,18 @@ public class SpringUserController {
     }
 
     @PutMapping("/password")
-    private ResponseEntity<String> changePassword(@RequestBody UserPasswordChangeRequest request) {
-        ControllerUtil.logRequest(request, path);
+    private ResponseEntity<String> changePassword(
+            @RequestBody UserPasswordChangeRequest userPasswordChangeRequest,
+            HttpServletRequest httpServletRequest) {
+        ControllerUtil.logRequest(httpServletRequest);
 
         final UserId userId = (UserId) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
 
         try {
-            userService.updatePassword(userId, request.currentPassword(), request.newPassword());
+            userService.updatePassword(userId,
+                    userPasswordChangeRequest.currentPassword(),
+                    userPasswordChangeRequest.newPassword());
 
             log.debug("Successfully updated password for user with id = {}", userId);
             return ResponseEntity.noContent().build();

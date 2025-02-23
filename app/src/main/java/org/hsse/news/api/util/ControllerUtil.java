@@ -5,9 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import spark.Request;
 import spark.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Locale;
 
@@ -20,6 +23,15 @@ public final class ControllerUtil {
                 request.ip(),
                 request.requestMethod().toUpperCase(Locale.ROOT),
                 path
+        );
+    }
+
+    public static void logRequest(HttpServletRequest request) {
+        LOG.info(
+                "{} - {} {}",
+                request.getRemoteAddr(),
+                request.getMethod().toUpperCase(Locale.ROOT),
+                request.getRequestURI()
         );
     }
 
