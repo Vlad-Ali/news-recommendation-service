@@ -5,6 +5,7 @@ plugins {
     id("com.gradleup.shadow") version "8.3.2"
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
+    id("io.freefair.lombok") version "8.12.1"
 }
 
 repositories {
@@ -53,8 +54,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security:3.4.3")
     implementation("org.springframework.security:spring-security-test:6.4.3")
     implementation("io.jsonwebtoken:jjwt:0.12.3")
-
-    implementation("org.projectlombok:lombok:1.18.34")
 }
 
 java {
