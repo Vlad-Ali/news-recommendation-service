@@ -45,16 +45,16 @@ dependencies {
     implementation("com.microsoft.onnxruntime:onnxruntime:1.20.0")
     implementation("ai.djl.huggingface:tokenizers:0.31.0")
 
-    implementation("org.springframework.boot:spring-boot-starter")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    implementation("org.springframework.boot:spring-boot-starter:3.4.3")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:3.4.3")
 
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.4.3")
 
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.security:spring-security-test")
+    implementation("org.springframework.boot:spring-boot-starter-security:3.4.3")
+    implementation("org.springframework.security:spring-security-test:6.4.3")
     implementation("io.jsonwebtoken:jjwt:0.12.3")
 
-    implementation("org.projectlombok:lombok")
+    implementation("org.projectlombok:lombok:1.18.34")
 }
 
 java {
