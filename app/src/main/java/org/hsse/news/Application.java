@@ -21,10 +21,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.util.List;
 
 @SpringBootApplication
-public final class Application {
+public class Application {
     private final List<SubApplication> subApplications;
 
-    private Application(final List<SubApplication> subApplications) {
+    public Application(final List<SubApplication> subApplications) {
         this.subApplications = subApplications;
     }
 
