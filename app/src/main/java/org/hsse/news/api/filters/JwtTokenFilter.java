@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.hsse.news.database.user.models.UserId;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 public class JwtTokenFilter extends OncePerRequestFilter {
     private final SecretKey secretKey = Jwts.SIG.HS256.key().build();
@@ -34,8 +36,11 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     .parseSignedClaims(token)
                     .getPayload();
 
+            UserId userId = new UserId(UUID.fromString(claims.getSubject()));
+
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(claims.getSubject(), null,
+                    new UsernamePasswordAuthenticationToken(
+                            userId, null,
                             List.of(new SimpleGrantedAuthority("ROLE_USER")));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }

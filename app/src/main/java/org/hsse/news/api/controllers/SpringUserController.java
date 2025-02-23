@@ -1,6 +1,5 @@
 package org.hsse.news.api.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.api.authorizers.Authorizer;
 import org.hsse.news.api.schemas.request.user.UserPasswordChangeRequest;
@@ -15,6 +14,7 @@ import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import spark.Response;
 
 import java.util.Optional;
 
@@ -31,11 +30,9 @@ import java.util.Optional;
 @Slf4j
 public class SpringUserController {
     private final UserService userService;
-    private final Authorizer authorizer;
 
-    public SpringUserController(final UserService userService, final Authorizer authorizer) {
+    public SpringUserController(final UserService userService) {
         this.userService = userService;
-        this.authorizer = authorizer;
     }
 
     @PostMapping("/register")
@@ -57,7 +54,8 @@ public class SpringUserController {
     private ResponseEntity<UserInfo> get() {
         ControllerUtil.logRequest(request, path);
 
-        final UserId userId = authorizer.authorizeStrict(request);
+        final UserId userId = (UserId) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
 
         final Optional<User> userOptional = userService.findById(userId);
         if (userOptional.isEmpty()) {
@@ -77,7 +75,8 @@ public class SpringUserController {
     private ResponseEntity<String> update(@RequestBody UserInfo userInfo) {
         ControllerUtil.logRequest(request, path);
 
-        final UserId userId = authorizer.authorizeStrict(request);
+        final UserId userId = (UserId) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
 
         try {
             userService.update(userId, userInfo.email(), userInfo.username());
@@ -93,7 +92,8 @@ public class SpringUserController {
     private ResponseEntity<String> changePassword(@RequestBody UserPasswordChangeRequest request) {
         ControllerUtil.logRequest(request, path);
 
-        final UserId userId = authorizer.authorizeStrict(request);
+        final UserId userId = (UserId) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
 
         try {
             userService.updatePassword(userId, request.currentPassword(), request.newPassword());
