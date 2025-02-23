@@ -39,7 +39,7 @@ public class SpringUserController {
     }
 
     @PostMapping("/register")
-    ResponseEntity<Void> register(@RequestBody UserRegisterRequest request) {
+    ResponseEntity<String> register(@RequestBody UserRegisterRequest request) {
         ControllerUtil.logRequest(request, path);
 
         try {
@@ -74,7 +74,7 @@ public class SpringUserController {
     }
 
     @PutMapping
-    private ResponseEntity<Void> update(@RequestBody UserInfo userInfo) {
+    private ResponseEntity<String> update(@RequestBody UserInfo userInfo) {
         ControllerUtil.logRequest(request, path);
 
         final UserId userId = authorizer.authorizeStrict(request);
@@ -111,12 +111,8 @@ public class SpringUserController {
         }
     }
 
-    private ResponseEntity<String> processEmailConflict(
-            final EmailConflictException e, final Response response
-    ) throws JsonProcessingException {
+    private ResponseEntity<String> processEmailConflict(final EmailConflictException e) {
         log.debug("Email conflict: {}", e.getMessage());
-
-        response.status(409);
         return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
     }
 }
