@@ -5,10 +5,12 @@ import org.hsse.news.api.schemas.request.user.UserPasswordChangeRequest;
 import org.hsse.news.api.schemas.request.user.UserRegisterRequest;
 import org.hsse.news.api.schemas.shared.UserInfo;
 import org.hsse.news.api.util.ControllerUtil;
+import org.hsse.news.database.jwt.JwtService;
 import org.hsse.news.database.user.UserService;
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.InvalidCurrentPasswordException;
 import org.hsse.news.database.user.exceptions.SameNewPasswordException;
+import org.hsse.news.database.user.models.AuthenticationCredentials;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
 import org.springframework.http.HttpStatus;
@@ -20,7 +22,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
@@ -30,9 +31,12 @@ import java.util.Optional;
 @Slf4j
 public class SpringUserController {
     private final UserService userService;
+    private final JwtService jwtService;
 
-    public SpringUserController(final UserService userService) {
+    public SpringUserController(final UserService userService,
+                                final JwtService jwtService) {
         this.userService = userService;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/register")
@@ -45,12 +49,30 @@ public class SpringUserController {
                     new User(userRegisterRequest.email(),
                             userRegisterRequest.password(),
                             userRegisterRequest.username()));
+
+            assert user.id() != null;
             log.debug("Registered user with id = {}", user.id());
-            return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentServletMapping()
-                    .path("/{id}").buildAndExpand(user.id()).toUri()).build();
+            return ResponseEntity.ok(jwtService.generateToken(user.id()));
         } catch (EmailConflictException e) {
             return processEmailConflict(e);
         }
+    }
+
+    @GetMapping("/sign-in")
+    public ResponseEntity<String> signIn(@RequestBody AuthenticationCredentials credentials,
+                                         HttpServletRequest request) {
+        ControllerUtil.logRequest(request);
+
+        log.debug("Attempting to authorize user with email = {}", credentials.email());
+
+        final Optional<UserId> userIdOptional = userService.authenticate(credentials);
+        if (userIdOptional.isEmpty()) {
+            log.debug("Failed to authorize user with email = {}", credentials.email());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
+
+        log.debug("Successfully authorized user with id = {}", userIdOptional.get());
+        return ResponseEntity.ok(jwtService.generateToken(userIdOptional.get()));
     }
 
     @GetMapping
