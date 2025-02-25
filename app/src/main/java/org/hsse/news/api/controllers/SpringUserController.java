@@ -57,10 +57,10 @@ public class SpringUserController {
     public ResponseEntity<UserInfo> get(HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
 
-        if (getCurrentUserId().isEmpty()) {
+        final UserId userId = getCurrentUserId().orElse(null);
+        if (userId == null) {
             return ResponseEntity.status(401).build();
         }
-        final UserId userId = getCurrentUserId().get();
 
         final Optional<User> userOptional = userService.findById(userId);
         if (userOptional.isEmpty()) {
@@ -81,10 +81,10 @@ public class SpringUserController {
                                           HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
 
-        if (getCurrentUserId().isEmpty()) {
+        final UserId userId = getCurrentUserId().orElse(null);
+        if (userId == null) {
             return ResponseEntity.status(401).build();
         }
-        final UserId userId = getCurrentUserId().get();
 
         try {
             userService.update(userId, userInfo.email(), userInfo.username());
@@ -102,10 +102,10 @@ public class SpringUserController {
             HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
 
-        if (getCurrentUserId().isEmpty()) {
+        final UserId userId = getCurrentUserId().orElse(null);
+        if (userId == null) {
             return ResponseEntity.status(401).build();
         }
-        final UserId userId = getCurrentUserId().get();
 
         try {
             userService.updatePassword(userId,
@@ -131,11 +131,11 @@ public class SpringUserController {
     }
 
     private Optional<UserId> getCurrentUserId() {
-        if (SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal() == "anonymousUser") {
+        Object principal = SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        if (principal.equals("anonymousUser")) {
             return Optional.empty();
         }
-        return Optional.of((UserId) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal());
+        return Optional.of((UserId) principal);
     }
 }
