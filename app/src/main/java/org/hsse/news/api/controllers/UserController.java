@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.api.schemas.request.user.UserPasswordChangeRequest;
 import org.hsse.news.api.schemas.request.user.UserRegisterRequest;
 import org.hsse.news.api.schemas.shared.UserInfo;
-import org.hsse.news.api.util.ControllerUtil;
 import org.hsse.news.database.jwt.JwtService;
 import org.hsse.news.database.user.UserService;
 import org.hsse.news.database.user.exceptions.EmailConflictException;
@@ -48,8 +47,6 @@ public class UserController {
             description = "Токен для доступа в аккаунт нового пользователя")
     public ResponseEntity<String> register(@RequestBody UserRegisterRequest userRegisterRequest,
                                            HttpServletRequest httpServletRequest) {
-        ControllerUtil.logRequest(httpServletRequest);
-
         final User user = userService.register(
                 new User(userRegisterRequest.email(),
                         userRegisterRequest.password(),
@@ -65,8 +62,6 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "Токен для входа в существующий аккаунт")
     public ResponseEntity<String> signIn(@RequestBody AuthenticationCredentials credentials,
                                          HttpServletRequest request) {
-        ControllerUtil.logRequest(request);
-
         log.debug("Attempting to authorize user with email = {}", credentials.email());
 
         final Optional<UserId> userIdOptional = userService.authenticate(credentials);
@@ -83,8 +78,6 @@ public class UserController {
     @Operation(summary = "Получить данные о текущем пользователя (по токену авторизации)")
     @ApiResponse(responseCode = "200", description = "Данные пользователя")
     public ResponseEntity<UserInfo> get(HttpServletRequest httpServletRequest) {
-        ControllerUtil.logRequest(httpServletRequest);
-
         final UserId userId = getCurrentUserId();
         final Optional<User> userOptional = userService.findById(userId);
         if (userOptional.isEmpty()) {
@@ -106,8 +99,6 @@ public class UserController {
     @ApiResponse(responseCode = "204", description = "Данные успешно изменены")
     public ResponseEntity<Void> update(@RequestBody UserInfo userInfo,
                                        HttpServletRequest httpServletRequest) {
-        ControllerUtil.logRequest(httpServletRequest);
-
         final UserId userId = getCurrentUserId();
         userService.update(userId, userInfo.email(), userInfo.username());
 
@@ -121,8 +112,6 @@ public class UserController {
     public ResponseEntity<Void> changePassword(
             @RequestBody UserPasswordChangeRequest userPasswordChangeRequest,
             HttpServletRequest httpServletRequest) {
-        ControllerUtil.logRequest(httpServletRequest);
-
         final UserId userId = getCurrentUserId();
         userService.updatePassword(userId,
                 userPasswordChangeRequest.currentPassword(),
