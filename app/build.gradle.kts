@@ -56,6 +56,18 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt:0.12.3")
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
+
+    testImplementation("org.eclipse.jetty:jetty-server:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-servlet:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-util:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-util-ajax:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-io:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-security:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-webapp:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-client:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-alpn-client:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-xml:9.4.44.v20210927")
+    testImplementation("org.eclipse.jetty:jetty-http:9.4.44.v20210927")
 }
 
 java {
