@@ -12,26 +12,14 @@ import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.models.Website;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.hsse.news.util.JdbiProvider;
-import org.hsse.news.util.SubApplication;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.util.List;
-
 @SpringBootApplication
+@SuppressWarnings("PMD.UseUtilityClass")
 public class Application {
-    private final List<SubApplication> subApplications;
-
-    public Application(final List<SubApplication> subApplications) {
-        this.subApplications = subApplications;
-    }
-
-    private void start() {
-        subApplications.forEach(SubApplication::run);
-    }
-
     public static void main(final String[] args) {
         initializeDatabase();
         SpringApplication.run(Application.class, args);

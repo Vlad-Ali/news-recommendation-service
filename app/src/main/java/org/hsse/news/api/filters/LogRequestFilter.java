@@ -15,8 +15,9 @@ import java.util.Locale;
 @Slf4j
 public class LogRequestFilter extends OncePerRequestFilter {
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(final HttpServletRequest request,
+                                    final HttpServletResponse response,
+                                    final FilterChain filterChain)
             throws ServletException, IOException {
         log.info(
                 "{} - {} {}",

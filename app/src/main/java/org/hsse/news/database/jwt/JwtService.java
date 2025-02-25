@@ -14,15 +14,15 @@ import java.util.UUID;
 public class JwtService {
     private final SecretKey secretKey = Jwts.SIG.HS256.key().build();
 
-    public UserId getUserId(String token) {
-        String subject = Jwts.parser()
+    public UserId getUserId(final String token) {
+        final String subject = Jwts.parser()
                 .verifyWith(secretKey).build()
                 .parseSignedClaims(token)
                 .getPayload().getSubject();
         return new UserId(UUID.fromString(subject));
     }
 
-    public String generateToken(UserId userId) {
+    public String generateToken(final UserId userId) {
         return Jwts.builder()
                 .subject(userId.toString())
                 .issuedAt(new Date())

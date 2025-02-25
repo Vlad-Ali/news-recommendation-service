@@ -16,7 +16,8 @@ public class SecurityConfig {
     private final JwtTokenFilter jwtTokenFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @SuppressWarnings("PMD.SignatureDeclareThrowsException")
+    public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
         http
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizeHttpRequests ->

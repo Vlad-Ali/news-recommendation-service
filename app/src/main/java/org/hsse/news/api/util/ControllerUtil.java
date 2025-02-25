@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Locale;
 
@@ -21,15 +20,6 @@ public final class ControllerUtil {
                 request.ip(),
                 request.requestMethod().toUpperCase(Locale.ROOT),
                 path
-        );
-    }
-
-    public static void logRequest(HttpServletRequest request) {
-        LOG.info(
-                "{} - {} {}",
-                request.getRemoteAddr(),
-                request.getMethod().toUpperCase(Locale.ROOT),
-                request.getRequestURI()
         );
     }
 

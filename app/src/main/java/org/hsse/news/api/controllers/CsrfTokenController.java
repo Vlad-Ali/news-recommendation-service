@@ -16,7 +16,7 @@ public class CsrfTokenController {
     @GetMapping
     @Operation(summary = "Получить CSRF токен")
     @ApiResponse(responseCode = "200", description = "Новый CSRF токен")
-    public String csrfToken(CsrfToken csrfToken) {
+    public String csrfToken(final CsrfToken csrfToken) {
         return csrfToken.getToken();
     }
 }

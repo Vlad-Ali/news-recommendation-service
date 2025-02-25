@@ -1,5 +1,6 @@
 package org.hsse.news.database.user;
 
+import lombok.AllArgsConstructor;
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.InvalidCurrentPasswordException;
 import org.hsse.news.database.user.exceptions.SameNewPasswordException;
@@ -7,25 +8,17 @@ import org.hsse.news.database.user.exceptions.UserNotFoundException;
 import org.hsse.news.database.user.models.AuthenticationCredentials;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
-import org.hsse.news.database.user.repositories.JdbiUserRepository;
 import org.hsse.news.database.user.repositories.UserRepository;
-import org.hsse.news.database.util.JdbiTransactionManager;
 import org.hsse.news.database.util.TransactionManager;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
+@AllArgsConstructor
 public final class UserService {
     private final UserRepository userRepository;
     private final TransactionManager transactionManager;
-
-    public UserService(
-            final UserRepository userRepository, final TransactionManager transactionManager
-    ) {
-        this.userRepository = userRepository;
-        this.transactionManager = transactionManager;
-    }
 
     public Optional<User> findById(final UserId userId) {
         return userRepository.findById(userId);
