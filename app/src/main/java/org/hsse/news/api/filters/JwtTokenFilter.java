@@ -1,5 +1,6 @@
 package org.hsse.news.api.filters;
 
+import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,12 +33,14 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
 
-            UserId userId = jwtService.getUserId(token);
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userId, null,
-                            List.of(new SimpleGrantedAuthority("ROLE_USER")));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            try {
+                UserId userId = jwtService.getUserId(token);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userId, null,
+                                List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (MalformedJwtException ignored) {}
         }
 
         filterChain.doFilter(request, response);
