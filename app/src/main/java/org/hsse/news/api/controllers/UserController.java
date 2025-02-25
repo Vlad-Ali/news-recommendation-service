@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.api.schemas.request.user.UserPasswordChangeRequest;
 import org.hsse.news.api.schemas.request.user.UserRegisterRequest;
@@ -34,17 +35,12 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/user")
+@AllArgsConstructor
 @Slf4j
 @Tag(name = "User API", description = "Управление текущим пользователем")
 public class UserController {
     private final UserService userService;
     private final JwtService jwtService;
-
-    public UserController(final UserService userService,
-                          final JwtService jwtService) {
-        this.userService = userService;
-        this.jwtService = jwtService;
-    }
 
     @PostMapping("/register")
     @Operation(summary = "Зарегистрировать пользователя")

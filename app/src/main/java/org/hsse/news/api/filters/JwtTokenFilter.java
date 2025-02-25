@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
 import org.hsse.news.database.jwt.JwtService;
 import org.hsse.news.database.user.models.UserId;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,12 +18,9 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class JwtTokenFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
-
-    JwtTokenFilter(JwtService jwtService) {
-        this.jwtService = jwtService;
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
