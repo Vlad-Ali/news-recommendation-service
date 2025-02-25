@@ -1,206 +1,163 @@
 package org.hsse.news.api.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hsse.news.api.authorizers.Authorizer;
+import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.api.schemas.request.user.UserPasswordChangeRequest;
 import org.hsse.news.api.schemas.request.user.UserRegisterRequest;
-import org.hsse.news.api.schemas.response.error.ConflictErrorResponse;
 import org.hsse.news.api.schemas.shared.UserInfo;
 import org.hsse.news.api.util.ControllerUtil;
+import org.hsse.news.database.jwt.JwtService;
 import org.hsse.news.database.user.UserService;
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.InvalidCurrentPasswordException;
 import org.hsse.news.database.user.exceptions.SameNewPasswordException;
+import org.hsse.news.database.user.models.AuthenticationCredentials;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import spark.Response;
-import spark.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
-public final class UserController implements Controller {
-    private static final Logger LOG = LoggerFactory.getLogger(UserController.class);
-    private static final String USERS_PREFIX = "/user";
-    private static final String ACCEPT_TYPE = "application/json";
-
-    private final String routePrefix;
-    private final Service service;
+@RestController
+@RequestMapping("/user")
+@Slf4j
+public class UserController {
     private final UserService userService;
-    private final ObjectMapper objectMapper;
-    private final Authorizer authorizer;
+    private final JwtService jwtService;
 
-    public UserController(
-            final String apiPrefix,
-            final Service service,
-            final UserService userService,
-            final ObjectMapper objectMapper,
-            final Authorizer authorizer
-    ) {
-        this.routePrefix = apiPrefix + USERS_PREFIX;
-        this.service = service;
+    public UserController(final UserService userService,
+                                final JwtService jwtService) {
         this.userService = userService;
-        this.objectMapper = objectMapper;
-        this.authorizer = authorizer;
+        this.jwtService = jwtService;
     }
 
-    @Override
-    public void initializeEndpoints() {
-        register();
-        get();
-        update();
-        changePassword();
+    @PostMapping("/register")
+    public ResponseEntity<String> register(@RequestBody UserRegisterRequest userRegisterRequest,
+                                    HttpServletRequest httpServletRequest) {
+        ControllerUtil.logRequest(httpServletRequest);
+
+        try {
+            final User user = userService.register(
+                    new User(userRegisterRequest.email(),
+                            userRegisterRequest.password(),
+                            userRegisterRequest.username()));
+
+            assert user.id() != null;
+            log.debug("Registered user with id = {}", user.id());
+            return ResponseEntity.ok(jwtService.generateToken(user.id()));
+        } catch (EmailConflictException e) {
+            return processEmailConflict(e);
+        }
     }
 
-    private void register() {
-        final String path = routePrefix + "/register";
+    @PostMapping("/sign-in")
+    public ResponseEntity<String> signIn(@RequestBody AuthenticationCredentials credentials,
+                                         HttpServletRequest request) {
+        ControllerUtil.logRequest(request);
 
-        service.post(
-                path,
-                ACCEPT_TYPE,
-                (request, response) -> {
-                    ControllerUtil.logRequest(request, path);
+        log.debug("Attempting to authorize user with email = {}", credentials.email());
 
-                    final UserRegisterRequest userRegisterRequest =
-                            ControllerUtil.validateRequestSchema(
-                                    request,
-                                    UserRegisterRequest.class,
-                                    service,
-                                    objectMapper
-                            );
+        final Optional<UserId> userIdOptional = userService.authenticate(credentials);
+        if (userIdOptional.isEmpty()) {
+            log.debug("Failed to authorize user with email = {}", credentials.email());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
 
-                    try {
-                        final User user = userService.register(
-                                new User(
-                                        userRegisterRequest.email(),
-                                        userRegisterRequest.password(),
-                                        userRegisterRequest.username())
-                        );
-
-                        LOG.debug("Registered user with id = {}", user.id());
-                        response.status(201);
-                    } catch (EmailConflictException e) {
-                        return processEmailConflict(e, response);
-                    }
-
-                    return "";
-                }
-        );
+        log.debug("Successfully authorized user with id = {}", userIdOptional.get());
+        return ResponseEntity.ok(jwtService.generateToken(userIdOptional.get()));
     }
 
-    private void get() {
-        final String path = routePrefix;
+    @GetMapping
+    public ResponseEntity<UserInfo> get(HttpServletRequest httpServletRequest) {
+        ControllerUtil.logRequest(httpServletRequest);
 
-        service.get(
-                path,
-                ACCEPT_TYPE,
-                (request, response) -> {
-                    ControllerUtil.logRequest(request, path);
+        final UserId userId = getCurrentUserId().orElse(null);
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
 
-                    final UserId userId = authorizer.authorizeStrict(request);
+        final Optional<User> userOptional = userService.findById(userId);
+        if (userOptional.isEmpty()) {
+            log.warn("User not found for id = {}", userId);
+            return ResponseEntity.notFound().build();
+        }
 
-                    final Optional<User> userOptional = userService.findById(userId);
-                    if (userOptional.isEmpty()) {
-                        LOG.warn("User not found for id = {}", userId);
-                        service.halt(404, "User not found");
-                        return "";
-                    }
+        log.debug("Successfully found user by id = {}", userOptional.get().id());
 
-                    LOG.debug("Successfully found user by id = {}", userOptional.get().id());
-                    response.status(200);
-
-                    return objectMapper.writeValueAsString(
-                            new UserInfo(
-                                    userOptional.get().email(),
-                                    userOptional.get().username()
-                            )
-                    );
-                }
-        );
+        return ResponseEntity.ok(new UserInfo(
+                userOptional.get().email(),
+                userOptional.get().username()
+        ));
     }
 
-    private void update() {
-        final String path = routePrefix;
+    @PutMapping
+    public ResponseEntity<String> update(@RequestBody UserInfo userInfo,
+                                          HttpServletRequest httpServletRequest) {
+        ControllerUtil.logRequest(httpServletRequest);
 
-        service.put(
-                path,
-                ACCEPT_TYPE,
-                (request, response) -> {
-                    ControllerUtil.logRequest(request, path);
+        final UserId userId = getCurrentUserId().orElse(null);
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
 
-                    final UserId userId = authorizer.authorizeStrict(request);
-                    final UserInfo userInfo =
-                            ControllerUtil.validateRequestSchema(
-                                    request,
-                                    UserInfo.class,
-                                    service,
-                                    objectMapper
-                            );
+        try {
+            userService.update(userId, userInfo.email(), userInfo.username());
 
-                    try {
-                        userService.update(userId, userInfo.email(), userInfo.username());
-
-                        LOG.debug("Successfully updated user with id = {}", userId);
-                        response.status(204);
-                    } catch (EmailConflictException e) {
-                        return processEmailConflict(e, response);
-                    }
-
-                    return "";
-                }
-        );
+            log.debug("Successfully updated user with id = {}", userId);
+            return ResponseEntity.noContent().build();
+        } catch (EmailConflictException e) {
+            return processEmailConflict(e);
+        }
     }
 
-    private void changePassword() {
-        final String path = routePrefix + "/password";
+    @PutMapping("/password")
+    public ResponseEntity<String> changePassword(
+            @RequestBody UserPasswordChangeRequest userPasswordChangeRequest,
+            HttpServletRequest httpServletRequest) {
+        ControllerUtil.logRequest(httpServletRequest);
 
-        service.put(
-                path,
-                ACCEPT_TYPE,
-                (request, response) -> {
-                    ControllerUtil.logRequest(request, path);
+        final UserId userId = getCurrentUserId().orElse(null);
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
 
-                    final UserId userId = authorizer.authorizeStrict(request);
-                    final UserPasswordChangeRequest userPasswordChangeRequest =
-                            ControllerUtil.validateRequestSchema(
-                                    request,
-                                    UserPasswordChangeRequest.class,
-                                    service,
-                                    objectMapper
-                            );
+        try {
+            userService.updatePassword(userId,
+                    userPasswordChangeRequest.currentPassword(),
+                    userPasswordChangeRequest.newPassword());
 
-                    try {
-                        userService.updatePassword(
-                                userId,
-                                userPasswordChangeRequest.currentPassword(),
-                                userPasswordChangeRequest.newPassword()
-                        );
-
-                        LOG.debug("Successfully updated password for user with id = {}", userId);
-                        response.status(204);
-                    } catch (SameNewPasswordException e) {
-                        LOG.debug("Same new password for user with id = {}", userId);
-                        service.halt(208, "Valid current password, new password matches it");
-                    } catch (InvalidCurrentPasswordException e) {
-                        LOG.debug("Invalid current password for user with id = {}", userId);
-                        service.halt(412, "Invalid current password");
-                    }
-
-                    return "";
-                }
-        );
+            log.debug("Successfully updated password for user with id = {}", userId);
+            return ResponseEntity.noContent().build();
+        } catch (SameNewPasswordException e) {
+            log.debug("Same new password for user with id = {}", userId);
+            return ResponseEntity.status(HttpStatus.ALREADY_REPORTED)
+                    .body("Valid current password, new password matches it");
+        } catch (InvalidCurrentPasswordException e) {
+            log.debug("Invalid current password for user with id = {}", userId);
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
+                    .body("Invalid current password");
+        }
     }
 
-    private String processEmailConflict(
-            final EmailConflictException e, final Response response
-    ) throws JsonProcessingException {
-        LOG.debug("Email conflict: {}", e.getMessage());
+    private ResponseEntity<String> processEmailConflict(final EmailConflictException e) {
+        log.debug("Email conflict: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
+    }
 
-        response.status(409);
-        return objectMapper.writeValueAsString(
-                new ConflictErrorResponse("Email already exists")
-        );
+    private Optional<UserId> getCurrentUserId() {
+        Object principal = SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        if (principal.equals("anonymousUser")) {
+            return Optional.empty();
+        }
+        return Optional.of((UserId) principal);
     }
 }
