@@ -1,5 +1,10 @@
 package org.hsse.news.api.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.api.schemas.request.user.UserPasswordChangeRequest;
 import org.hsse.news.api.schemas.request.user.UserRegisterRequest;
@@ -29,6 +34,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/user")
 @Slf4j
+@Tag(name="User API", description = "Управление текущим пользователем")
 public class UserController {
     private final UserService userService;
     private final JwtService jwtService;
@@ -40,6 +46,10 @@ public class UserController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Зарегистрировать пользователя")
+    @ApiResponse(responseCode = "200",
+            description = "Токен для доступа в аккаунт нового пользователя")
+    @ApiResponse(responseCode = "409", description = "Аккаунт с таким e-mail уже зарегистрирован")
     public ResponseEntity<String> register(@RequestBody UserRegisterRequest userRegisterRequest,
                                     HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
@@ -59,6 +69,10 @@ public class UserController {
     }
 
     @PostMapping("/sign-in")
+    @Operation(summary = "Войти в существующий аккаунт")
+    @ApiResponse(responseCode = "200", description = "Токен для входа в существующий аккаунт")
+    @ApiResponse(responseCode = "401",
+            description = "Ошибка авторизации")
     public ResponseEntity<String> signIn(@RequestBody AuthenticationCredentials credentials,
                                          HttpServletRequest request) {
         ControllerUtil.logRequest(request);
@@ -76,6 +90,9 @@ public class UserController {
     }
 
     @GetMapping
+    @Operation(summary = "Получить данные о текущем пользователя (по токену авторизации)")
+    @ApiResponse(responseCode = "200", description = "Данные пользователя")
+    @ApiResponse(responseCode = "401", description = "Нужно авторизоваться", content = {@Content})
     public ResponseEntity<UserInfo> get(HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
 
@@ -99,6 +116,10 @@ public class UserController {
     }
 
     @PutMapping
+    @Operation(summary = "Изменить данные текущего пользователя")
+    @ApiResponse(responseCode = "204", description = "Данные успешно изменены", content = {@Content})
+    @ApiResponse(responseCode = "401", description = "Нужно авторизоваться", content = {@Content})
+    @ApiResponse(responseCode = "409", description = "Аккаунт с таким e-mail уже зарегистрирован")
     public ResponseEntity<String> update(@RequestBody UserInfo userInfo,
                                           HttpServletRequest httpServletRequest) {
         ControllerUtil.logRequest(httpServletRequest);
@@ -119,6 +140,11 @@ public class UserController {
     }
 
     @PutMapping("/password")
+    @Operation(summary = "Сменить пароль")
+    @ApiResponse(responseCode = "204", description = "Пароль успешно изменён", content = {@Content})
+    @ApiResponse(responseCode = "401", description = "Нужно авторизоваться", content = {@Content})
+    @ApiResponse(responseCode = "208", description = "Новый пароль совпадает со старым")
+    @ApiResponse(responseCode = "412", description = "Старый пароль неправильно указан")
     public ResponseEntity<String> changePassword(
             @RequestBody UserPasswordChangeRequest userPasswordChangeRequest,
             HttpServletRequest httpServletRequest) {
