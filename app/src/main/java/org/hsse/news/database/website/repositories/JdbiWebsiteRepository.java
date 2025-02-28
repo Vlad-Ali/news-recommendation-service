@@ -1,5 +1,6 @@
 package org.hsse.news.database.website.repositories;
 
+import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
@@ -9,10 +10,12 @@ import org.hsse.news.util.JdbiProvider;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class JdbiWebsiteRepository implements WebsiteRepository {
     private final Jdbi jdbi;
 
@@ -23,11 +26,11 @@ public class JdbiWebsiteRepository implements WebsiteRepository {
     }
 
     @Override
-    public Optional<Website> findById(final @NotNull WebsiteId websiteId) {
+    public Optional<WebsiteInfo> findById(final @NotNull WebsiteId websiteId) {
         return jdbi.inTransaction(handle ->
                 handle.createQuery("SELECT * FROM websites WHERE website_id = :website_id")
                         .bind("website_id", websiteId.value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
-                        .mapTo(Website.class)
+                        .map((rs, ctx) -> new WebsiteInfo(rs.getLong("website_id"), rs.getString("url"), rs.getString("description")))// NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
                         .findFirst()
         );
     }
@@ -42,7 +45,7 @@ public class JdbiWebsiteRepository implements WebsiteRepository {
                         )
                         .bind("url", website.url()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
                         .bind("description", website.description()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
-                        .bind("creator_id", website.creatorId()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                        .bind("creator_id", website.creatorId().value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
                         .executeAndReturnGeneratedKeys("website_id") // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
                         .mapTo(WebsiteId.class)
                         .one()
@@ -63,27 +66,46 @@ public class JdbiWebsiteRepository implements WebsiteRepository {
     }
 
     @Override
-    public @NotNull List<Website> findSubscribedWebsitesByUserId(final @NotNull UserId creatorId) {
-        return jdbi.inTransaction(handle -> handle.createQuery("SELECT * FROM websites JOIN user_websites " +
-                        "WHERE websites.website_id = user_websites.website_id AND user_websites.user_id = :user_id")
-                .bind("user_id", creatorId.value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
-                .mapTo(Website.class)
+    public @NotNull List<WebsiteInfo> findSubscribedWebsitesByUserId(final @NotNull UserId creatorId) {
+    return jdbi.inTransaction(
+        handle ->
+            handle
+                .createQuery(
+                    "SELECT websites.website_id, url, description FROM websites INNER JOIN user_websites ON websites.website_id = user_websites.website_id\n"
+                        + "WHERE user_websites.user_id = :user_id")
+                .bind(
+                    "user_id", // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                    creatorId.value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                .map((rs, ctx) -> new WebsiteInfo(rs.getLong("website_id"), rs.getString("url"), rs.getString("description")))
                 .list());
     }
 
     @Override
-    public @NotNull List<Website> findUnSubscribedWebsitesByUserId(final @NotNull UserId creatorId) {
-        return jdbi.inTransaction(handle -> handle.createQuery("SELECT * FROM websites LEFT JOIN user_websites " +
-                        "WHERE websites.website_id = user_websites.website_id AND user_websites.user_id = :user_id")
-                .bind("user_id", creatorId.value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
-                .mapTo(Website.class)
+    public @NotNull List<WebsiteInfo> findUnSubscribedWebsitesByUserId(final @NotNull UserId creatorId) {
+    return jdbi.inTransaction(
+        handle ->
+            handle
+                .createQuery(
+                    "SELECT w.*\n"
+                        + "FROM websites w\n"
+                        + "LEFT JOIN user_websites uw ON w.website_id = uw.website_id AND uw.user_id = :user_id\n"
+                        + "WHERE uw.website_id IS NULL")
+                .bind(
+                    "user_id",
+                    creatorId.value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                .map(
+                    (rs, ctx) ->
+                        new WebsiteInfo(
+                            rs.getLong("website_id"),
+                            rs.getString("url"),
+                            rs.getString("description")))
                 .list());
     }
 
     @Override
     public void update(final @NotNull Website website) {
         if (website.id() == null) {
-            throw new WebsiteNotFoundException(null);
+            throw new WebsiteNotFoundException("Website with id = null does not exist");
         }
 
         jdbi.useTransaction(handle -> {
@@ -102,7 +124,7 @@ public class JdbiWebsiteRepository implements WebsiteRepository {
     @Override
     public void delete(final @NotNull WebsiteId websiteId, final @NotNull UserId creatorId) {
         jdbi.useTransaction(handle ->
-                handle.createUpdate("DELETE FROM websites WHERE website_id = :website_id, creator_id = :creator_id")
+                handle.createUpdate("DELETE FROM websites WHERE website_id = :website_id AND creator_id = :creator_id")
                         .bind("website_id", websiteId.value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
                         .bind("creator_id", creatorId.value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
                         .execute()

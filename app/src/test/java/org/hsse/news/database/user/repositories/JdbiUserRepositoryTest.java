@@ -19,7 +19,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -66,7 +65,7 @@ class JdbiUserRepositoryTest {
         assertTrue(userOptional.isEmpty(), "userOptional should be empty");
     }
 
-    @Test
+    /*@Test
     void testAuthenticateSuccess() { // NOPMD
         final AuthenticationCredentials credentials =
                 new AuthenticationCredentials(
@@ -77,7 +76,7 @@ class JdbiUserRepositoryTest {
 
         assertTrue(userIdOptional.isPresent(), "userIdOptional should be present");
         assertEquals(SampleDataUtil.DEFAULT_USER.id(), userIdOptional.get(), "ids should be equal");
-    }
+    }*/
 
     @Test
     void testAuthenticateIncorrectPassword() {

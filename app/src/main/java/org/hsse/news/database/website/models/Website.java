@@ -11,14 +11,14 @@ import java.util.Objects;
 
 public record Website(
         @Nested @Nullable WebsiteId id,
-        @NotNull String url, @NotNull String description, @NotNull UserId creatorId
+         @NotNull String url, @NotNull String description, @Nullable UserId creatorId
 ) {
     @JdbiConstructor
     public Website {}
 
     public Website(
             final @NotNull String url, final @NotNull String description,
-            final @NotNull UserId creatorId
+            final @Nullable UserId creatorId
     ) {
         this(null, url, description, creatorId);
     }

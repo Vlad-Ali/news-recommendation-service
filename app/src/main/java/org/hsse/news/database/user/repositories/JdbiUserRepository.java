@@ -9,9 +9,11 @@ import org.hsse.news.util.JdbiProvider;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+@Repository
 public final class JdbiUserRepository implements UserRepository {
     private final Jdbi jdbi;
 

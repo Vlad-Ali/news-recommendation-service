@@ -1,0 +1,8 @@
+spring:
+  application:
+    name:
+      news-recommendation-service
+logging:
+  level:
+    org.hsse.news.api: DEBUG
+    org.hsse.news.database: DEBUG

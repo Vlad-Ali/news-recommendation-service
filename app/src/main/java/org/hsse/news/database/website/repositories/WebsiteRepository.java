@@ -1,5 +1,6 @@
 package org.hsse.news.database.website.repositories;
 
+import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WebsiteRepository {
-    Optional<Website> findById(@NotNull WebsiteId websiteId);
+    Optional<WebsiteInfo> findById(@NotNull WebsiteId websiteId);
 
     /**
      * @throws WebsiteAlreadyExistsException if the website exist
@@ -20,9 +21,9 @@ public interface WebsiteRepository {
 
     @NotNull List<Website> getAll();
 
-    @NotNull List<Website> findSubscribedWebsitesByUserId(@NotNull UserId creatorId);
+    @NotNull List<WebsiteInfo> findSubscribedWebsitesByUserId(@NotNull UserId creatorId);
 
-    @NotNull List<Website> findUnSubscribedWebsitesByUserId(@NotNull UserId creatorId);
+    @NotNull List<WebsiteInfo> findUnSubscribedWebsitesByUserId(@NotNull UserId creatorId);
 
     /**
      * @throws WebsiteNotFoundException if the website does not exist
@@ -33,7 +34,7 @@ public interface WebsiteRepository {
     /**
      * @throws WebsiteNotFoundException if the website does not exist
      */
-    void delete(@NotNull WebsiteId userId, @NotNull UserId creatorId);
+    void delete(@NotNull WebsiteId websiteId, @NotNull UserId creatorId);
 
     void updateSubscribedWebsites(@NotNull List<WebsiteId> websites, @NotNull UserId userId);
 }

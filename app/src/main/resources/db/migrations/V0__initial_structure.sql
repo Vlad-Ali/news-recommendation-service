@@ -12,7 +12,7 @@ CREATE INDEX IF NOT EXISTS index_users_email ON users (email);
 CREATE TABLE IF NOT EXISTS topics
 (
     topic_id   bigserial NOT NULL PRIMARY KEY,
-    name       text      NOT NULL,
+    name       text      UNIQUE NOT NULL,
     creator_id uuid REFERENCES users (user_id) ON DELETE CASCADE
 );
 
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS topics
 CREATE TABLE IF NOT EXISTS websites
 (
     website_id  bigserial        NOT NULL PRIMARY KEY,
-    url         text      UNIQUE NOT NULL,
+    url         text             UNIQUE NOT NULL,
     description text             NOT NULL,
     creator_id  uuid REFERENCES users (user_id) ON DELETE CASCADE
 );

@@ -8,4 +8,8 @@ public class QuantityLimitExceededWebsitesPerUserException extends RuntimeExcept
     public QuantityLimitExceededWebsitesPerUserException(final UserId websiteId) {
         super(String.format(DEFAULT_MESSAGE, websiteId));
     }
+
+    public QuantityLimitExceededWebsitesPerUserException(final String message) {
+        super(message);
+    }
 }

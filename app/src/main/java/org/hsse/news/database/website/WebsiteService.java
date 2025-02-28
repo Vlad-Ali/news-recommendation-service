@@ -1,20 +1,22 @@
 package org.hsse.news.database.website;
 
 import com.typesafe.config.ConfigFactory;
+import org.hsse.news.api.schemas.response.website.WebsitesResponse;
+import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.user.models.UserId;
-import org.hsse.news.database.util.JdbiTransactionManager;
 import org.hsse.news.database.util.TransactionManager;
 import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPerUserException;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
 import org.hsse.news.database.website.models.Website;
 import org.hsse.news.database.website.models.WebsiteId;
-import org.hsse.news.database.website.repositories.JdbiWebsiteRepository;
 import org.hsse.news.database.website.repositories.WebsiteRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public final class WebsiteService {
     private static final int MAX_WEBSITES_PER_USER = ConfigFactory.load().getInt("website.max-custom-per-user");
 
@@ -29,14 +31,7 @@ public final class WebsiteService {
         this.transactionManager = transactionManager;
     }
 
-    public WebsiteService() {
-        this(
-                new JdbiWebsiteRepository(),
-                new JdbiTransactionManager()
-        );
-    }
-
-    public Optional<Website> findById(final WebsiteId websiteId) {
+    public Optional<WebsiteInfo> findById(final WebsiteId websiteId) {
         return websiteRepository.findById(websiteId);
     }
 
@@ -44,12 +39,16 @@ public final class WebsiteService {
         return websiteRepository.getAll();
     }
 
-    public List<Website> getSubscribedWebsitesByUserId(final UserId userId) {
+    public List<WebsiteInfo> getSubscribedWebsitesByUserId(final UserId userId) {
         return websiteRepository.findSubscribedWebsitesByUserId(userId);
     }
 
-    public List<Website> getUnSubscribedWebsitesByUserId(final UserId userId) {
+    public List<WebsiteInfo> getUnSubscribedWebsitesByUserId(final UserId userId) {
         return websiteRepository.findUnSubscribedWebsitesByUserId(userId);
+    }
+
+    public WebsitesResponse getSubAndUnSubWebsites(final UserId userId){
+        return new WebsitesResponse(getSubscribedWebsitesByUserId(userId), getUnSubscribedWebsitesByUserId(userId));
     }
 
     public Website create(final Website website) {
@@ -62,9 +61,10 @@ public final class WebsiteService {
      */
     public void update(final WebsiteId websiteId, final String url, final String description) {
         transactionManager.useTransaction(() -> {
-            final Website websiteToUpdate =
+            final WebsiteInfo websiteInfoToUpdate =
                     websiteRepository.findById(websiteId)
                             .orElseThrow(() -> new WebsiteNotFoundException(websiteId));
+            final Website websiteToUpdate = new Website(websiteId, websiteInfoToUpdate.url(), websiteInfoToUpdate.description(), null);
 
             websiteRepository.update(
                     websiteToUpdate
@@ -79,13 +79,21 @@ public final class WebsiteService {
             throw new QuantityLimitExceededWebsitesPerUserException(userId);
         }
 
-        websiteRepository.updateSubscribedWebsites(websites, userId);
+        try{
+            websiteRepository.updateSubscribedWebsites(websites, userId);
+        }
+        catch (Exception ex){
+            throw new WebsiteNotFoundException("Incorrect website IDs");
+        }
     }
 
     /**
      * @throws WebsiteNotFoundException if the website does not exist
      */
     public void delete(final WebsiteId websiteId, final UserId creatorId) {
+        if (findById(websiteId).isEmpty()){
+            throw new WebsiteNotFoundException(websiteId);
+        }
         websiteRepository.delete(websiteId, creatorId);
     }
 }

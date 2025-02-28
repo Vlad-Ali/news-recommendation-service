@@ -9,7 +9,6 @@ INSERT INTO topics (name) VALUES ('Mobile Development');
 INSERT INTO topics (name) VALUES ('Game Development');
 INSERT INTO topics (name) VALUES ('Databases');
 
-
 INSERT INTO websites (url, description)
 VALUES ('https://www.computerworld.com/news/rss',
         'Computerworld covers a range of technology topics, with a focus on these core areas of IT');
@@ -28,3 +27,5 @@ VALUES ('https://techcrunch.com/feed/',
 INSERT INTO websites (url, description)
 VALUES ('https://habr.com/ru/rss/articles/',
         'Russian service for news, blogs, analytical articles, tutorials and more - all in the field of technologies and business');
+
+
