@@ -2,7 +2,7 @@ name: Gradle build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "feature/spring-article" ]
   pull_request:
     branches: [ "feature/spring-article" ]
 
