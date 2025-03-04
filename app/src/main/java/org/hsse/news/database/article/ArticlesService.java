@@ -2,6 +2,7 @@ package org.hsse.news.database.article;
 
 import org.hsse.news.database.article.exceptions.ArticleNotFoundException;
 import org.hsse.news.database.article.models.Article;
+import org.hsse.news.database.article.models.ArticleData;
 import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.article.repositories.ArticleRepository;
 import org.hsse.news.database.article.repositories.JdbiArticleRepository;
@@ -13,28 +14,23 @@ import org.hsse.news.database.website.models.WebsiteId;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Optional;
 
-public final class ArticleService {
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@AllArgsConstructor
+public final class ArticlesService {
     private final ArticleRepository articleRepository;
     private final TransactionManager transactionManager;
 
-    public ArticleService(
-            final ArticleRepository articleRepository, final TransactionManager transactionManager
-    ) {
-        this.articleRepository = articleRepository;
-        this.transactionManager = transactionManager;
+    public ArticleData findById(ArticleId articleId) {
+        return articleRepository
+            .findById(articleId)
+            .orElseThrow(() -> new ArticleNotFoundException(articleId));
     }
 
-    public ArticleService() {
-        this(new JdbiArticleRepository(), new JdbiTransactionManager());
-    }
-
-    public Optional<Article> findById(final ArticleId articleId) { // NOPMD
-        return articleRepository.findById(articleId);
-    }
-
-    public List<Article> getAllUnknown(final UserId userId) {
+    public List<Article> getAllUnknown(UserId userId) {
         return articleRepository.getAllUnknown(userId);
     }
 
@@ -48,21 +44,14 @@ public final class ArticleService {
                        final Timestamp createdAt,
                        final TopicId topicId,
                        final WebsiteId websiteId
-                       ) {
-        transactionManager.useTransaction(() -> {
-            final Article articleToUpdate =
-                    articleRepository.findById(articleId)
-                            .orElseThrow(() -> new ArticleNotFoundException(articleId));
+    ) {
+        articleRepository.update(
+            new Article(articleId, title, url, createdAt, topicId, websiteId)
+        );
+    }
 
-            articleRepository.update(
-                    articleToUpdate
-                            .withTitle(title)
-                            .withUrl(url)
-                            .withCreatedAt(createdAt)
-                            .withTopicId(topicId)
-                            .withWebsiteId(websiteId)
-            );
-        });
+    public void updateTitle(Article article) {
+
     }
 
     public void delete(final ArticleId articleId) {

@@ -11,10 +11,12 @@ import org.hsse.news.database.website.models.Website;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.hsse.news.database.website.repositories.JdbiWebsiteRepository;
 import org.hsse.news.database.website.repositories.WebsiteRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public final class WebsiteService {
     private static final int MAX_WEBSITES_PER_USER = ConfigFactory.load().getInt("website.max-custom-per-user");
 

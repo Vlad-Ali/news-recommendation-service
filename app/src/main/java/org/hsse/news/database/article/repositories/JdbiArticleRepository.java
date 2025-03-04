@@ -1,22 +1,31 @@
 package org.hsse.news.database.article.repositories;
 
+import org.hsse.news.api.mapper.TopicIdMapper;
+import org.hsse.news.api.mapper.WebsiteIdMapper;
 import org.hsse.news.database.article.exceptions.ArticleNotFoundException;
 import org.hsse.news.database.article.models.Article;
+import org.hsse.news.database.article.models.ArticleData;
 import org.hsse.news.database.article.models.ArticleId;
+import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
+import org.hsse.news.database.website.models.WebsiteId;
 import org.hsse.news.util.JdbiProvider;
 import org.jdbi.v3.core.Jdbi;
 
 import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public final class JdbiArticleRepository implements ArticleRepository {
     private final Jdbi jdbi;
 
     public JdbiArticleRepository(final @NotNull Jdbi jdbi) {
         this.jdbi = jdbi;
+        this.jdbi.registerRowMapper(TopicId.class, new TopicIdMapper());
+        this.jdbi.registerRowMapper(WebsiteId.class, new WebsiteIdMapper());
     }
 
     public JdbiArticleRepository() {
@@ -24,49 +33,58 @@ public final class JdbiArticleRepository implements ArticleRepository {
     }
 
     @Override
-    public Optional<Article> findById(final @NotNull ArticleId articleId) {
+    public Optional<ArticleData> findById(final @NotNull ArticleId articleId) {
         return jdbi.inTransaction( handle ->
                 handle.createQuery("SELECT * FROM articles WHERE article_id = :article_id")
                         .bind("article_id", articleId.value()) // NOPMD
-                        .mapTo(Article.class)
+                        .map(
+                            (rs, ctx) -> new ArticleData(
+                                rs.getString("title"),
+                                rs.getString("url"),
+                                rs.getTimestamp("created_at"),
+                                rs.getLong("topic_id"),
+                                rs.getLong("website_id")
+                            )
+                        )
                         .findFirst()
         );
     }
 
     @Override
     public @NotNull Article create(final @NotNull Article article) {
-        return jdbi.inTransaction(handle -> article.initializeWithId(
-                handle.createUpdate(
-                        "INSERT INTO articles (title, url, created_at, topic_id, website_id) " +
-                                "VALUES (:title, :url, :created_at, :topic_id, :website_id)"
+        return jdbi.inTransaction(handle -> article.toBuilder()
+            .id(handle.createUpdate(
+                    "INSERT INTO articles (title, url, created_at, topic_id, website_id) " +
+                        "VALUES (:title, :url, :created_at, :topic_id, :website_id)"
                 )
-                        .bind("title", article.title())
-                        .bind("url", article.url())
-                        .bind("created_at", article.createdAt())
-                        .bind("topic_id", article.topicId())
-                        .bind("website_id", article.websiteId())
-                        .executeAndReturnGeneratedKeys("article_id")
-                        .mapTo(ArticleId.class)
-                        .one()
-        ));
+                .bind("title", article.getTitle())
+                .bind("url", article.getUrl())
+                .bind("created_at", article.getCreatedAt())
+                .bind("topic_id", article.getTopicId().value())
+                .bind("website_id", article.getWebsiteId().value())
+                .executeAndReturnGeneratedKeys("article_id")
+                .mapTo(ArticleId.class)
+                .one())
+            .build()
+        );
     }
 
     @Override
     public void update(final @NotNull Article article) {
-        if (article.id() == null) {
+        if (article.getId() == null) {
             throw new ArticleNotFoundException(null);
         }
 
         jdbi.useTransaction(handle ->
             handle.createUpdate("UPDATE articles SET title = :title, url = :url, " +
-                            "created_at = :created_at, topic_id = :topic_id, website_id = :website_id" +
+                            "created_at = :created_at, topic_id = :topic_id, website_id = :website_id " +
                             "WHERE article_id = :article_id")
-               .bind("title", article.title())
-               .bind("url", article.url())
-               .bind("created_at", article.createdAt())
-               .bind("topic_id", article.topicId())
-               .bind("website_id", article.websiteId())
-               .bind("article_id", article.id().value())
+               .bind("title", article.getTitle())
+               .bind("url", article.getUrl())
+               .bind("created_at", article.getCreatedAt())
+               .bind("topic_id", article.getTopicId().value())
+               .bind("website_id", article.getWebsiteId().value())
+               .bind("article_id", article.getId().value())
                .execute()
         );
     }

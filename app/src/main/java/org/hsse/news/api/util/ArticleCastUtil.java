@@ -4,6 +4,7 @@ import org.hsse.news.api.schemas.response.article.ArticleResponse;
 import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.topic.TopicService;
 import org.hsse.news.database.website.WebsiteService;
+import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +20,13 @@ public final class ArticleCastUtil {
 
     public ArticleResponse fromArticle(final Article article) {
         return new ArticleResponse(
-                article.title(),
-                article.url(),
-                String.valueOf(article.createdAt()),
-                new ArrayList<>(List.of(topicService.getTopicNameById(article.topicId()))), // NOPMD
-                websiteService.findById(article.websiteId()).get().description() // NOPMD
+                article.getTitle(),
+                article.getUrl(),
+                String.valueOf(article.getCreatedAt()),
+                new ArrayList<>(List.of(topicService.getTopicNameById(article.getTopicId()))), // NOPMD
+                websiteService.findById(article.getWebsiteId())
+                    .orElseThrow(() -> new WebsiteNotFoundException(article.getWebsiteId()))
+                    .description() // NOPMD
         );
     }
 }
