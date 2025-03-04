@@ -5,10 +5,8 @@ import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleData;
 import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.article.repositories.ArticleRepository;
-import org.hsse.news.database.article.repositories.JdbiArticleRepository;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
-import org.hsse.news.database.util.JdbiTransactionManager;
 import org.hsse.news.database.util.TransactionManager;
 import org.hsse.news.database.website.models.WebsiteId;
 
@@ -24,13 +22,13 @@ public final class ArticlesService {
     private final ArticleRepository articleRepository;
     private final TransactionManager transactionManager;
 
-    public ArticleData findById(ArticleId articleId) {
+    public ArticleData findById(final ArticleId articleId) {
         return articleRepository
             .findById(articleId)
             .orElseThrow(() -> new ArticleNotFoundException(articleId));
     }
 
-    public List<Article> getAllUnknown(UserId userId) {
+    public List<Article> getAllUnknown(final UserId userId) {
         return articleRepository.getAllUnknown(userId);
     }
 
@@ -50,7 +48,7 @@ public final class ArticlesService {
         );
     }
 
-    public void updateTitle(Article article) {
+    public void updateTitle(final Article article) {
 
     }
 

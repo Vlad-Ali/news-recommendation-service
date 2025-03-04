@@ -23,24 +23,24 @@ public final class ArticlesController implements ArticleOperations {
 
   private final ArticlesService articleService;
 
-  public ArticlesController(ArticlesService articleService) {
+  public ArticlesController(final ArticlesService articleService) {
     this.articleService = articleService;
   }
 
   @Override
-  public ResponseEntity<ArticleData> getArticle(UUID articleId) {
-    ArticleData article = articleService.findById(new ArticleId(articleId));
+  public ResponseEntity<ArticleData> getArticle(final UUID articleId) {
+    final ArticleData article = articleService.findById(new ArticleId(articleId));
     return ResponseEntity.ok(article);
   }
 
   @Override
-  public ResponseEntity<ArticleListData> getUserArticles(UUID userId) {
+  public ResponseEntity<ArticleListData> getUserArticles(final UUID userId) {
     return null;
   }
 
   @Override
-  public ResponseEntity<String> createArticle(ArticleData articleData) {
-    Article article = articleService.create(
+  public ResponseEntity<String> createArticle(final ArticleData articleData) {
+    final Article article = articleService.create(
         Article.builder()
             .title(articleData.title())
             .url(articleData.url())
@@ -55,7 +55,7 @@ public final class ArticlesController implements ArticleOperations {
   }
 
   @Override
-  public ResponseEntity<String> updateArticle(UUID articleId, ArticleData articleData) {
+  public ResponseEntity<String> updateArticle(final UUID articleId, final ArticleData articleData) {
     articleService.update(
         new ArticleId(articleId),
         articleData.title(),

@@ -40,12 +40,12 @@ public class Article {
     private WebsiteId websiteId;
 
     @JdbiConstructor
-    public Article(ArticleId id,
-                   @NonNull String title,
-                   @NonNull String url,
-                   @NonNull Timestamp createdAt,
-                   TopicId topicId,
-                   WebsiteId websiteId
+    public Article(final ArticleId id,
+                   @NonNull final String title,
+                   @NonNull final String url,
+                   @NonNull final Timestamp createdAt,
+                   final TopicId topicId,
+                   final WebsiteId websiteId
     ) {
       this.id = id;
       this.title = title;

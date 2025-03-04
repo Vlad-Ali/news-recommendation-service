@@ -9,7 +9,7 @@ import java.sql.SQLException;
 
 public class WebsiteIdMapper implements RowMapper<WebsiteId> {
   @Override
-  public WebsiteId map(ResultSet rs, StatementContext ctx) throws SQLException {
+  public WebsiteId map(final ResultSet rs, final StatementContext ctx) throws SQLException {
     return new  WebsiteId(rs.getLong("website_id"));
   }
 }

@@ -11,7 +11,7 @@ import java.sql.SQLException;
 public class TopicIdMapper implements RowMapper<TopicId> {
 
   @Override
-  public TopicId map(ResultSet rs, StatementContext ctx) throws SQLException {
+  public TopicId map(final ResultSet rs, final StatementContext ctx) throws SQLException {
     return new TopicId(rs.getLong("topic_id"));
   }
 }
