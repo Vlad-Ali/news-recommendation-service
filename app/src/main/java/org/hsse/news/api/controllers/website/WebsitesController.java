@@ -1,6 +1,5 @@
 package org.hsse.news.api.controllers.website;
 
-import com.typesafe.config.ConfigFactory;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.hsse.news.api.schemas.request.website.CustomWebsiteCreateRequest;
 import org.hsse.news.api.schemas.request.website.SubWebsitesUpdateRequest;
@@ -34,7 +33,7 @@ import java.util.Optional;
 public class WebsitesController implements WebsiteOperations{
   private static final Logger LOG = LoggerFactory.getLogger(WebsitesController.class);
   private static final int MAX_WEBSITES_PER_USER =
-      ConfigFactory.load().getInt("website.max-custom-per-user");
+      10;
   private final WebsiteService websiteService;
 
   public WebsitesController(

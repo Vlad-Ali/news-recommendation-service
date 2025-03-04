@@ -1,7 +1,10 @@
 package org.hsse.news.database.util;
 
+import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
+import org.hsse.news.database.website.models.Website;
+import org.hsse.news.database.website.models.WebsiteId;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.List;
@@ -22,7 +25,10 @@ public final class SampleDataUtil {
                     "new_password",
                     "NewUser"
             );
-
+    public static final Website DEFAULT_WEBSITE = new Website(new WebsiteId(1L), "https://alex.com/RSS", "xxxx", new UserId(UUID.fromString("11111111-1111-1111-1111-111111111111")));
+    public static final WebsiteInfo DEFAULT_WEBSITE_INFO = new WebsiteInfo(1L, "https://alex.com/RSS", "xxxx");
+    public static final Website NEW_WEBSITE = new Website(new WebsiteId(2L), "https://mark.com/RSS","yyyy",new UserId(UUID.fromString("11111111-1111-1111-1111-111111111111")));
+    public static final WebsiteInfo NEW_WEBSITE_INFO = new WebsiteInfo(2L, "https://mark.com/RSS","yyyy");
     @SuppressWarnings("SqlWithoutWhere")
     public static void clearDatabase(final Jdbi jdbi) {
         jdbi.useHandle(handle -> {

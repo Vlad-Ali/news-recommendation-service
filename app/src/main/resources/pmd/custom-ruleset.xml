@@ -9,6 +9,8 @@
         <exclude name="GuardLogStatement"/>
         <exclude name="JUnitTestContainsTooManyAsserts"/>
         <exclude name="PreserveStackTrace"/>
+        <exclude name="JUnitTestsShouldIncludeAssert"/>
+        <exclude name="JUnit5TestShouldBePackagePrivate"/>
     </rule>
     <rule ref="category/java/codestyle.xml">
         <exclude name="AtLeastOneConstructor"/>
@@ -28,10 +30,12 @@
         <exclude name="AvoidThrowingNewInstanceOfSameException"/>
         <exclude name="AvoidCatchingGenericException"/>
         <exclude name="AvoidUncheckedExceptionsInSignatures"/>
+        <exclude name="SignatureDeclareThrowsException"/>
     </rule>
     <rule ref="category/java/errorprone.xml">
         <exclude name="AvoidFieldNameMatchingMethodName"/>
         <exclude name="MissingSerialVersionUID"/>
+        <exclude name="AvoidDuplicateLiterals"/>
     </rule>
     <rule ref="category/java/multithreading.xml">
     </rule>

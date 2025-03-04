@@ -1,6 +1,6 @@
 package org.hsse.news.database.website;
 
-import com.typesafe.config.ConfigFactory;
+import lombok.AllArgsConstructor;
 import org.hsse.news.api.schemas.response.website.WebsitesResponse;
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.user.models.UserId;
@@ -17,19 +17,20 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@AllArgsConstructor
 public final class WebsiteService {
-    private static final int MAX_WEBSITES_PER_USER = ConfigFactory.load().getInt("website.max-custom-per-user");
+    private static final int MAX_WEBSITES_PER_USER = 10;
 
-    private final WebsiteRepository websiteRepository;
-    private final TransactionManager transactionManager;
+    private WebsiteRepository websiteRepository;
+    private TransactionManager transactionManager;
 
-    public WebsiteService(
+    /*public WebsiteService(
             final WebsiteRepository websiteRepository,
             final TransactionManager transactionManager
     ) {
         this.websiteRepository = websiteRepository;
         this.transactionManager = transactionManager;
-    }
+    }*/
 
     public Optional<WebsiteInfo> findById(final WebsiteId websiteId) {
         return websiteRepository.findById(websiteId);
