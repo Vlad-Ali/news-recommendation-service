@@ -1,9 +1,11 @@
 package org.hsse.news.api.controllers;
 
+import org.checkerframework.checker.units.qual.A;
 import org.hsse.news.api.operations.ArticleOperations;
 import org.hsse.news.database.article.ArticlesService;
 import org.hsse.news.database.article.models.*;
 import org.hsse.news.database.topic.models.TopicId;
+import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,12 @@ public final class ArticlesController implements ArticleOperations {
   }
 
   @Override
+  public ResponseEntity<ArticleListData> getAll() {
+    final ArticleListData articles = articleService.getAll();
+    return new ResponseEntity<>(articles, HttpStatus.OK);
+  }
+
+  @Override
   public ResponseEntity<ArticleData> getArticle(final UUID articleId) {
     final ArticleData article = articleService.findById(new ArticleId(articleId));
     return ResponseEntity.ok(article);
@@ -35,7 +43,8 @@ public final class ArticlesController implements ArticleOperations {
 
   @Override
   public ResponseEntity<ArticleListData> getUserArticles(final UUID userId) {
-    return null;
+    final ArticleListData articles = articleService.getUserArticles(new UserId(userId));
+    return new  ResponseEntity<>(articles, HttpStatus.OK);
   }
 
   @Override
@@ -66,5 +75,11 @@ public final class ArticlesController implements ArticleOperations {
     );
 
     return new ResponseEntity<>(articleId.toString(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<String> deleteArticle(UUID articleId) {
+    articleService.delete(new ArticleId(articleId));
+    return new ResponseEntity<>(articleId.toString(), HttpStatus.NO_CONTENT);
   }
 }

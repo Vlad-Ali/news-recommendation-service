@@ -4,6 +4,7 @@ import org.hsse.news.database.article.exceptions.ArticleNotFoundException;
 import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleData;
 import org.hsse.news.database.article.models.ArticleId;
+import org.hsse.news.database.article.models.ArticleListData;
 import org.hsse.news.database.article.repositories.ArticleRepository;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
@@ -20,7 +21,11 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public final class ArticlesService {
     private final ArticleRepository articleRepository;
-    private final TransactionManager transactionManager;
+
+    public ArticleListData getAll() {
+        List<ArticleData>  articles = articleRepository.findAll();
+        return new ArticleListData(articles);
+    }
 
     public ArticleData findById(final ArticleId articleId) {
         return articleRepository
@@ -28,8 +33,8 @@ public final class ArticlesService {
             .orElseThrow(() -> new ArticleNotFoundException(articleId));
     }
 
-    public List<Article> getAllUnknown(final UserId userId) {
-        return articleRepository.getAllUnknown(userId);
+    public ArticleListData getUserArticles(final UserId userId) {
+        return new ArticleListData(articleRepository.getUserArticles(userId));
     }
 
     public Article create(final Article article) {

@@ -12,16 +12,22 @@ import java.util.UUID;
 @RequestMapping("/default")
 public interface ArticleOperations {
 
+  @GetMapping("/articles")
+  @Operation(summary = "Получение всех статей")
+  @ApiResponse(responseCode = "200", description = "Статьи получены")
+  ResponseEntity<ArticleListData> getAll();
+
+  @GetMapping("/articles/{userId}")
+  @Operation(summary = "Получение статей пользователя по ID")
+  @ApiResponse(responseCode = "200", description = "Статьи получены")
+  ResponseEntity<ArticleListData> getUserArticles(
+      @Parameter(description = "ID пользователя")
+      @PathVariable("userId") UUID userId);
+
   @GetMapping("/{articleId}")
   @Operation(summary = "Получение статьи по ее ID")
   @ApiResponse(responseCode = "200", description = "Статья найдена")
   ResponseEntity<ArticleData> getArticle(@Parameter(description = "ID статьи") @PathVariable UUID articleId);
-
-  @GetMapping("/user/{userId}")
-  @Operation(summary = "Получение статьи по id")
-  @ApiResponse(responseCode = "200", description = "Статья найдена")
-  ResponseEntity<ArticleListData> getUserArticles(
-      @Parameter(description = "ID пользователя") @PathVariable UUID userId);
 
   @PostMapping("/create")
   @Operation(summary = "Создание статьи")
@@ -35,4 +41,9 @@ public interface ArticleOperations {
       @Parameter(description = "ID статьи") @PathVariable UUID articleId,
       @RequestBody ArticleData articleData
   );
+
+  @DeleteMapping("/delete/{articleId}")
+  @Operation(summary = "Удаление статьи")
+  @ApiResponse(responseCode = "204", description = "Статья удалена")
+  ResponseEntity<String> deleteArticle(@Parameter(description = "ID статьи") UUID articleId);
 }
