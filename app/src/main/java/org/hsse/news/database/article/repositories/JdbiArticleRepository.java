@@ -6,7 +6,6 @@ import org.hsse.news.database.article.exceptions.ArticleNotFoundException;
 import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleData;
 import org.hsse.news.database.article.models.ArticleId;
-import org.hsse.news.database.article.models.ArticleListData;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.models.WebsiteId;
@@ -39,11 +38,11 @@ public final class JdbiArticleRepository implements ArticleRepository {
         return jdbi.inTransaction(handle ->
             handle.createQuery("select * from articles")
                 .map((rs, ctx) -> new ArticleData(
-                    rs.getString("title"),
-                    rs.getString("url"),
-                    rs.getTimestamp("created_at"),
-                    rs.getLong("topic_id"),
-                    rs.getLong("website_id"))
+                    rs.getString("title"), // NOPMD
+                    rs.getString("url"), // NOPMD
+                    rs.getTimestamp("created_at"), // NOPMD
+                    rs.getLong("topic_id"), // NOPMD
+                    rs.getLong("website_id")) // NOPMD
                 )
                 .list()
         );

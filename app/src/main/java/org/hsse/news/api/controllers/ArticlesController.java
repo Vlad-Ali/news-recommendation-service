@@ -1,6 +1,5 @@
 package org.hsse.news.api.controllers;
 
-import org.checkerframework.checker.units.qual.A;
 import org.hsse.news.api.operations.ArticleOperations;
 import org.hsse.news.database.article.ArticlesService;
 import org.hsse.news.database.article.models.*;
@@ -78,7 +77,7 @@ public final class ArticlesController implements ArticleOperations {
   }
 
   @Override
-  public ResponseEntity<String> deleteArticle(UUID articleId) {
+  public ResponseEntity<String> deleteArticle(final UUID articleId) {
     articleService.delete(new ArticleId(articleId));
     return new ResponseEntity<>(articleId.toString(), HttpStatus.NO_CONTENT);
   }

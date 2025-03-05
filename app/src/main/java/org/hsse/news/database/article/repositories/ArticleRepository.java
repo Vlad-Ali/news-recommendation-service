@@ -3,7 +3,6 @@ package org.hsse.news.database.article.repositories;
 import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleData;
 import org.hsse.news.database.article.models.ArticleId;
-import org.hsse.news.database.article.models.ArticleListData;
 import org.hsse.news.database.user.models.UserId;
 import org.jetbrains.annotations.NotNull;
 

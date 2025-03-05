@@ -8,7 +8,6 @@ import org.hsse.news.database.article.models.ArticleListData;
 import org.hsse.news.database.article.repositories.ArticleRepository;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
-import org.hsse.news.database.util.TransactionManager;
 import org.hsse.news.database.website.models.WebsiteId;
 
 import java.sql.Timestamp;
@@ -23,7 +22,7 @@ public final class ArticlesService {
     private final ArticleRepository articleRepository;
 
     public ArticleListData getAll() {
-        List<ArticleData>  articles = articleRepository.findAll();
+        final List<ArticleData>  articles = articleRepository.findAll();
         return new ArticleListData(articles);
     }
 

@@ -1,9 +1,14 @@
 package org.hsse.news.database.util;
 
+import org.hsse.news.database.article.models.Article;
+import org.hsse.news.database.article.models.ArticleId;
+import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
+import org.hsse.news.database.website.models.WebsiteId;
 import org.jdbi.v3.core.Jdbi;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +27,24 @@ public final class SampleDataUtil {
                     "new_password",
                     "NewUser"
             );
+    public static final Article DEFAULT_ARTICLE =
+        new Article(
+            new ArticleId(UUID.fromString("11111111-aaaa-1111-bbbb-111111111111")),
+            "Test title",
+            "test@mail.ru",
+            new Timestamp(System.currentTimeMillis()),
+            new TopicId(1L),
+            new WebsiteId(1L)
+            );
+  public static final Article NEW_ARTICLE =
+      new Article(
+          new ArticleId(UUID.fromString("22222222-aaaa-1111-bbbb-222222222222")),
+          "New title",
+          "new@mail.ru",
+          new Timestamp(System.currentTimeMillis()),
+          new TopicId(2L),
+          new WebsiteId(2L)
+      );
 
     @SuppressWarnings("SqlWithoutWhere")
     public static void clearDatabase(final Jdbi jdbi) {
@@ -53,6 +76,23 @@ public final class SampleDataUtil {
                         .execute()
         );
     }
+
+  public static void prepareArticles(final Jdbi jdbi) {
+    assert DEFAULT_USER.id() != null;
+    jdbi.useTransaction(handle ->
+        handle.createUpdate(
+                "INSERT INTO articles (article_id, title, url, created_at, topic_id, website_id) " +
+                    "VALUES (:article_id, :title, :url, :created_at, :topic_id, :website_id)"
+            )
+            .bind("article_id", DEFAULT_ARTICLE.getId().value())
+            .bind("title", DEFAULT_ARTICLE.getTitle())
+            .bind("url", DEFAULT_ARTICLE.getUrl())
+            .bind("created_at", DEFAULT_ARTICLE.getCreatedAt())
+            .bind("topic_id", DEFAULT_ARTICLE.getTopicId().value())
+            .bind("website_id", DEFAULT_ARTICLE.getWebsiteId().value())
+            .execute()
+    );
+  }
 
     private SampleDataUtil() {}
 }
