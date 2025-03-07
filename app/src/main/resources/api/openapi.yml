@@ -276,7 +276,7 @@ paths:
     put:
       tags:
         - user
-      summary: Change user password
+      summary: Change user passwordHash
       security:
         - BasicHttpAuthentication: []
       requestBody:
@@ -288,11 +288,11 @@ paths:
         204:
           description: Success
         208:
-          description: Valid current password, new password matches it
+          description: Valid current passwordHash, new passwordHash matches it
         401:
           description: Invalid authentication credentials
         412:
-          description: Invalid current password
+          description: Invalid current passwordHash
         422:
           description: Validation error
 components:
@@ -429,18 +429,18 @@ components:
           example: "KruASe"
       required:
         - email
-        - password
+        - passwordHash
         - username
     UserPasswordChange:
       type: object
       properties:
         current_password:
           type: string
-          format: password
+          format: passwordHash
           example: "password123"
         new_password:
           type: string
-          format: password
+          format: passwordHash
           example: "password456"
       required:
         - current_password

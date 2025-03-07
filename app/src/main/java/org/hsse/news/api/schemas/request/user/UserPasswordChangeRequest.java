@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Schema(name = "UserPasswordChangeRequest", description = "Запрос на смену пароля")
 public record UserPasswordChangeRequest(
-        @Schema(description = "Старый пароль", example = "password")
+        @Schema(description = "Старый пароль", example = "passwordHash")
         @JsonProperty("current_password")
         @NotNull
         String currentPassword,

@@ -46,10 +46,7 @@ public class UserController {
             description = "Токен для доступа в аккаунт нового пользователя")
     public ResponseEntity<String> register(
             final @RequestBody UserRegisterRequest userRegisterRequest) {
-        final User user = userService.register(
-                new User(userRegisterRequest.email(),
-                        userRegisterRequest.password(),
-                        userRegisterRequest.username()));
+        final User user = userService.register(userRegisterRequest);
 
         assert user.id() != null;
         log.debug("Registered user with id = {}", user.id());
@@ -104,7 +101,7 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/password")
+    @PutMapping("/passwordHash")
     @Operation(summary = "Сменить пароль")
     @ApiResponse(responseCode = "204", description = "Пароль успешно изменён")
     public ResponseEntity<Void> changePassword(
@@ -114,7 +111,7 @@ public class UserController {
                 userPasswordChangeRequest.currentPassword(),
                 userPasswordChangeRequest.newPassword());
 
-        log.debug("Successfully updated password for user with id = {}", userId);
+        log.debug("Successfully updated passwordHash for user with id = {}", userId);
         return ResponseEntity.noContent().build();
     }
 
@@ -126,16 +123,16 @@ public class UserController {
 
     @ExceptionHandler(SameNewPasswordException.class)
     public ErrorResponse handleSameNewPassword(final SameNewPasswordException e) {
-        log.debug("Same new password for user with id = {}", getCurrentUserId());
+        log.debug("Same new passwordHash for user with id = {}", getCurrentUserId());
         return ErrorResponse.create(e, HttpStatus.ALREADY_REPORTED,
-                "Valid current password, new password matches it");
+                "Valid current passwordHash, new passwordHash matches it");
     }
 
     @ExceptionHandler(InvalidCurrentPasswordException.class)
     public ErrorResponse handleInvalidCurrentPassword(final InvalidCurrentPasswordException e) {
-        log.debug("Invalid current password for user with id = {}", getCurrentUserId());
+        log.debug("Invalid current passwordHash for user with id = {}", getCurrentUserId());
         return ErrorResponse.create(e, HttpStatus.PRECONDITION_FAILED,
-                "Invalid current password");
+                "Invalid current passwordHash");
     }
 
     private UserId getCurrentUserId() {

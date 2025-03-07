@@ -36,14 +36,12 @@ public final class JdbiUserRepository implements UserRepository {
     }
 
     @Override
-public Optional<UserId> authenticate(final @NotNull AuthenticationCredentials credentials) {
+    public Optional<User> findByEmail(final @NotNull String email) {
         return jdbi.inTransaction(handle ->
                 handle.createQuery("SELECT * FROM users WHERE email = :email")
-                        .bind("email", credentials.email())
+                        .bind("email", email)
                         .mapTo(User.class)
                         .findFirst()
-                        .filter(user -> user.password().equals(credentials.password()))
-                        .map(User::id)
         );
     }
 
@@ -54,10 +52,10 @@ public Optional<UserId> authenticate(final @NotNull AuthenticationCredentials cr
                 return user.initializeWithId(
                         handle.createUpdate(
                                 "INSERT INTO users (email, password, username) " +
-                                        "VALUES (:email, :password, :username)"
+                                        "VALUES (:email, :passwordHash, :username)"
                                 )
                                 .bind("email", user.email())
-                                .bind("password", user.password())
+                                .bind("passwordHash", user.passwordHash())
                                 .bind("username", user.username())
                                 .executeAndReturnGeneratedKeys("user_id")
                                 .mapTo(UserId.class)
@@ -83,9 +81,9 @@ public Optional<UserId> authenticate(final @NotNull AuthenticationCredentials cr
                     throw new UserNotFoundException(user.id());
                 }
 
-                handle.createUpdate("UPDATE users SET email = :email, password = :password, username = :username WHERE user_id = :user_id")
+                handle.createUpdate("UPDATE users SET email = :email, passwordHash = :passwordHash, username = :username WHERE user_id = :user_id")
                         .bind("email", user.email())
-                        .bind("password", user.password())
+                        .bind("passwordHash", user.passwordHash())
                         .bind("username", user.username())
                         .bind("user_id", user.id().value())
                         .execute();

@@ -43,12 +43,12 @@ public final class SampleDataUtil {
         assert DEFAULT_USER.id() != null;
         jdbi.useTransaction(handle ->
                 handle.createUpdate(
-                        "INSERT INTO users (user_id, email, password, username) " +
-                                "VALUES (:user_id, :email, :password, :username)"
+                        "INSERT INTO users (user_id, email, passwordHash, username) " +
+                                "VALUES (:user_id, :email, :passwordHash, :username)"
                         )
                         .bind("user_id", DEFAULT_USER.id().value())
                         .bind("email", DEFAULT_USER.email())
-                        .bind("password", DEFAULT_USER.password())
+                        .bind("passwordHash", DEFAULT_USER.passwordHash())
                         .bind("username", DEFAULT_USER.username())
                         .execute()
         );

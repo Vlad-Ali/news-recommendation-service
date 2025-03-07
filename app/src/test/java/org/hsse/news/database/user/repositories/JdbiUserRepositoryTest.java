@@ -71,7 +71,7 @@ class JdbiUserRepositoryTest {
         final AuthenticationCredentials credentials =
                 new AuthenticationCredentials(
                         SampleDataUtil.DEFAULT_USER.email(),
-                        SampleDataUtil.DEFAULT_USER.password()
+                        SampleDataUtil.DEFAULT_USER.passwordHash()
                 );
         final Optional<UserId> userIdOptional = repository.authenticate(credentials);
 
@@ -96,7 +96,7 @@ class JdbiUserRepositoryTest {
         final AuthenticationCredentials credentials =
                 new AuthenticationCredentials(
                         "non_existent_email@example.com",
-                        SampleDataUtil.DEFAULT_USER.password()
+                        SampleDataUtil.DEFAULT_USER.passwordHash()
                 );
         final Optional<UserId> userIdOptional = repository.authenticate(credentials);
 
@@ -107,7 +107,7 @@ class JdbiUserRepositoryTest {
     void testCreateSuccess() {
         final User newUser = new User(
                 SampleDataUtil.NEW_USER.email(),
-                SampleDataUtil.NEW_USER.password(),
+                SampleDataUtil.NEW_USER.passwordHash(),
                 SampleDataUtil.NEW_USER.username()
         );
         final User createdUser = repository.create(newUser);
@@ -123,7 +123,7 @@ class JdbiUserRepositoryTest {
     void testCreateEmailConflict() {
         final User newUser = new User(
                 SampleDataUtil.DEFAULT_USER.email(),
-                SampleDataUtil.NEW_USER.password(),
+                SampleDataUtil.NEW_USER.passwordHash(),
                 SampleDataUtil.NEW_USER.username()
         );
 
@@ -138,7 +138,7 @@ class JdbiUserRepositoryTest {
         final User userToUpdate = new User(
                 SampleDataUtil.DEFAULT_USER.id(),
                 SampleDataUtil.NEW_USER.email(),
-                SampleDataUtil.NEW_USER.password(),
+                SampleDataUtil.NEW_USER.passwordHash(),
                 SampleDataUtil.NEW_USER.username()
         );
         repository.update(userToUpdate);
@@ -163,7 +163,7 @@ class JdbiUserRepositoryTest {
         repository.create(
                 new User(
                         SampleDataUtil.NEW_USER.email(),
-                        SampleDataUtil.NEW_USER.password(),
+                        SampleDataUtil.NEW_USER.passwordHash(),
                         SampleDataUtil.NEW_USER.username()
                 )
         );
@@ -171,7 +171,7 @@ class JdbiUserRepositoryTest {
         final User userToUpdate = new User(
                 SampleDataUtil.DEFAULT_USER.id(),
                 SampleDataUtil.NEW_USER.email(),
-                SampleDataUtil.NEW_USER.password(),
+                SampleDataUtil.NEW_USER.passwordHash(),
                 SampleDataUtil.NEW_USER.username()
         );
 

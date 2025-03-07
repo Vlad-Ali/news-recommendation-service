@@ -21,7 +21,7 @@ public final class ComparisonUtil {
 
         assertEquals(expected.id(), actual.id(), "ids should be equal");
         assertEquals(expected.email(), actual.email(), "emails should be equal");
-        assertEquals(expected.password(), actual.password(), "passwords should be equal");
+        assertEquals(expected.passwordHash(), actual.passwordHash(), "passwords should be equal");
         assertEquals(expected.username(), actual.username(), "usernames should be equal");
     }
 

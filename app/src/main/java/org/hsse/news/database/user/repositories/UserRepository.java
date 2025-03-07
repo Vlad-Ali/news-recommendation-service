@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface UserRepository {
     Optional<User> findById(@NotNull UserId userId);
 
-    Optional<UserId> authenticate(@NotNull AuthenticationCredentials credentials);
+    Optional<User> findByEmail(@NotNull String email);
 
     /**
      * @throws EmailConflictException if an email conflict occurs
