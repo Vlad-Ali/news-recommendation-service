@@ -16,12 +16,4 @@ public record UserPasswordChangeRequest(
         @JsonProperty("new_password")
         @NotNull
         String newPassword
-) {
-    public UserPasswordChangeRequest(
-            @JsonProperty("current_password") final @NotNull String currentPassword,
-            @JsonProperty("new_password") final @NotNull String newPassword
-    ) {
-        this.currentPassword = PasswordUtil.hashPassword(currentPassword);
-        this.newPassword = PasswordUtil.hashPassword(newPassword);
-    }
-}
+) {}

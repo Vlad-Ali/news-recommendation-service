@@ -101,7 +101,7 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/passwordHash")
+    @PutMapping("/password")
     @Operation(summary = "Сменить пароль")
     @ApiResponse(responseCode = "204", description = "Пароль успешно изменён")
     public ResponseEntity<Void> changePassword(
