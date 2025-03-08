@@ -1,5 +1,6 @@
 package org.hsse.news.database.util;
 
+import org.hsse.news.api.schemas.request.user.UserRegisterRequest;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
 import org.jdbi.v3.core.Jdbi;
@@ -43,7 +44,7 @@ public final class SampleDataUtil {
         assert DEFAULT_USER.id() != null;
         jdbi.useTransaction(handle ->
                 handle.createUpdate(
-                        "INSERT INTO users (user_id, email, passwordHash, username) " +
+                        "INSERT INTO users (user_id, email, password, username) " +
                                 "VALUES (:user_id, :email, :passwordHash, :username)"
                         )
                         .bind("user_id", DEFAULT_USER.id().value())

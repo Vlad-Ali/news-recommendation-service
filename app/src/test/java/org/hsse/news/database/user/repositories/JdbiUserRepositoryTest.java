@@ -67,40 +67,18 @@ class JdbiUserRepositoryTest {
     }
 
     @Test
-    void testAuthenticateSuccess() { // NOPMD
-        final AuthenticationCredentials credentials =
-                new AuthenticationCredentials(
-                        SampleDataUtil.DEFAULT_USER.email(),
-                        SampleDataUtil.DEFAULT_USER.passwordHash()
-                );
-        final Optional<UserId> userIdOptional = repository.authenticate(credentials);
+    void testFindByEmailSuccess() {
+        final Optional<User> userOptional = repository.findByEmail(SampleDataUtil.DEFAULT_USER.email());
 
-        assertTrue(userIdOptional.isPresent(), "userIdOptional should be present");
-        assertEquals(SampleDataUtil.DEFAULT_USER.id(), userIdOptional.get(), "ids should be equal");
+        assertTrue(userOptional.isPresent(), "userOptional should be present");
+        ComparisonUtil.assertDeepEquals(SampleDataUtil.DEFAULT_USER, userOptional.get());
     }
 
     @Test
-    void testAuthenticateIncorrectPassword() {
-        final AuthenticationCredentials credentials =
-                new AuthenticationCredentials(
-                        SampleDataUtil.DEFAULT_USER.email(),
-                        "wrong_password"
-                );
-        final Optional<UserId> userIdOptional = repository.authenticate(credentials);
+    void testFindByEmailFail() {
+        final Optional<User> userOptional = repository.findByEmail(SampleDataUtil.NEW_USER.email());
 
-        assertTrue(userIdOptional.isEmpty(), "userIdOptional should be empty");
-    }
-
-    @Test
-    void testAuthenticateNonExistentEmail() {
-        final AuthenticationCredentials credentials =
-                new AuthenticationCredentials(
-                        "non_existent_email@example.com",
-                        SampleDataUtil.DEFAULT_USER.passwordHash()
-                );
-        final Optional<UserId> userIdOptional = repository.authenticate(credentials);
-
-        assertTrue(userIdOptional.isEmpty(), "userIdOptional should be empty");
+        assertTrue(userOptional.isEmpty(), "userOptional should be empty");
     }
 
     @Test

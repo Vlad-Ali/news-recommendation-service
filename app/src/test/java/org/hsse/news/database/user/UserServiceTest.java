@@ -18,6 +18,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import static org.mockito.ArgumentMatchers.refEq;
 
 import java.util.Optional;
 
@@ -32,6 +34,9 @@ class UserServiceTest {
 
     @Mock
     private TransactionManager transactionManagerMock;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService service;
@@ -62,70 +67,49 @@ class UserServiceTest {
     }
 
     @Test
-    void testAuthenticateSuccess() {  // NOPMD
-//        assert SampleDataUtil.DEFAULT_USER.id() != null;
-//        final AuthenticationCredentials credentials =
-//                new AuthenticationCredentials(
-//                        SampleDataUtil.DEFAULT_USER.email(),
-//                        SampleDataUtil.DEFAULT_USER.passwordHash()
-//                );
-//        Mockito.when(repositoryMock.authenticate(credentials))
-//                .thenReturn(Optional.of(SampleDataUtil.DEFAULT_USER.id()));
-//
-//        final Optional<UserId> userIdOptional = service.authenticate(credentials);
-//
-//        Mockito.verify(repositoryMock).authenticate(credentials);
-//        assertTrue(userIdOptional.isPresent(), "userIdOptional should be present");
-//        assertEquals(SampleDataUtil.DEFAULT_USER.id(), userIdOptional.get(), "ids should be equal");
-    }
-
-    @Test
-    void testAuthenticateFail() {
-//        assert SampleDataUtil.DEFAULT_USER.id() != null;
-//        final AuthenticationCredentials credentials =
-//                new AuthenticationCredentials(
-//                        SampleDataUtil.DEFAULT_USER.email(),
-//                        SampleDataUtil.DEFAULT_USER.passwordHash()
-//                );
-//        Mockito.when(repositoryMock.authenticate(credentials))
-//                .thenReturn(Optional.empty());
-//
-//        final Optional<UserId> userIdOptional = service.authenticate(credentials);
-//
-//        Mockito.verify(repositoryMock).authenticate(credentials);
-//        assertTrue(userIdOptional.isEmpty(), "userIdOptional should be empty");
-    }
-
-    @Test
     void testRegisterSuccess() {
-//        assert SampleDataUtil.DEFAULT_USER.id() != null;
-//        final User newUser = new User(
-//                SampleDataUtil.DEFAULT_USER.email(),
-//                SampleDataUtil.DEFAULT_USER.passwordHash(),
-//                SampleDataUtil.DEFAULT_USER.username()
-//        );
-//        Mockito.when(repositoryMock.create(newUser))
-//                .thenReturn(newUser.initializeWithId(SampleDataUtil.DEFAULT_USER.id()));
-//
-//        final User registeredUser = service.register();
-//
-//        Mockito.verify(repositoryMock).create(newUser);
-//        ComparisonUtil.assertDeepEquals(SampleDataUtil.DEFAULT_USER, registeredUser);
+        assert SampleDataUtil.DEFAULT_USER.id() != null;
+        final User newUser = new User(
+                SampleDataUtil.DEFAULT_USER.email(),
+                "password hash",
+                SampleDataUtil.DEFAULT_USER.username()
+        );
+        Mockito.when(repositoryMock.create(refEq(newUser)))
+                .thenReturn(newUser.initializeWithId(SampleDataUtil.DEFAULT_USER.id()));
+        Mockito.when(passwordEncoder.encode("password")).thenReturn("password hash");
+
+        final User registeredUser = service.register(new UserRegisterRequest(
+                SampleDataUtil.DEFAULT_USER.email(),
+                "password",
+                SampleDataUtil.DEFAULT_USER.username()));
+
+        Mockito.verify(repositoryMock).create(refEq(newUser));
+        Mockito.verify(passwordEncoder).encode("password");
+
+        ComparisonUtil.assertDeepEquals(
+                SampleDataUtil.DEFAULT_USER.withPasswordHash("password hash"),
+                registeredUser);
     }
 
     @Test
     void testRegisterEmailConflict() {
-//        assert SampleDataUtil.DEFAULT_USER.id() != null;
-//        final User newUser = new User(
-//                SampleDataUtil.DEFAULT_USER.email(),
-//                SampleDataUtil.DEFAULT_USER.passwordHash(),
-//                SampleDataUtil.DEFAULT_USER.username()
-//        );
-//        Mockito.when(repositoryMock.create(newUser))
-//               .thenThrow(EmailConflictException.class);
-//
-//        assertThrows(EmailConflictException.class, () -> service.register(newUser));
-//        Mockito.verify(repositoryMock).create(newUser);
+        assert SampleDataUtil.DEFAULT_USER.id() != null;
+        final User newUser = new User(
+                SampleDataUtil.DEFAULT_USER.email(),
+                "password hash",
+                SampleDataUtil.DEFAULT_USER.username()
+        );
+        Mockito.when(repositoryMock.create(refEq(newUser)))
+               .thenThrow(EmailConflictException.class);
+        Mockito.when(passwordEncoder.encode("password")).thenReturn("password hash");
+
+        assertThrows(EmailConflictException.class, () -> service.register(new UserRegisterRequest(
+                SampleDataUtil.DEFAULT_USER.email(),
+                "password",
+                SampleDataUtil.DEFAULT_USER.username())));
+
+        Mockito.verify(repositoryMock).create(refEq(newUser));
+        Mockito.verify(passwordEncoder).encode("password");
     }
 
     @Test
@@ -194,5 +178,60 @@ class UserServiceTest {
                         SampleDataUtil.NEW_USER.username()
                 )
         );
+    }
+
+    @Test
+    void testAuthenticateSuccess() { // NOPMD
+        final AuthenticationCredentials credentials =
+                new AuthenticationCredentials(
+                        SampleDataUtil.DEFAULT_USER.email(),
+                        "password"
+                );
+
+        Mockito.when(repositoryMock.findByEmail(SampleDataUtil.DEFAULT_USER.email()))
+                .thenReturn(Optional.of(SampleDataUtil.DEFAULT_USER
+                        .withPasswordHash("password hash")));
+        Mockito.when(passwordEncoder.matches("password", "password hash"))
+                .thenReturn(true);
+
+        final Optional<UserId> userIdOptional = service.authenticate(credentials);
+
+        assertTrue(userIdOptional.isPresent(), "userIdOptional should be present");
+        assertEquals(SampleDataUtil.DEFAULT_USER.id(), userIdOptional.get(), "ids should be equal");
+    }
+
+    @Test
+    void testAuthenticateIncorrectPassword() {
+        final AuthenticationCredentials credentials =
+                new AuthenticationCredentials(
+                        SampleDataUtil.DEFAULT_USER.email(),
+                        "wrong password"
+                );
+
+        Mockito.when(repositoryMock.findByEmail(SampleDataUtil.DEFAULT_USER.email()))
+                .thenReturn(Optional.of(SampleDataUtil.DEFAULT_USER
+                        .withPasswordHash("password hash")));
+        Mockito.when(passwordEncoder.matches("wrong password", "password hash"))
+                .thenReturn(false);
+
+        final Optional<UserId> userIdOptional = service.authenticate(credentials);
+
+        assertTrue(userIdOptional.isEmpty(), "userIdOptional should be empty");
+    }
+
+    @Test
+    void testAuthenticateNonExistentEmail() {
+        final AuthenticationCredentials credentials =
+                new AuthenticationCredentials(
+                        "non_existent_email@example.com",
+                        "password"
+                );
+
+        Mockito.when(repositoryMock.findByEmail("non_existent_email@example.com"))
+                .thenReturn(Optional.empty());
+
+        final Optional<UserId> userIdOptional = service.authenticate(credentials);
+
+        assertTrue(userIdOptional.isEmpty(), "userIdOptional should be empty");
     }
 }
