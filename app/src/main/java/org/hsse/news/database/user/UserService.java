@@ -42,7 +42,7 @@ public final class UserService {
      * @throws EmailConflictException if an email conflict occurs
      */
     public User register(final UserRegisterRequest userRegisterRequest) {
-        String passwordHash = passwordEncoder.encode(userRegisterRequest.password());
+        final String passwordHash = passwordEncoder.encode(userRegisterRequest.password());
         log.debug("Password hash on registration is {}", passwordHash);
 
         return userRepository.create(

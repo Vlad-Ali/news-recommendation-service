@@ -2,7 +2,6 @@ package org.hsse.news.database.user.repositories;
 
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.UserNotFoundException;
-import org.hsse.news.database.user.models.AuthenticationCredentials;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.util.JdbiProvider;

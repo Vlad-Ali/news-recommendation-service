@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = UserController.class)
 @Import(SecurityConfig.class)
-public class UserControllerTest {
+class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -47,32 +47,34 @@ public class UserControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
+    private final static String AUTHORIZATION_HEADER_NAME = "Authorization";
+
     @Test
     void testRegister() throws Exception {
-        UserRegisterRequest request = new UserRegisterRequest(
+        final UserRegisterRequest request = new UserRegisterRequest(
                 SampleDataUtil.DEFAULT_USER.email(),
-                "password",
+                SampleDataUtil.DEFAULT_PASSWORD,
                 SampleDataUtil.DEFAULT_USER.username());
 
         when(userService.register(request)).thenReturn(
-                SampleDataUtil.DEFAULT_USER.withPasswordHash("password hash"));
+                SampleDataUtil.DEFAULT_USER.withPasswordHash(SampleDataUtil.DEFAULT_PASSWORD_HASH));
         assert SampleDataUtil.DEFAULT_USER.id() != null;
-        when(jwtService.generateToken(SampleDataUtil.DEFAULT_USER.id())).thenReturn("token");
+        when(jwtService.generateToken(SampleDataUtil.DEFAULT_USER.id())).thenReturn(SampleDataUtil.DEFAULT_TOKEN);
 
         mockMvc.perform(post("/user/register").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("token"));
+                .andExpect(content().string(SampleDataUtil.DEFAULT_TOKEN));
 
         verify(userService).register(request);
     }
 
     @Test
     void testHandleEmailConflict() throws Exception {
-        UserRegisterRequest request = new UserRegisterRequest(
+        final UserRegisterRequest request = new UserRegisterRequest(
                 SampleDataUtil.DEFAULT_USER.email(),
-                "password",
+                SampleDataUtil.DEFAULT_PASSWORD,
                 SampleDataUtil.DEFAULT_USER.username());
 
         when(userService.register(request)).thenThrow(new EmailConflictException(null));
@@ -87,20 +89,21 @@ public class UserControllerTest {
 
     @Test
     void testSignIn() throws Exception {
-        AuthenticationCredentials request = new AuthenticationCredentials(
+        final AuthenticationCredentials request = new AuthenticationCredentials(
                 SampleDataUtil.DEFAULT_USER.email(),
-                "password");
+                SampleDataUtil.DEFAULT_PASSWORD);
 
         assert SampleDataUtil.DEFAULT_USER.id() != null;
         when(userService.authenticate(request)).thenReturn(
                 Optional.of(SampleDataUtil.DEFAULT_USER.id()));
-        when(jwtService.generateToken(SampleDataUtil.DEFAULT_USER.id())).thenReturn("token");
+        when(jwtService.generateToken(SampleDataUtil.DEFAULT_USER.id()))
+                .thenReturn(SampleDataUtil.DEFAULT_TOKEN);
 
         mockMvc.perform(post("/user/sign-in").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("token"));
+                .andExpect(content().string(SampleDataUtil.DEFAULT_TOKEN));
 
         verify(userService).authenticate(request);
     }
@@ -108,31 +111,36 @@ public class UserControllerTest {
     @Test
     void testGet() throws Exception {
         assert SampleDataUtil.DEFAULT_USER.id() != null;
-        when(jwtService.getUserId("token")).thenReturn(SampleDataUtil.DEFAULT_USER.id());
+        when(jwtService.getUserId(SampleDataUtil.DEFAULT_TOKEN)).thenReturn(SampleDataUtil.DEFAULT_USER.id());
         when(userService.findById(SampleDataUtil.DEFAULT_USER.id())).thenReturn(
                 Optional.of(SampleDataUtil.DEFAULT_USER));
 
         mockMvc.perform(get("/user").with(csrf())
-                        .header("Authorization", "Bearer token"))
+                        .header(AUTHORIZATION_HEADER_NAME,
+                                SampleDataUtil.DEFAULT_AUTHORIZATION_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(new UserInfo(
                         SampleDataUtil.DEFAULT_USER.email(),
                         SampleDataUtil.DEFAULT_USER.username()))));
+
+        verify(jwtService).getUserId(SampleDataUtil.DEFAULT_TOKEN);
+        verify(userService).findById(SampleDataUtil.DEFAULT_USER.id());
     }
 
     @Test
     void testUpdate() throws Exception {
-        UserInfo request = new UserInfo(
+        final UserInfo request = new UserInfo(
                 SampleDataUtil.DEFAULT_USER.email(),
                 SampleDataUtil.DEFAULT_USER.username());
 
         assert SampleDataUtil.DEFAULT_USER.id() != null;
-        when(jwtService.getUserId("token")).thenReturn(SampleDataUtil.DEFAULT_USER.id());
+        when(jwtService.getUserId(SampleDataUtil.DEFAULT_TOKEN)).thenReturn(SampleDataUtil.DEFAULT_USER.id());
 
         mockMvc.perform(put("/user").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
-                        .header("Authorization", "Bearer token"))
+                        .header(AUTHORIZATION_HEADER_NAME,
+                                SampleDataUtil.DEFAULT_AUTHORIZATION_HEADER))
                 .andExpect(status().isNoContent());
 
         verify(userService).update(
@@ -143,64 +151,68 @@ public class UserControllerTest {
 
     @Test
     void testChangePassword() throws Exception {
-        UserPasswordChangeRequest request = new UserPasswordChangeRequest(
-                "old password", "new password");
+        final UserPasswordChangeRequest request = new UserPasswordChangeRequest(
+                SampleDataUtil.DEFAULT_PASSWORD, SampleDataUtil.NEW_PASSWORD);
 
         assert SampleDataUtil.DEFAULT_USER.id() != null;
-        when(jwtService.getUserId("token")).thenReturn(SampleDataUtil.DEFAULT_USER.id());
+        when(jwtService.getUserId(SampleDataUtil.DEFAULT_TOKEN))
+                .thenReturn(SampleDataUtil.DEFAULT_USER.id());
 
         mockMvc.perform(put("/user/password").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
-                        .header("Authorization", "Bearer token"))
+                        .header(AUTHORIZATION_HEADER_NAME,
+                                SampleDataUtil.DEFAULT_AUTHORIZATION_HEADER))
                 .andExpect(status().isNoContent());
 
         verify(userService).updatePassword(
                 SampleDataUtil.DEFAULT_USER.id(),
-                "old password", "new password");
+                SampleDataUtil.DEFAULT_PASSWORD, SampleDataUtil.NEW_PASSWORD);
     }
 
     @Test
     void testHandleSameNewPassword() throws Exception {
-        UserPasswordChangeRequest request = new UserPasswordChangeRequest(
-                "old password", "new password");
+        final UserPasswordChangeRequest request = new UserPasswordChangeRequest(
+                SampleDataUtil.DEFAULT_PASSWORD, SampleDataUtil.NEW_PASSWORD);
 
         assert SampleDataUtil.DEFAULT_USER.id() != null;
-        when(jwtService.getUserId("token")).thenReturn(SampleDataUtil.DEFAULT_USER.id());
+        when(jwtService.getUserId(SampleDataUtil.DEFAULT_TOKEN)).thenReturn(SampleDataUtil.DEFAULT_USER.id());
         doThrow(new SameNewPasswordException()).when(userService)
                 .updatePassword(SampleDataUtil.DEFAULT_USER.id(),
-                        "old password", "new password");
+                        SampleDataUtil.DEFAULT_PASSWORD, SampleDataUtil.NEW_PASSWORD);
 
         mockMvc.perform(put("/user/password").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
-                        .header("Authorization", "Bearer token"))
+                        .header(AUTHORIZATION_HEADER_NAME,
+                                SampleDataUtil.DEFAULT_AUTHORIZATION_HEADER))
                 .andExpect(status().isAlreadyReported());
 
         verify(userService).updatePassword(
                 SampleDataUtil.DEFAULT_USER.id(),
-                "old password", "new password");
+                SampleDataUtil.DEFAULT_PASSWORD, SampleDataUtil.NEW_PASSWORD);
     }
 
     @Test
     void testHandleInvalidCurrentPassword() throws Exception {
-        UserPasswordChangeRequest request = new UserPasswordChangeRequest(
-                "old password", "new password");
+        final UserPasswordChangeRequest request = new UserPasswordChangeRequest(
+                SampleDataUtil.DEFAULT_PASSWORD, SampleDataUtil.NEW_PASSWORD);
 
         assert SampleDataUtil.DEFAULT_USER.id() != null;
         when(jwtService.getUserId("token")).thenReturn(SampleDataUtil.DEFAULT_USER.id());
         doThrow(new InvalidCurrentPasswordException()).when(userService)
                 .updatePassword(SampleDataUtil.DEFAULT_USER.id(),
-                        "old password", "new password");
+                        SampleDataUtil.DEFAULT_PASSWORD, SampleDataUtil.NEW_PASSWORD);
 
         mockMvc.perform(put("/user/password").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
-                        .header("Authorization", "Bearer token"))
+                        .header(AUTHORIZATION_HEADER_NAME,
+                                SampleDataUtil.DEFAULT_AUTHORIZATION_HEADER))
                 .andExpect(status().isPreconditionFailed());
 
         verify(userService).updatePassword(
                 SampleDataUtil.DEFAULT_USER.id(),
-                "old password", "new password");
+                SampleDataUtil.DEFAULT_PASSWORD, SampleDataUtil.NEW_PASSWORD);
     }
 }

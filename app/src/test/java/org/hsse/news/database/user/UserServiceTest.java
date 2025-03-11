@@ -71,23 +71,24 @@ class UserServiceTest {
         assert SampleDataUtil.DEFAULT_USER.id() != null;
         final User newUser = new User(
                 SampleDataUtil.DEFAULT_USER.email(),
-                "password hash",
+                SampleDataUtil.DEFAULT_PASSWORD_HASH,
                 SampleDataUtil.DEFAULT_USER.username()
         );
         Mockito.when(repositoryMock.create(refEq(newUser)))
                 .thenReturn(newUser.initializeWithId(SampleDataUtil.DEFAULT_USER.id()));
-        Mockito.when(passwordEncoder.encode("password")).thenReturn("password hash");
+        Mockito.when(passwordEncoder.encode(SampleDataUtil.DEFAULT_PASSWORD))
+                .thenReturn(SampleDataUtil.DEFAULT_PASSWORD_HASH);
 
         final User registeredUser = service.register(new UserRegisterRequest(
                 SampleDataUtil.DEFAULT_USER.email(),
-                "password",
+                SampleDataUtil.DEFAULT_PASSWORD,
                 SampleDataUtil.DEFAULT_USER.username()));
 
         Mockito.verify(repositoryMock).create(refEq(newUser));
-        Mockito.verify(passwordEncoder).encode("password");
+        Mockito.verify(passwordEncoder).encode(SampleDataUtil.DEFAULT_PASSWORD);
 
         ComparisonUtil.assertDeepEquals(
-                SampleDataUtil.DEFAULT_USER.withPasswordHash("password hash"),
+                SampleDataUtil.DEFAULT_USER.withPasswordHash(SampleDataUtil.DEFAULT_PASSWORD_HASH),
                 registeredUser);
     }
 
@@ -96,20 +97,21 @@ class UserServiceTest {
         assert SampleDataUtil.DEFAULT_USER.id() != null;
         final User newUser = new User(
                 SampleDataUtil.DEFAULT_USER.email(),
-                "password hash",
+                SampleDataUtil.DEFAULT_PASSWORD_HASH,
                 SampleDataUtil.DEFAULT_USER.username()
         );
         Mockito.when(repositoryMock.create(refEq(newUser)))
                .thenThrow(EmailConflictException.class);
-        Mockito.when(passwordEncoder.encode("password")).thenReturn("password hash");
+        Mockito.when(passwordEncoder.encode(SampleDataUtil.DEFAULT_PASSWORD))
+                .thenReturn(SampleDataUtil.DEFAULT_PASSWORD_HASH);
 
         assertThrows(EmailConflictException.class, () -> service.register(new UserRegisterRequest(
                 SampleDataUtil.DEFAULT_USER.email(),
-                "password",
+                SampleDataUtil.DEFAULT_PASSWORD,
                 SampleDataUtil.DEFAULT_USER.username())));
 
         Mockito.verify(repositoryMock).create(refEq(newUser));
-        Mockito.verify(passwordEncoder).encode("password");
+        Mockito.verify(passwordEncoder).encode(SampleDataUtil.DEFAULT_PASSWORD);
     }
 
     @Test
@@ -185,13 +187,13 @@ class UserServiceTest {
         final AuthenticationCredentials credentials =
                 new AuthenticationCredentials(
                         SampleDataUtil.DEFAULT_USER.email(),
-                        "password"
+                        SampleDataUtil.DEFAULT_PASSWORD
                 );
 
         Mockito.when(repositoryMock.findByEmail(SampleDataUtil.DEFAULT_USER.email()))
                 .thenReturn(Optional.of(SampleDataUtil.DEFAULT_USER
-                        .withPasswordHash("password hash")));
-        Mockito.when(passwordEncoder.matches("password", "password hash"))
+                        .withPasswordHash(SampleDataUtil.DEFAULT_PASSWORD_HASH)));
+        Mockito.when(passwordEncoder.matches(SampleDataUtil.DEFAULT_PASSWORD, SampleDataUtil.DEFAULT_PASSWORD_HASH))
                 .thenReturn(true);
 
         final Optional<UserId> userIdOptional = service.authenticate(credentials);
@@ -210,8 +212,8 @@ class UserServiceTest {
 
         Mockito.when(repositoryMock.findByEmail(SampleDataUtil.DEFAULT_USER.email()))
                 .thenReturn(Optional.of(SampleDataUtil.DEFAULT_USER
-                        .withPasswordHash("password hash")));
-        Mockito.when(passwordEncoder.matches("wrong password", "password hash"))
+                        .withPasswordHash(SampleDataUtil.DEFAULT_PASSWORD_HASH)));
+        Mockito.when(passwordEncoder.matches("wrong password", SampleDataUtil.DEFAULT_PASSWORD_HASH))
                 .thenReturn(false);
 
         final Optional<UserId> userIdOptional = service.authenticate(credentials);
@@ -224,7 +226,7 @@ class UserServiceTest {
         final AuthenticationCredentials credentials =
                 new AuthenticationCredentials(
                         "non_existent_email@example.com",
-                        "password"
+                        SampleDataUtil.DEFAULT_PASSWORD
                 );
 
         Mockito.when(repositoryMock.findByEmail("non_existent_email@example.com"))

@@ -2,9 +2,7 @@ package org.hsse.news.database.user.repositories;
 
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.UserNotFoundException;
-import org.hsse.news.database.user.models.AuthenticationCredentials;
 import org.hsse.news.database.user.models.User;
-import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.util.ComparisonUtil;
 import org.hsse.news.database.util.SampleDataUtil;
 import org.hsse.news.database.util.TestcontainersUtil;
@@ -19,7 +17,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;

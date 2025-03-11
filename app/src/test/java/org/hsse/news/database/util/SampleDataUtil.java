@@ -1,6 +1,5 @@
 package org.hsse.news.database.util;
 
-import org.hsse.news.api.schemas.request.user.UserRegisterRequest;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
 import org.jdbi.v3.core.Jdbi;
@@ -23,6 +22,13 @@ public final class SampleDataUtil {
                     "new_password",
                     "NewUser"
             );
+
+    public static final String DEFAULT_PASSWORD = "password";
+    public static final String DEFAULT_PASSWORD_HASH = "password hash";
+    public static final String DEFAULT_TOKEN = "token";
+    public static final String DEFAULT_AUTHORIZATION_HEADER = "Bearer " + DEFAULT_TOKEN;
+
+    public static final String NEW_PASSWORD = "new password";
 
     @SuppressWarnings("SqlWithoutWhere")
     public static void clearDatabase(final Jdbi jdbi) {
