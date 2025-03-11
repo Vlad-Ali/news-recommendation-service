@@ -80,7 +80,7 @@ public final class JdbiUserRepository implements UserRepository {
                     throw new UserNotFoundException(user.id());
                 }
 
-                handle.createUpdate("UPDATE users SET email = :email, passwordHash = :passwordHash, username = :username WHERE user_id = :user_id")
+                handle.createUpdate("UPDATE users SET email = :email, password = :passwordHash, username = :username WHERE user_id = :user_id")
                         .bind("email", user.email())
                         .bind("passwordHash", user.passwordHash())
                         .bind("username", user.username())
