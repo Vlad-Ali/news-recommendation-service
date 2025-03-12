@@ -58,10 +58,17 @@ public class NewsBot extends TelegramLongPollingBot {
         return "HsseNewsTeam1Bot";
     }
 
+    private final static String NEXT_POST_COMMAND = "Следующий пост";
+    private final static String ADD_SOURCE_COMMAND = "Добавить источник";
+    private final static String LIKE_COMMAND = "Лайк";
+    private final static String UNLIKE_COMMAND = "Убрать лайк";
+    private final static String DISLIKE_COMMAND = "Дизлайк";
+    private final static String UNDISLIKE_COMMAND = "Убрать дизлайк";
+
     private static KeyboardRow getNoPostCommandsRow() {
         KeyboardRow commandsRow = new KeyboardRow();
-        commandsRow.add("next");
-        commandsRow.add("add source");
+        commandsRow.add(NEXT_POST_COMMAND);
+        commandsRow.add(ADD_SOURCE_COMMAND);
         return commandsRow;
     }
 
@@ -74,18 +81,18 @@ public class NewsBot extends TelegramLongPollingBot {
             return new ReplyKeyboardMarkup(List.of(getNoPostCommandsRow()));
         } else if (normalChatState.isLiked()) {
             KeyboardRow likeRow = new KeyboardRow();
-            likeRow.add("unlike");
-            likeRow.add("dislike");
+            likeRow.add(UNLIKE_COMMAND);
+            likeRow.add(DISLIKE_COMMAND);
             return new ReplyKeyboardMarkup(List.of(likeRow, getNoPostCommandsRow()));
         } else if (normalChatState.isDisliked()) {
             KeyboardRow likeRow = new KeyboardRow();
-            likeRow.add("like");
-            likeRow.add("undislike");
+            likeRow.add(LIKE_COMMAND);
+            likeRow.add(UNDISLIKE_COMMAND);
             return new ReplyKeyboardMarkup(List.of(likeRow, getNoPostCommandsRow()));
         } else {
             KeyboardRow likeRow = new KeyboardRow();
-            likeRow.add("like");
-            likeRow.add("dislike");
+            likeRow.add(LIKE_COMMAND);
+            likeRow.add(DISLIKE_COMMAND);
             return new ReplyKeyboardMarkup(List.of(likeRow, getNoPostCommandsRow()));
         }
     }
@@ -107,19 +114,19 @@ public class NewsBot extends TelegramLongPollingBot {
         }
         long postId = state.post().get();
 
-        if (!state.isLiked() && "like".equalsIgnoreCase(text)) {
+        if (!state.isLiked() && LIKE_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, new NormalChatState(postId, true));
             sendMessage(chatId, "Предстааавьте, что мы записали лайк для поста " + postId);
             return true;
-        } else if (state.isLiked() && "unlike".equalsIgnoreCase(text)) {
+        } else if (state.isLiked() && UNLIKE_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, new NormalChatState(postId));
             sendMessage(chatId, "Предстааавьте, что мы убрали лайк для поста " + postId);
             return true;
-        } else if (!state.isDisliked() && "dislike".equalsIgnoreCase(text)) {
+        } else if (!state.isDisliked() && DISLIKE_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, new NormalChatState(postId, false));
             sendMessage(chatId, "Предстааавьте, что мы записал дизлайк для поста " + postId);
             return true;
-        } else if (state.isDisliked() && "undislike".equalsIgnoreCase(text)) {
+        } else if (state.isDisliked() && UNDISLIKE_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, new NormalChatState(postId));
             sendMessage(chatId, "Предстааавьте, что мы убрали дизлайк для поста " + postId);
             return true;
@@ -138,12 +145,12 @@ public class NewsBot extends TelegramLongPollingBot {
             return true;
         }
 
-        if ("next".equalsIgnoreCase(text)) {
+        if (NEXT_POST_COMMAND.equalsIgnoreCase(text)) {
             long postId = (long) (Math.random() * 1000);
             chatStates.put(chatId, new NormalChatState(postId));
             sendMessage(chatId, "Предстааавьте, что это пост " + postId + " с новостями");
             return true;
-        } else if ("add source".equalsIgnoreCase(text)) {
+        } else if (ADD_SOURCE_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, new AwaitingUriChatState());
             sendMessage(chatId, "Введите URI нового источника: ");
             return true;
@@ -162,7 +169,9 @@ public class NewsBot extends TelegramLongPollingBot {
                 chatStates.remove(chatId);
             } else if (state == null || "/start".equalsIgnoreCase(text)) {
                 chatStates.put(chatId, new NormalChatState());
-                sendMessage(chatId, "Welcome!");
+                sendMessage(chatId, "Привет! " +
+                        "Добавить источники RSS и ты сможешь смотреть ленту новостей в этом боте! " +
+                        "Если ты в веб-версии и не видишь меню, наведи на символ рядом с прикреплением файла");
             } else if (state instanceof AwaitingUriChatState) {
                 chatStates.put(chatId, new NormalChatState());
                 sendMessage(chatId, "Источник " + text + " добавлен");
