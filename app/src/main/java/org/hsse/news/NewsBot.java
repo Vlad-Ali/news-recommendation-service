@@ -40,19 +40,24 @@ public class NewsBot extends TelegramLongPollingBot {
             if ("/stop".equalsIgnoreCase(text)) {
                 chatStates.remove(chatId);
             } else if (state == null || "/start".equalsIgnoreCase(text)) {
-                replyToStarted(chatId);
+                chatStates.put(chatId, ChatState.NO_POST);
+                sendMessage(chatId, "Welcome!");
             } else if (state.equals(ChatState.AWAITING_URI)) {
-                replyToAwaitingUri(chatId, text);
+                chatStates.put(chatId, ChatState.NO_POST);
+                sendMessage(chatId, "Источник " + text + " добавлен");
             } else if (state.equals(ChatState.POST) && "like".equalsIgnoreCase(text)) {
-                sendLikeRecorded(chatId);
+                chatStates.put(chatId, ChatState.NO_POST);
+                sendMessage(chatId, "Предстааавьте, что мы записал лайк");
             } else if (state.equals(ChatState.POST) && "dislike".equalsIgnoreCase(text)) {
-                sendDislikeRecorded(chatId);
+                chatStates.put(chatId, ChatState.NO_POST);
+                sendMessage(chatId, "Предстааавьте, что мы записал дизлайк");
             } else if ("next".equalsIgnoreCase(text)) {
-                sendPost(chatId);
+                sendMessage(chatId, "Предстааавьте, что это пост с новостями");
             } else if ("add source".equalsIgnoreCase(text)) {
-                sendAddSource(chatId);
+                chatStates.put(chatId, ChatState.AWAITING_URI);
+                sendMessage(chatId, "Введите URI нового источника: ");
             } else {
-                sendUnsupported(chatId, text);
+                sendMessage(chatId, "Операция " + text + " не поддерживается");
             }
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
@@ -62,18 +67,6 @@ public class NewsBot extends TelegramLongPollingBot {
     @Override
     public String getBotUsername() {
         return "HsseNewsTeam1Bot";
-    }
-
-    private void replyToStarted(long chatId) throws TelegramApiException {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-
-        message.setText("Welcome!");
-        message.setReplyMarkup(getNoPostKeyboard());
-
-        execute(message);
-
-        chatStates.put(chatId, ChatState.NO_POST);
     }
 
     private static KeyboardRow getCommandsRow() {
@@ -94,76 +87,19 @@ public class NewsBot extends TelegramLongPollingBot {
         return new ReplyKeyboardMarkup(List.of(getCommandsRow()));
     }
 
-    private void sendPost(long chatId) throws TelegramApiException {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
+    private void sendMessage(long chatId, String text) throws TelegramApiException {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
 
-        sendMessage.setText("Предстааавьте, что это пост с новостями");
-        sendMessage.setReplyMarkup(getPostKeyboard());
+        message.setText(text);
 
-        execute(sendMessage);
-
-        chatStates.put(chatId, ChatState.POST);
-    }
-
-    private void sendLikeRecorded(long chatId) throws TelegramApiException {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-
-        sendMessage.setText("Предстааавьте, что мы записал лайк");
-        sendMessage.setReplyMarkup(getNoPostKeyboard());
-
-        execute(sendMessage);
-
-        chatStates.put(chatId, ChatState.NO_POST);
-    }
-
-    private void sendDislikeRecorded(long chatId) throws TelegramApiException {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-
-        sendMessage.setText("Предстааавьте, что мы записал дизлайк");
-        sendMessage.setReplyMarkup(getNoPostKeyboard());
-
-        execute(sendMessage);
-
-        chatStates.put(chatId, ChatState.NO_POST);
-    }
-
-    private void sendAddSource(long chatId) throws TelegramApiException {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-
-        sendMessage.setText("Введите URI нового источника: ");
-
-        execute(sendMessage);
-
-        chatStates.put(chatId, ChatState.AWAITING_URI);
-    }
-
-    private void sendUnsupported(long chatId, String operation) throws TelegramApiException {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-
-        sendMessage.setText("Операция " + operation + " не поддерживается");
-        if (chatStates.get(chatId).equals(ChatState.POST)) {
-            sendMessage.setReplyMarkup(getPostKeyboard());
-        } else {
-            sendMessage.setReplyMarkup(getNoPostKeyboard());
+        if (chatStates.get(chatId).equals(ChatState.NO_POST)) {
+            message.setReplyMarkup(getNoPostKeyboard());
+        } else if (chatStates.get(chatId).equals(ChatState.POST)) {
+            message.setReplyMarkup(getPostKeyboard());
         }
 
-        execute(sendMessage);
+        execute(message);
     }
 
-    private void replyToAwaitingUri(long chatId, String message) throws TelegramApiException {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-
-        sendMessage.setText("Источник " + message + " добавлен");
-        sendMessage.setReplyMarkup(getNoPostKeyboard());
-
-        execute(sendMessage);
-
-        chatStates.put(chatId, ChatState.NO_POST);
-    }
 }
