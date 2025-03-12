@@ -17,7 +17,6 @@ import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -28,9 +27,9 @@ public class Application {
     public static void main(final String[] args) throws TelegramApiException {
         initializeDatabase();
 
-        ApplicationContext context = SpringApplication.run(Application.class, args);
+        final ApplicationContext context = SpringApplication.run(Application.class, args);
 
-        TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+        final TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         botsApi.registerBot(context.getBean("newsBot", NewsBot.class));
     }
 
