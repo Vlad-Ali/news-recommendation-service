@@ -1,6 +1,7 @@
 package org.hsse.news.database.website.repositories;
 
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
+import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
@@ -63,6 +64,18 @@ public class JdbiWebsiteRepository implements WebsiteRepository {
                         .mapTo(Website.class)
                         .list()
         );
+    }
+
+    public @NotNull List<WebsiteId> getWebsitesByUserTopic(final UserId userId, final TopicId topicId){
+        return jdbi.inTransaction(handle -> handle.createQuery("SELECT user_websites.website_id FROM user_websites\n" +
+                "WHERE user_websites.user_id IN (SELECT user_topics.user_id FROM user_topics\n" +
+                "WHERE user_topics.topic_id = :topic_id) AND user_websites.website_id NOT IN \n" +
+                "(SELECT user_websites.website_id FROM user_websites \n" +
+                "WHERE user_websites.user_id = :user_id)")
+                .bind("user_id", userId.value())
+                .bind("topic_id", topicId.value())
+                .map((rs, ctx) -> new WebsiteId(rs.getLong("website_id")))
+                .list());
     }
 
     @Override

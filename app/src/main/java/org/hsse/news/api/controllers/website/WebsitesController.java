@@ -10,6 +10,7 @@ import org.hsse.news.database.website.WebsiteService;
 import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPerUserException;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
+import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
 import org.hsse.news.database.website.models.Website;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.slf4j.Logger;
@@ -30,23 +31,23 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/websites")
-public class WebsitesController implements WebsiteOperations{
+public class WebsitesController implements WebsiteOperations {
   private static final Logger LOG = LoggerFactory.getLogger(WebsitesController.class);
   private static final int MAX_WEBSITES_PER_USER =
-      10;
+          10;
   private final WebsiteService websiteService;
 
   public WebsitesController(
-      final WebsiteService websiteService) {
+          final WebsiteService websiteService) {
     this.websiteService = websiteService;
   }
 
   @Override
   public ResponseEntity<WebsiteInfo> get(
-      final @Parameter(description = "ID сайта для получения") @PathVariable Long id) {
+          final @Parameter(description = "ID сайта для получения") @PathVariable Long id) {
     getCurrentUserId();
     final Optional<WebsiteInfo> website = websiteService.findById(new WebsiteId(id));
-    if (website.isEmpty()){
+    if (website.isEmpty()) {
       throw new WebsiteNotFoundException(new WebsiteId(id));
     }
     LOG.debug("Website found by id = {} for user ", id);
@@ -62,17 +63,16 @@ public class WebsitesController implements WebsiteOperations{
 
   @Override
   public ResponseEntity<String> updateSubWebsites(
-      final @Parameter(description = "Данные для обновления выбранных сайтов") @RequestBody
-          SubWebsitesUpdateRequest subWebsitesUpdateRequest)
-  {
+          final @Parameter(description = "Данные для обновления выбранных сайтов") @RequestBody
+          SubWebsitesUpdateRequest subWebsitesUpdateRequest) {
     final UserId userId = getCurrentUserId();
     final List<WebsiteId> websitesIds =
-        subWebsitesUpdateRequest.websiteIds().stream().map(WebsiteId::new).toList();
+            subWebsitesUpdateRequest.websiteIds().stream().map(WebsiteId::new).toList();
     try {
       websiteService.tryUpdateSubscribedWebsites(websitesIds, userId);
     } catch (QuantityLimitExceededWebsitesPerUserException ex) {
       throw new QuantityLimitExceededWebsitesPerUserException(
-          String.format("Chosen websites more than limit = %s", MAX_WEBSITES_PER_USER));
+              String.format("Chosen websites more than limit = %s", MAX_WEBSITES_PER_USER));
     }
     LOG.debug("Successfully updated subWebsites for user with id = {}", userId.value());
     return ResponseEntity.ok("SubWebsites updated");
@@ -80,24 +80,23 @@ public class WebsitesController implements WebsiteOperations{
 
   @Override
   public ResponseEntity<WebsiteInfo> create(
-      final @Parameter(description = "Данные для создания Сайта пользователем") @RequestBody
-          CustomWebsiteCreateRequest customWebsiteCreateRequest)
-      {
+          final @Parameter(description = "Данные для создания Сайта пользователем") @RequestBody
+          CustomWebsiteCreateRequest customWebsiteCreateRequest) {
     final UserId userId = getCurrentUserId();
     final Website website =
-        websiteService.create(
-            new Website(
-                null,
-                customWebsiteCreateRequest.url(),
-                customWebsiteCreateRequest.description(),
-                userId));
+            websiteService.create(
+                    new Website(
+                            null,
+                            customWebsiteCreateRequest.url(),
+                            customWebsiteCreateRequest.description(),
+                            userId));
     LOG.debug("Successfully created website with id = {}", website.id());
     return ResponseEntity.ok(new WebsiteInfo(website.id().value(), website.url(), website.description()));
   }
 
   @Override
   public ResponseEntity<String> delete(
-      final @Parameter(description = "ID созданного сайта для удаления") @PathVariable Long websiteId) {
+          final @Parameter(description = "ID созданного сайта для удаления") @PathVariable Long websiteId) {
     final UserId userId = getCurrentUserId();
     websiteService.delete(new WebsiteId(websiteId), userId);
     LOG.debug("Successfully deleted website with id = {} by user with id = {}", websiteId, userId);
@@ -129,6 +128,12 @@ public class WebsitesController implements WebsiteOperations{
           final QuantityLimitExceededWebsitesPerUserException ex) {
     LOG.debug("Limit of subscribed websites: {}", ex.getMessage());
     return ErrorResponse.create(ex, HttpStatus.LENGTH_REQUIRED, "Limit of chosen websites");
+  }
+
+  @ExceptionHandler(WebsiteRSSNotValidException.class)
+  public ErrorResponse handleWebsiteRSSNotValidException(final WebsiteRSSNotValidException ex){
+    LOG.debug("Website rss not valid: {}", ex.getMessage());
+    return ErrorResponse.create(ex, HttpStatus.UNSUPPORTED_MEDIA_TYPE, "RSS of website is not valid");
   }
 
 }

@@ -12,6 +12,7 @@ import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPerUserException;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
+import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,11 +44,11 @@ public interface WebsiteOperations {
             SubWebsitesUpdateRequest subWebsitesUpdateRequest) throws QuantityLimitExceededWebsitesPerUserException, WebsiteNotFoundException;
 
     @Operation(summary = "Создать сайт")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Сайт создан"), @ApiResponse(responseCode = "409", description = "Такой сайт уже создан")}) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Сайт создан"), @ApiResponse(responseCode = "409", description = "Такой сайт уже создан"), @ApiResponse(responseCode = "415", description = "Неправильный RSS")}) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
     @PostMapping("/custom")
     ResponseEntity<WebsiteInfo> create(
             @Parameter(description = "Данные для создания Сайта пользователем") @RequestBody
-            CustomWebsiteCreateRequest customWebsiteCreateRequest) throws WebsiteAlreadyExistsException;
+            CustomWebsiteCreateRequest customWebsiteCreateRequest) throws WebsiteAlreadyExistsException, WebsiteRSSNotValidException;
 
     @Operation(summary = "Удалить созданный пользователем сайт")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Сайт удален"), @ApiResponse(responseCode = "400", description = "Такой сайт не найден")}) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant

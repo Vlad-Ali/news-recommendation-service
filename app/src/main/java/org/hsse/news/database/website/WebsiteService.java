@@ -8,9 +8,11 @@ import org.hsse.news.database.util.TransactionManager;
 import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPerUserException;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
+import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
 import org.hsse.news.database.website.models.Website;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.hsse.news.database.website.repositories.WebsiteRepository;
+import org.hsse.news.util.RSSValidator;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -53,6 +55,9 @@ public final class WebsiteService {
     }
 
     public Website create(final Website website) {
+        if (!RSSValidator.isRSSFeedValid(website.url())){
+            throw new WebsiteRSSNotValidException("Not valid rss for website");
+        }
         return websiteRepository.create(website);
     }
 

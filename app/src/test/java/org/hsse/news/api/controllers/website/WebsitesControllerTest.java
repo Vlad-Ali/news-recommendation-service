@@ -18,6 +18,7 @@ import org.hsse.news.database.website.WebsiteService;
 import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPerUserException;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
+import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
 import org.hsse.news.database.website.models.Website;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.junit.jupiter.api.BeforeEach;
@@ -174,6 +175,14 @@ public class WebsitesControllerTest {
         when(websiteService.create(any(Website.class))).thenThrow(new WebsiteAlreadyExistsException(new WebsiteId(5L), testWebsite.url()));
         mockMvc.perform(post("/websites/custom").contentType(CONTENT_TYPE_JSON).content(CUSTOM_WEBSITE_CREATE).header("Authorization", "Bearer "+token))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    public void shouldNotCreateCustomWebsiteBecauseNotValidRSS() throws Exception {
+        final String token = getUserToken();
+        when(websiteService.create(any(Website.class))).thenThrow(new WebsiteRSSNotValidException(""));
+        mockMvc.perform(post("/websites/custom").contentType(CONTENT_TYPE_JSON).content(CUSTOM_WEBSITE_CREATE).header("Authorization", "Bearer "+token))
+                .andExpect(status().isUnsupportedMediaType());
     }
 
     @Test

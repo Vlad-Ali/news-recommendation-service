@@ -1,13 +1,16 @@
 package org.hsse.news.api.filters;
 
-import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.database.jwt.JwtService;
 import org.hsse.news.database.user.models.UserId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,8 +22,10 @@ import java.util.List;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
     private JwtService jwtService;
+    private static final Logger LOG = LoggerFactory.getLogger(JwtTokenFilter.class);
 
     @Override
     protected void doFilterInternal(
@@ -39,7 +44,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                                 userId, null,
                                 List.of(new SimpleGrantedAuthority("ROLE_USER")));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (MalformedJwtException ignored) {}
+            } catch (JwtException e) {
+                LOG.warn("Failed to parse JWT token: {}", e.toString());
+            }
         }
 
         filterChain.doFilter(request, response);
