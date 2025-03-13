@@ -7,4 +7,4 @@ logging:
     org.hsse.news.api: DEBUG
     org.hsse.news.database: DEBUG
 tg-bot:
-  token: 7838862242:AAE6mOjuLuuWAVzc46oMsZKVkJ1reTsjbzM
+  token: token
