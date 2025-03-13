@@ -56,6 +56,9 @@ dependencies {
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
 
+    implementation("org.telegram:telegrambots-spring-boot-starter:6.7.0")
+    implementation("org.telegram:telegrambots:6.5.0")
+
     testImplementation("org.eclipse.jetty:jetty-server:9.4.44.v20210927")
     testImplementation("org.eclipse.jetty:jetty-servlet:9.4.44.v20210927")
     testImplementation("org.eclipse.jetty:jetty-util:9.4.44.v20210927")

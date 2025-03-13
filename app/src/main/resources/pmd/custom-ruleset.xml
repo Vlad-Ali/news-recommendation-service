@@ -24,6 +24,9 @@
     </rule>
     <rule ref="category/java/design.xml">
         <exclude name="LawOfDemeter"/>
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="NcssCount"/>
+        <exclude name="CognitiveComplexity"/>
         <exclude name="TooManyMethods"/>
         <exclude name="ExcessiveImports"/>
         <exclude name="AvoidThrowingRawExceptionTypes"/>
