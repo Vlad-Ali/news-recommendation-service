@@ -21,6 +21,7 @@
         <exclude name="ShortVariable"/>
         <exclude name="TooManyStaticImports"/>
         <exclude name="CallSuperInConstructor"/>
+        <exclude name="PrematureDeclaration"/>
     </rule>
     <rule ref="category/java/design.xml">
         <exclude name="LawOfDemeter"/>
@@ -31,6 +32,7 @@
         <exclude name="AvoidCatchingGenericException"/>
         <exclude name="AvoidUncheckedExceptionsInSignatures"/>
         <exclude name="SignatureDeclareThrowsException"/>
+        <exclude name="DataClass"/>
     </rule>
     <rule ref="category/java/errorprone.xml">
         <exclude name="AvoidFieldNameMatchingMethodName"/>

@@ -54,6 +54,9 @@ dependencies {
     implementation("org.springframework.security:spring-security-test:6.4.3")
     implementation("io.jsonwebtoken:jjwt:0.12.3")
 
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.4.2")
+    implementation("org.hibernate:hibernate-core:6.6.9.Final")
+
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
 
     testImplementation("org.eclipse.jetty:jetty-server:9.4.44.v20210927")

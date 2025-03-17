@@ -2,7 +2,6 @@ package org.hsse.news;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.flywaydb.core.Flyway;
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleId;
@@ -29,7 +28,7 @@ public class Application {
     private static void initializeDatabase() {
         final Config config = ConfigFactory.load();
 
-        final Flyway flyway =
+        /*final Flyway flyway =
             Flyway.configure()
                 .outOfOrder(true)
                 .locations("classpath:db/migrations")
@@ -39,7 +38,7 @@ public class Application {
                         config.getString("database.password")
                 )
                 .load();
-        flyway.migrate();
+        flyway.migrate();*/
 
         final Jdbi jdbi = Jdbi.create(
                 config.getString("database.url"),
