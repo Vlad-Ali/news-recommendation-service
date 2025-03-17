@@ -9,6 +9,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: nrs
+          POSTGRES_USER: nrs
+          POSTGRES_PASSWORD: nrs-password
+        ports:
+          - 5432:5432
+          -
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -29,6 +40,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build with Gradle
+        env:
+          SPRING_DATABASE_URL: jdbc:postgresql://localhost:5432/nrs
+          SPRING_DATABASE_USERNAME: nrs
+          SPRING_DATABASE_PASSWORD: nrs-password
         run: ./gradlew build
 
       - name: Upload reports
