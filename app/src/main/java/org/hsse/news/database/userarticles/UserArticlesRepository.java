@@ -12,14 +12,14 @@ import java.util.UUID;
 public interface UserArticlesRepository extends JpaRepository<UserArticle, Long> {
 
     @Query("select count(ua) from UserArticle ua where ua.articleId = :articleId and ua.mark = 1")
-    Integer getArticleLikeCount(@Param("articleId") UUID articleId);
+    Integer getArticleLikeCount(@Param("articleId") UUID articleId); // NOPMD
 
     @Query("select count(ua) from UserArticle ua where ua.articleId = :articleId and ua.mark = -1")
     Integer getArticleDislikeCount(@Param("articleId") UUID articleId);
 
     @Modifying
     @Query("update UserArticle ua set ua.mark = 1 where ua.articleId = :articleId and ua.userId = :userId")
-    void likeUserArticle(@Param("userId") UUID userId, @Param("articleId") UUID articleId);
+    void likeUserArticle(@Param("userId") UUID userId, @Param("articleId") UUID articleId); // NOPMD
 
     @Modifying
     @Query("update UserArticle ua set ua.mark = -1 where ua.articleId = :articleId and ua.userId = :userId")

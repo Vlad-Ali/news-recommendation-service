@@ -12,7 +12,7 @@ public interface UserArticlesOperations {
 
     @GetMapping("/articles/likes")
     @Operation(summary = "Получение количетва положительных оценок статьи")
-    @ApiResponse(responseCode = "200", description = "Лайки получены")
+    @ApiResponse(responseCode = "200", description = "Лайки получены") // NOPMD
     ResponseEntity<Integer> getUserArticlesLikes(@RequestParam("articleId") UUID articleId);
 
     @GetMapping("/articles/dislikes")

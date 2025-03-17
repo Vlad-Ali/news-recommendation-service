@@ -1,14 +1,9 @@
 package org.hsse.news.database.util;
 
-import org.hsse.news.database.article.models.Article;
-import org.hsse.news.database.article.models.ArticleId;
-import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
-import org.hsse.news.database.website.models.WebsiteId;
 import org.jdbi.v3.core.Jdbi;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,8 +34,7 @@ public final class SampleDataUtil {
                             .list();
             tables.remove("flyway_schema_history");
 
-            // noinspection SqlSourceToSinkFlow
-            tables.forEach(table -> handle.execute("DELETE FROM " + table));
+          tables.forEach(table -> handle.execute("DELETE FROM " + table));
         });
     }
 
@@ -58,23 +52,6 @@ public final class SampleDataUtil {
                         .execute()
         );
     }
-
-  public static void prepareArticles(final Jdbi jdbi) {
-    assert DEFAULT_USER.id() != null;
-    jdbi.useTransaction(handle ->
-        handle.createUpdate(
-                "INSERT INTO articles (article_id, title, url, created_at, topic_id, website_id) " +
-                    "VALUES (:article_id, :title, :url, :created_at, :topic_id, :website_id)"
-            )
-            .bind("article_id", DEFAULT_ARTICLE.getId().value())
-            .bind("title", DEFAULT_ARTICLE.getTitle())
-            .bind("url", DEFAULT_ARTICLE.getUrl())
-            .bind("created_at", DEFAULT_ARTICLE.getCreatedAt())
-            .bind("topic_id", DEFAULT_ARTICLE.getTopicId().value())
-            .bind("website_id", DEFAULT_ARTICLE.getWebsiteId().value())
-            .execute()
-    );
-  }
 
     private SampleDataUtil() {}
 }

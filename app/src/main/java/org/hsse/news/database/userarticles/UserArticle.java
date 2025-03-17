@@ -5,9 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hsse.news.database.article.models.Article;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -39,7 +37,7 @@ public class UserArticle {
         mark = 0;
     }
 
-    public static UserArticleDto toDto(UserArticle userArticle) {
+    public static UserArticleDto toDto(final UserArticle userArticle) {
         return new UserArticleDto(
                 userArticle.articleId,
                 userArticle.userId,
@@ -48,9 +46,11 @@ public class UserArticle {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        UserArticle that = (UserArticle) o;
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final UserArticle that = (UserArticle) o;
         return Objects.equals(id, that.id);
     }
 

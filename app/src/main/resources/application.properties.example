@@ -2,3 +2,15 @@ database.url=jdbc:postgresql://localhost:5432/nrs
 database.user=nrs
 database.password=nrs-password
 website.max-custom-per-user=10
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/nrs
+spring.datasource.username=nrs
+spring.datasource.password=nrs-password
+
+spring.flyway.enabled=true
+spring.flyway.url=jdbc:postgresql://localhost:5432/nrs
+spring.flyway.user=nrs
+spring.flyway.password=nrs-password
+spring.flyway.locations=classpath:db/migration
+
+spring.jpa.hibernate.ddl-auto=validate

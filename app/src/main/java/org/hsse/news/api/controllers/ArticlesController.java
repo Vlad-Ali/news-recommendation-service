@@ -1,21 +1,14 @@
 package org.hsse.news.api.controllers;
 
-import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.api.operations.ArticleOperations;
 import org.hsse.news.database.article.ArticlesService;
 import org.hsse.news.database.article.models.*;
-import org.hsse.news.database.topic.models.TopicId;
-import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.userarticles.UserArticleDto;
-import org.hsse.news.database.website.models.WebsiteId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -60,10 +53,7 @@ public class ArticlesController implements ArticleOperations {
     articleService.update(
         new ArticleId(articleId),
             articleDto.title(),
-            articleDto.url(),
-            articleDto.createdAt(),
-            articleDto.topicId(),
-            articleDto.websiteId()
+            articleDto.url()
     );
 
     return new ResponseEntity<>(articleId.toString(), HttpStatus.OK);

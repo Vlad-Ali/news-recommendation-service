@@ -6,7 +6,6 @@ import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleDto;
 import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.article.repositories.ArticleRepository;
-import org.hsse.news.database.user.models.UserId;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -33,7 +32,7 @@ public class ArticlesService {
 
     @Transactional(readOnly = true)
     public ArticleDto findById(final ArticleId articleId) {
-        Article article =  articleRepository
+        final Article article = articleRepository
             .findById(articleId.value())
             .orElseThrow(() -> new ArticleNotFoundException(articleId));
         return Article.toDto(article);
@@ -41,14 +40,13 @@ public class ArticlesService {
 
     @Transactional(readOnly = true)
     public List<UserArticleDto> getUserArticles(final UUID userId) {
-        List<UserArticle> articles = articleRepository.getUserArticles(userId);
-        List<UserArticleDto> dtos = articles.stream().map(UserArticle::toDto).toList();
-        return dtos;
+        final List<UserArticle> articles = articleRepository.getUserArticles(userId);
+      return articles.stream().map(UserArticle::toDto).toList();
     }
 
     @Transactional()
     public Article create(final ArticleDto articleDto) {
-        Article article = new Article();
+        final Article article = new Article();
         article.setUrl(articleDto.url());
         article.setTitle(articleDto.title());
         article.setCreatedAt(new Timestamp(System.currentTimeMillis()));
@@ -63,17 +61,9 @@ public class ArticlesService {
     @Transactional()
     public void update(final ArticleId articleId, // NOPMD
                        final String title,
-                       final String url,
-                       final Timestamp createdAt,
-                       final Long topicId,
-                       final Long websiteId
+                       final String url
     ) {
-
-    }
-
-    @Transactional()
-    public void updateTitle(final Article article) {
-
+        articleRepository.update(articleId.value(), title, url);
     }
 
     @Transactional()

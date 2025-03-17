@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 public record UserArticleDto(
-        @NotNull UUID articleId,
-        @NotNull UUID userId,
-        @NotNull Integer mark
+        @NotNull UUID articleId, // NOPMD
+        @NotNull UUID userId, // NOPMD
+        @NotNull Integer mark // NOPMD
 ) { }

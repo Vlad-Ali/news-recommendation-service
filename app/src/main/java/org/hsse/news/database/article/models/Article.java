@@ -3,8 +3,6 @@ package org.hsse.news.database.article.models;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hsse.news.database.topic.models.Topic;
-import org.hsse.news.database.website.models.Website;
 
 import java.sql.Timestamp;
 import java.util.Objects;
@@ -17,20 +15,21 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(name = "Article", description = "Сущность статьи")
 @Getter
 @Setter
+@NoArgsConstructor
 public class Article {
 
     @Id
     @GeneratedValue
     @Schema(description = "ID", example = "1")
-    private UUID articleId;
+    private UUID articleId; // NOPMD
 
     @Schema(description = "title", example = "test-title")
     @NotNull()
-    private String title;
+    private String title; // NOPMD
 
     @Schema(description = "url", example = "https://test.ru")
     @NotNull()
-    private String url;
+    private String url; // NOPMD
 
     @Schema(description = "created_at")
     @NotNull()
@@ -38,25 +37,20 @@ public class Article {
 
     @Schema(description = "topic_id", example = "1")
     @NotNull()
-    private Long topicId;
+    private Long topicId; // NOPMD
 
     @Schema(description = "website_id", example = "1")
     @NotNull()
-    private Long websiteId;
+    private Long websiteId; // NOPMD
 
-    public Article() {
-        this.articleId = UUID.randomUUID();
-    }
-
-    public  Article(@NonNull String title, @NonNull String url, @NonNull Long topicId, @NonNull Long websiteId) {
-        this();
+    public Article(final String title, final String url, final Long topicId, final Long websiteId) {
         this.title = title;
         this.url = url;
         this.topicId = topicId;
         this.websiteId = websiteId;
     }
 
-    public static ArticleDto toDto(Article article) {
+    public static ArticleDto toDto(final Article article) {
         return new ArticleDto(
                 article.getTitle(),
                 article.getUrl(),
