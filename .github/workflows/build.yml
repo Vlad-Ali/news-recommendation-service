@@ -19,7 +19,7 @@ jobs:
           POSTGRES_PASSWORD: nrs-password
         ports:
           - 5432:5432
-          -
+
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
