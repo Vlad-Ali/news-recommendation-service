@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public final class WebsiteController implements Controller {
+public class WebsiteController implements Controller {
     private static final Logger LOG = LoggerFactory.getLogger(WebsiteController.class);
     private static final String WEBSITES_PREFIX = "/websites";
     private static final String ACCEPT_TYPE = "application/json";

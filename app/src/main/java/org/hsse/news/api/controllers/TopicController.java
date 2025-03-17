@@ -11,7 +11,7 @@ import spark.Service;
 
 import java.util.Optional;
 
-public final class TopicController implements Controller {
+public class TopicController implements Controller {
     private static final Logger LOG = LoggerFactory.getLogger(TopicController.class);
     private static final String TOPICS_PREFIX = "/topics";
     private static final String ACCEPT_TYPE = "application/json";

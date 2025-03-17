@@ -1,24 +1,37 @@
 package org.hsse.news.database.article.repositories;
 
 import org.hsse.news.database.article.models.Article;
-import org.hsse.news.database.article.models.ArticleData;
+import org.hsse.news.database.article.models.ArticleDto;
 import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.user.models.UserId;
+import org.hsse.news.database.userarticles.UserArticle;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface ArticleRepository {
-    List<ArticleData> findAll();
+@Repository
+public interface ArticleRepository extends JpaRepository<Article, UUID> {
 
-    Optional<ArticleData> findById(@NotNull ArticleId articleId);
+    @Query("select a from Article a")
+    @NotNull List<Article> findAll();
 
-    List<ArticleData> getUserArticles(UserId userId);
+    @Query("select a from Article a where a.articleId = :articleId")
+    @NotNull Optional<Article> findById(@NotNull UUID articleId);
 
-    @NotNull Article create(@NotNull Article article);
+    @Query("select ua from UserArticle ua where ua.userId = :userId")
+    List<UserArticle> getUserArticles(UUID userId);
 
-    void update(@NotNull Article article);
+    @Modifying
+    @Query("update Article a set a.title = :title, a.url = :url")
+    void update(@NotNull UUID id, @NotNull String title, @NotNull String url);
 
-    void delete(@NotNull ArticleId articleId);
+    @Modifying
+    @Query("delete from Article a where a.articleId = :articleId")
+    void delete(@NotNull UUID articleId);
 }

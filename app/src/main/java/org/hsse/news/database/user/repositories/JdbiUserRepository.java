@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public final class JdbiUserRepository implements UserRepository {
+public class JdbiUserRepository implements UserRepository {
     private final Jdbi jdbi;
 
     public JdbiUserRepository(final @NotNull Jdbi jdbi) {

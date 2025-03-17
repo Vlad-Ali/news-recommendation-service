@@ -52,8 +52,8 @@ public class Application {
         jdbi.registerRowMapper(TopicId.class, ConstructorMapper.of(TopicId.class));
         jdbi.registerRowMapper(Website.class, ConstructorMapper.of(Website.class));
         jdbi.registerRowMapper(WebsiteId.class, ConstructorMapper.of(WebsiteId.class));
-        jdbi.registerRowMapper(Article.class, ConstructorMapper.of(Article.class));
-        jdbi.registerRowMapper(ArticleId.class, ConstructorMapper.of(ArticleId.class));
+//        jdbi.registerRowMapper(Article.class, ConstructorMapper.of(Article.class));
+//        jdbi.registerRowMapper(ArticleId.class, ConstructorMapper.of(ArticleId.class));
 
         JdbiProvider.initialize(jdbi);
     }

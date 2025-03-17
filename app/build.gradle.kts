@@ -6,6 +6,7 @@ plugins {
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("io.freefair.lombok") version "8.12.1"
+    id("org.flywaydb.flyway") version "11.2.0"
 }
 
 repositories {
@@ -50,6 +51,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test:3.4.3")
 
     implementation("org.springframework.boot:spring-boot-starter-web:3.4.3")
+
+    implementation("org.hibernate.orm:hibernate-core:6.5.2.Final")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.4.3")
 
     implementation("org.springframework.boot:spring-boot-starter-security:3.4.3")
     implementation("org.springframework.security:spring-security-test:6.4.3")

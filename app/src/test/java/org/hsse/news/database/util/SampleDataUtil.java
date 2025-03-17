@@ -27,24 +27,6 @@ public final class SampleDataUtil {
                     "new_password",
                     "NewUser"
             );
-    public static final Article DEFAULT_ARTICLE =
-        new Article(
-            new ArticleId(UUID.fromString("11111111-aaaa-1111-bbbb-111111111111")),
-            "Test title",
-            "test@mail.ru",
-            new Timestamp(System.currentTimeMillis()),
-            new TopicId(1L),
-            new WebsiteId(1L)
-            );
-  public static final Article NEW_ARTICLE =
-      new Article(
-          new ArticleId(UUID.fromString("22222222-aaaa-1111-bbbb-222222222222")),
-          "New title",
-          "new@mail.ru",
-          new Timestamp(System.currentTimeMillis()),
-          new TopicId(2L),
-          new WebsiteId(2L)
-      );
 
     @SuppressWarnings("SqlWithoutWhere")
     public static void clearDatabase(final Jdbi jdbi) {

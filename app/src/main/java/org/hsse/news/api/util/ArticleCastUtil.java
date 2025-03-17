@@ -17,16 +17,4 @@ public final class ArticleCastUtil {
         this.topicService = topicService;
         this.websiteService = websiteService;
     }
-
-    public ArticleResponse fromArticle(final Article article) {
-        return new ArticleResponse(
-                article.getTitle(),
-                article.getUrl(),
-                String.valueOf(article.getCreatedAt()),
-                new ArrayList<>(List.of(topicService.getTopicNameById(article.getTopicId()))), // NOPMD
-                websiteService.findById(article.getWebsiteId())
-                    .orElseThrow(() -> new WebsiteNotFoundException(article.getWebsiteId()))
-                    .description() // NOPMD
-        );
-    }
 }

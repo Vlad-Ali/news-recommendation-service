@@ -1,58 +1,69 @@
 package org.hsse.news.database.article.models;
 
-import org.hsse.news.database.topic.models.TopicId;
-import org.hsse.news.database.website.models.WebsiteId;
-import org.jdbi.v3.core.mapper.Nested;
-import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import org.hsse.news.database.topic.models.Topic;
+import org.hsse.news.database.website.models.Website;
 
 import java.sql.Timestamp;
 import java.util.Objects;
+import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Data;
 
+@Entity
+@Table(name = "articles")
 @Schema(name = "Article", description = "Сущность статьи")
-@Data
-@Builder(toBuilder = true)
+@Getter
+@Setter
 public class Article {
+
+    @Id
+    @GeneratedValue
     @Schema(description = "ID", example = "1")
-    @Nested
-    private ArticleId id;
+    private UUID articleId;
 
     @Schema(description = "title", example = "test-title")
-    @NonNull
-    private final String title;
+    @NotNull()
+    private String title;
 
     @Schema(description = "url", example = "https://test.ru")
-    @NonNull
-    private final String url;
+    @NotNull()
+    private String url;
 
     @Schema(description = "created_at")
-    @NonNull
-    private final Timestamp createdAt;
+    @NotNull()
+    private Timestamp createdAt;
 
     @Schema(description = "topic_id", example = "1")
-    private TopicId topicId;
+    @NotNull()
+    private Long topicId;
 
     @Schema(description = "website_id", example = "1")
-    private WebsiteId websiteId;
+    @NotNull()
+    private Long websiteId;
 
-    @JdbiConstructor
-    public Article(final ArticleId id,
-                   @NonNull final String title,
-                   @NonNull final String url,
-                   @NonNull final Timestamp createdAt,
-                   final TopicId topicId,
-                   final WebsiteId websiteId
-    ) {
-      this.id = id;
-      this.title = title;
-      this.url = url;
-      this.createdAt = createdAt;
-      this.topicId = topicId;
-      this.websiteId = websiteId;
+    public Article() {
+        this.articleId = UUID.randomUUID();
+    }
+
+    public  Article(@NonNull String title, @NonNull String url, @NonNull Long topicId, @NonNull Long websiteId) {
+        this();
+        this.title = title;
+        this.url = url;
+        this.topicId = topicId;
+        this.websiteId = websiteId;
+    }
+
+    public static ArticleDto toDto(Article article) {
+        return new ArticleDto(
+                article.getTitle(),
+                article.getUrl(),
+                article.getCreatedAt(),
+                article.getTopicId(),
+                article.getWebsiteId()
+        );
     }
 
     @Override
@@ -61,11 +72,11 @@ public class Article {
             return false;
         }
         final Article article = (Article) o;
-        return id != null && id.equals(article.id);
+        return articleId != null && articleId.equals(article.articleId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(articleId);
     }
 }
