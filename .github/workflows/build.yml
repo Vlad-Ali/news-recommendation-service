@@ -2,9 +2,9 @@ name: Gradle build
 
 on:
   push:
-    branches: [ "feature/spring-article" ]
+    branches: [ "main", "feature/*" ]
   pull_request:
-    branches: [ "feature/spring-article" ]
+    branches: [ "feature/*" ]
 
 jobs:
   build:
