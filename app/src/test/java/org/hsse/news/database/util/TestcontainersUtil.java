@@ -30,8 +30,6 @@ public final class TestcontainersUtil { // NOPMD - suppressed TestClassWithoutTe
 
         jdbi.registerRowMapper(User.class, ConstructorMapper.of(User.class));
         jdbi.registerRowMapper(UserId.class, ConstructorMapper.of(UserId.class));
-        jdbi.registerRowMapper(Topic.class, ConstructorMapper.of(Topic.class));
-        jdbi.registerRowMapper(TopicId.class, ConstructorMapper.of(TopicId.class));
         jdbi.registerRowMapper(Website.class, ConstructorMapper.of(Website.class));
         jdbi.registerRowMapper(WebsiteId.class, ConstructorMapper.of(WebsiteId.class));
 
