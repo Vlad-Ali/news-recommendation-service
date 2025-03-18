@@ -47,8 +47,8 @@ class TopicServiceTest {
         final Optional<TopicDto> topicOptional = service.getById(new TopicId(TOPIC_1.getTopicId()));
 
         Mockito.verify(repositoryMock).findById(TOPIC_1.getTopicId());
-        assertTrue(topicOptional.isPresent(), "userOptional should be present");
-        assertEquals(TOPIC_1.toDto(), topicOptional.get());
+        assertTrue(topicOptional.isPresent(), "Should find a topic");
+        assertEquals(TOPIC_1.toDto(), topicOptional.get(), "Should find a correct topic");
     }
 
     @Test
@@ -62,7 +62,7 @@ class TopicServiceTest {
         final Optional<TopicDto> topicOptional = service.getById(new TopicId(id));
 
         Mockito.verify(repositoryMock).findById(id);
-        assertTrue(topicOptional.isEmpty(), "topicOptional should be empty");
+        assertTrue(topicOptional.isEmpty(), "Nonexistent topic shouldn't be found");
     }
 
     @Test
