@@ -11,7 +11,7 @@ import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPe
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
 import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
-import org.hsse.news.database.website.models.Website;
+import org.hsse.news.database.website.models.WebsiteDto;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,15 +83,15 @@ public class WebsitesController implements WebsiteOperations {
           final @Parameter(description = "Данные для создания Сайта пользователем") @RequestBody
           CustomWebsiteCreateRequest customWebsiteCreateRequest) {
     final UserId userId = getCurrentUserId();
-    final Website website =
+    final WebsiteDto websiteDto =
             websiteService.create(
-                    new Website(
+                    new WebsiteDto(
                             null,
                             customWebsiteCreateRequest.url(),
                             customWebsiteCreateRequest.description(),
                             userId));
-    LOG.debug("Successfully created website with id = {}", website.id());
-    return ResponseEntity.ok(new WebsiteInfo(website.id().value(), website.url(), website.description()));
+    LOG.debug("Successfully created website with id = {}", websiteDto.id());
+    return ResponseEntity.ok(new WebsiteInfo(websiteDto.id().value(), websiteDto.url(), websiteDto.description()));
   }
 
   @Override

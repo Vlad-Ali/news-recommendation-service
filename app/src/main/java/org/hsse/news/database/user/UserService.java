@@ -7,7 +7,7 @@ import org.hsse.news.database.user.exceptions.InvalidCurrentPasswordException;
 import org.hsse.news.database.user.exceptions.SameNewPasswordException;
 import org.hsse.news.database.user.exceptions.UserNotFoundException;
 import org.hsse.news.database.user.models.AuthenticationCredentials;
-import org.hsse.news.database.user.models.User;
+import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.user.repositories.JpaUsersRepository;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ public class UserService {
         this.usersRepository = usersRepository;
     }
 
-    public Optional<User> findById(final UserId userId) {
+    public Optional<UserDto> findById(final UserId userId) {
         LOG.debug("Method findById called");
         final Optional<UserEntity> optionalUser= usersRepository.findById(userId.value());
         if (optionalUser.isEmpty()){
@@ -44,13 +44,13 @@ public class UserService {
     /**
      * @throws EmailConflictException if an email conflict occurs
      */
-    public User register(final User user) {
+    public UserDto register(final UserDto userDto) {
         LOG.debug("Method register called");
-        final Optional<UserEntity> optionalUser = usersRepository.findByEmail(user.email());
+        final Optional<UserEntity> optionalUser = usersRepository.findByEmail(userDto.email());
         if (optionalUser.isPresent()){
             throw new EmailConflictException("Email is already used");
         }
-        final UserEntity userEntity = UserMapper.toUserEntity(user);
+        final UserEntity userEntity = UserMapper.toUserEntity(userDto);
 
         return UserMapper.toUser(usersRepository.save(userEntity));
     }

@@ -3,7 +3,7 @@ package org.hsse.news.database.user.repositories;
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.UserNotFoundException;
 import org.hsse.news.database.user.models.AuthenticationCredentials;
-import org.hsse.news.database.user.models.User;
+import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.util.ComparisonUtil;
 import org.hsse.news.database.util.SampleDataUtil;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Testcontainers
-class JdbiUserRepositoryTest {
+class JdbiUserDtoRepositoryTest {
     @Container
     private static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>("postgres:16.4-alpine");
@@ -50,17 +50,17 @@ class JdbiUserRepositoryTest {
 
     @Test
     void testFindByIdSuccess() {
-        assert SampleDataUtil.DEFAULT_USER.id() != null;
-        final Optional<User> userOptional = repository.findById(SampleDataUtil.DEFAULT_USER.id());
+        assert SampleDataUtil.DEFAULT_USER_DTO.id() != null;
+        final Optional<UserDto> userOptional = repository.findById(SampleDataUtil.DEFAULT_USER_DTO.id());
 
         assertTrue(userOptional.isPresent(), "userOptional should be present");
-        ComparisonUtil.assertDeepEquals(SampleDataUtil.DEFAULT_USER, userOptional.get());
+        ComparisonUtil.assertDeepEquals(SampleDataUtil.DEFAULT_USER_DTO, userOptional.get());
     }
 
     @Test
     void testFindByIdFail() {
-        assert SampleDataUtil.NEW_USER.id() != null;
-        final Optional<User> userOptional = repository.findById(SampleDataUtil.NEW_USER.id());
+        assert SampleDataUtil.NEW_USER_DTO.id() != null;
+        final Optional<UserDto> userOptional = repository.findById(SampleDataUtil.NEW_USER_DTO.id());
 
         assertTrue(userOptional.isEmpty(), "userOptional should be empty");
     }
@@ -82,7 +82,7 @@ class JdbiUserRepositoryTest {
     void testAuthenticateIncorrectPassword() {
         final AuthenticationCredentials credentials =
                 new AuthenticationCredentials(
-                        SampleDataUtil.DEFAULT_USER.email(),
+                        SampleDataUtil.DEFAULT_USER_DTO.email(),
                         "wrong_password"
                 );
         final Optional<UserId> userIdOptional = repository.authenticate(credentials);
@@ -95,7 +95,7 @@ class JdbiUserRepositoryTest {
         final AuthenticationCredentials credentials =
                 new AuthenticationCredentials(
                         "non_existent_email@example.com",
-                        SampleDataUtil.DEFAULT_USER.password()
+                        SampleDataUtil.DEFAULT_USER_DTO.password()
                 );
         final Optional<UserId> userIdOptional = repository.authenticate(credentials);
 
@@ -104,104 +104,104 @@ class JdbiUserRepositoryTest {
 
     @Test
     void testCreateSuccess() {
-        final User newUser = new User(
-                SampleDataUtil.NEW_USER.email(),
-                SampleDataUtil.NEW_USER.password(),
-                SampleDataUtil.NEW_USER.username()
+        final UserDto newUserDto = new UserDto(
+                SampleDataUtil.NEW_USER_DTO.email(),
+                SampleDataUtil.NEW_USER_DTO.password(),
+                SampleDataUtil.NEW_USER_DTO.username()
         );
-        final User createdUser = repository.create(newUser);
+        final UserDto createdUserDto = repository.create(newUserDto);
 
-        assertNotNull(createdUser.id(), "createdUser should be initialized");
+        assertNotNull(createdUserDto.id(), "createdUser should be initialized");
         ComparisonUtil.assertDeepEquals(
-                newUser.initializeWithId(createdUser.id()),
-                createdUser
+                newUserDto.initializeWithId(createdUserDto.id()),
+                createdUserDto
         );
     }
 
     @Test
     void testCreateEmailConflict() {
-        final User newUser = new User(
-                SampleDataUtil.DEFAULT_USER.email(),
-                SampleDataUtil.NEW_USER.password(),
-                SampleDataUtil.NEW_USER.username()
+        final UserDto newUserDto = new UserDto(
+                SampleDataUtil.DEFAULT_USER_DTO.email(),
+                SampleDataUtil.NEW_USER_DTO.password(),
+                SampleDataUtil.NEW_USER_DTO.username()
         );
 
         assertThrows(
                 EmailConflictException.class,
-                () -> repository.create(newUser)
+                () -> repository.create(newUserDto)
         );
     }
 
     @Test
     void testUpdateSuccess() {
-        final User userToUpdate = new User(
-                SampleDataUtil.DEFAULT_USER.id(),
-                SampleDataUtil.NEW_USER.email(),
-                SampleDataUtil.NEW_USER.password(),
-                SampleDataUtil.NEW_USER.username()
+        final UserDto userDtoToUpdate = new UserDto(
+                SampleDataUtil.DEFAULT_USER_DTO.id(),
+                SampleDataUtil.NEW_USER_DTO.email(),
+                SampleDataUtil.NEW_USER_DTO.password(),
+                SampleDataUtil.NEW_USER_DTO.username()
         );
-        repository.update(userToUpdate);
+        repository.update(userDtoToUpdate);
 
-        assert userToUpdate.id() != null;
-        final Optional<User> updatedUserOptional = repository.findById(userToUpdate.id());
+        assert userDtoToUpdate.id() != null;
+        final Optional<UserDto> updatedUserOptional = repository.findById(userDtoToUpdate.id());
 
         assertTrue(updatedUserOptional.isPresent(), "updatedUserOptional should be present");
-        ComparisonUtil.assertDeepEquals(userToUpdate, updatedUserOptional.get());
+        ComparisonUtil.assertDeepEquals(userDtoToUpdate, updatedUserOptional.get());
     }
 
     @Test
     void testUpdateUserNotFound() {
         assertThrows(
                 UserNotFoundException.class,
-                () -> repository.update(SampleDataUtil.NEW_USER)
+                () -> repository.update(SampleDataUtil.NEW_USER_DTO)
         );
     }
 
     @Test
     void testUpdateEmailConflict() {
         repository.create(
-                new User(
-                        SampleDataUtil.NEW_USER.email(),
-                        SampleDataUtil.NEW_USER.password(),
-                        SampleDataUtil.NEW_USER.username()
+                new UserDto(
+                        SampleDataUtil.NEW_USER_DTO.email(),
+                        SampleDataUtil.NEW_USER_DTO.password(),
+                        SampleDataUtil.NEW_USER_DTO.username()
                 )
         );
 
-        final User userToUpdate = new User(
-                SampleDataUtil.DEFAULT_USER.id(),
-                SampleDataUtil.NEW_USER.email(),
-                SampleDataUtil.NEW_USER.password(),
-                SampleDataUtil.NEW_USER.username()
+        final UserDto userDtoToUpdate = new UserDto(
+                SampleDataUtil.DEFAULT_USER_DTO.id(),
+                SampleDataUtil.NEW_USER_DTO.email(),
+                SampleDataUtil.NEW_USER_DTO.password(),
+                SampleDataUtil.NEW_USER_DTO.username()
         );
 
         assertThrows(
                 EmailConflictException.class,
-                () -> repository.update(userToUpdate)
+                () -> repository.update(userDtoToUpdate)
         );
     }
 
     @Test
     void testDeleteSuccess() {
-        assert SampleDataUtil.DEFAULT_USER.id() != null;
-        repository.delete(SampleDataUtil.DEFAULT_USER.id());
+        assert SampleDataUtil.DEFAULT_USER_DTO.id() != null;
+        repository.delete(SampleDataUtil.DEFAULT_USER_DTO.id());
 
         assertTrue(
-                repository.findById(SampleDataUtil.DEFAULT_USER.id()).isEmpty(),
+                repository.findById(SampleDataUtil.DEFAULT_USER_DTO.id()).isEmpty(),
                 "DEFAULT_USER should not be present"
         );
     }
 
     @Test
     void testDeleteUserNotFound() { // NOPMD
-        assert SampleDataUtil.NEW_USER.id() != null;
+        assert SampleDataUtil.NEW_USER_DTO.id() != null;
         assertThrows(
                 UserNotFoundException.class,
-                () -> repository.delete(SampleDataUtil.NEW_USER.id())
+                () -> repository.delete(SampleDataUtil.NEW_USER_DTO.id())
         );
 
-        assert SampleDataUtil.DEFAULT_USER.id() != null;
+        assert SampleDataUtil.DEFAULT_USER_DTO.id() != null;
         assertTrue(
-                repository.findById(SampleDataUtil.DEFAULT_USER.id()).isPresent(),
+                repository.findById(SampleDataUtil.DEFAULT_USER_DTO.id()).isPresent(),
                 "DEFAULT_USER should be present"
         );
     }

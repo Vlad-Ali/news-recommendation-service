@@ -11,7 +11,7 @@ import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.jwt.JwtService;
 import org.hsse.news.database.user.UserService;
 import org.hsse.news.database.user.models.AuthenticationCredentials;
-import org.hsse.news.database.user.models.User;
+import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.util.SampleDataUtil;
 import org.hsse.news.database.website.WebsiteService;
@@ -19,7 +19,7 @@ import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPe
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
 import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
-import org.hsse.news.database.website.models.Website;
+import org.hsse.news.database.website.models.WebsiteDto;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,8 +43,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(classes = {Application.class, SecurityConfig.class, JwtTokenFilter.class, JwtService.class, UserController.class})
 public class WebsitesControllerTest {
     private final WebsiteInfo testWebsiteInfo = SampleDataUtil.DEFAULT_WEBSITE_INFO;
-    private final Website testWebsite = SampleDataUtil.DEFAULT_WEBSITE;
-    private final User testUser = SampleDataUtil.DEFAULT_USER;
+    private final WebsiteDto testWebsiteDto = SampleDataUtil.DEFAULT_WEBSITE_DTO;
+    private final UserDto testUserDto = SampleDataUtil.DEFAULT_USER_DTO;
     private static final String USER_REGISTER = "{\"email\":\"test@example.com\", \"password\":\"test_password\",\"username\":\"TestUser\"}";
     private static final String USER_SIGN_IN = "{\"email\":\"test@example.com\", \"password\":\"test_password\"}";
     private static final String SUB_WEBSITES_UPDATE = "{\"websiteIds\":[1,2]}";
@@ -52,7 +52,7 @@ public class WebsitesControllerTest {
     private static final String CONTENT_TYPE_JSON = "application/json";
     private final WebsitesResponse testWebsitesResponse = new WebsitesResponse(List.of(SampleDataUtil.DEFAULT_WEBSITE_INFO), List.of(SampleDataUtil.NEW_WEBSITE_INFO));
     private final SubWebsitesUpdateRequest testSubWebsitesUpdateRequest = new SubWebsitesUpdateRequest(List.of(1L,2L));
-    private final CustomWebsiteCreateRequest testCustomWebsiteCreateRequest = new CustomWebsiteCreateRequest(SampleDataUtil.DEFAULT_WEBSITE.url(), SampleDataUtil.DEFAULT_WEBSITE.description());
+    private final CustomWebsiteCreateRequest testCustomWebsiteCreateRequest = new CustomWebsiteCreateRequest(SampleDataUtil.DEFAULT_WEBSITE_DTO.url(), SampleDataUtil.DEFAULT_WEBSITE_DTO.description());
 
     @Autowired
     private MockMvc mockMvc;
@@ -65,7 +65,7 @@ public class WebsitesControllerTest {
 
     @BeforeEach
     void beforeEach() throws Exception {
-        when(userService.register(any(User.class))).thenReturn(testUser);
+        when(userService.register(any(UserDto.class))).thenReturn(testUserDto);
         mockMvc.perform(post("/user/register").contentType(CONTENT_TYPE_JSON).content(USER_REGISTER))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -75,7 +75,7 @@ public class WebsitesControllerTest {
 
     // Method to get jwt user's token
     private String getUserToken() throws Exception {
-        when(userService.authenticate(any(AuthenticationCredentials.class))).thenReturn(Optional.of(testUser.id()));
+        when(userService.authenticate(any(AuthenticationCredentials.class))).thenReturn(Optional.of(testUserDto.id()));
         return mockMvc.perform(post("/user/sign-in").contentType(CONTENT_TYPE_JSON).content(USER_SIGN_IN))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -161,7 +161,7 @@ public class WebsitesControllerTest {
     @Test
     public void shouldCreateCustomWebsite() throws Exception {
         final String token = getUserToken();
-        when(websiteService.create(any(Website.class))).thenReturn(testWebsite);
+        when(websiteService.create(any(WebsiteDto.class))).thenReturn(testWebsiteDto);
         mockMvc.perform(post("/websites/custom").contentType(CONTENT_TYPE_JSON).content(CUSTOM_WEBSITE_CREATE).header("Authorization", "Bearer "+token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.websiteId").value(testWebsiteInfo.websiteId()))
@@ -172,7 +172,7 @@ public class WebsitesControllerTest {
     @Test
     public void shouldNotCreateCustomWebsite() throws Exception {
         final String token = getUserToken();
-        when(websiteService.create(any(Website.class))).thenThrow(new WebsiteAlreadyExistsException(new WebsiteId(5L), testWebsite.url()));
+        when(websiteService.create(any(WebsiteDto.class))).thenThrow(new WebsiteAlreadyExistsException(new WebsiteId(5L), testWebsiteDto.url()));
         mockMvc.perform(post("/websites/custom").contentType(CONTENT_TYPE_JSON).content(CUSTOM_WEBSITE_CREATE).header("Authorization", "Bearer "+token))
                 .andExpect(status().isConflict());
     }
@@ -180,7 +180,7 @@ public class WebsitesControllerTest {
     @Test
     public void shouldNotCreateCustomWebsiteBecauseNotValidRSS() throws Exception {
         final String token = getUserToken();
-        when(websiteService.create(any(Website.class))).thenThrow(new WebsiteRSSNotValidException(""));
+        when(websiteService.create(any(WebsiteDto.class))).thenThrow(new WebsiteRSSNotValidException(""));
         mockMvc.perform(post("/websites/custom").contentType(CONTENT_TYPE_JSON).content(CUSTOM_WEBSITE_CREATE).header("Authorization", "Bearer "+token))
                 .andExpect(status().isUnsupportedMediaType());
     }

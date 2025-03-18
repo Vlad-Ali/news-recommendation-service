@@ -8,38 +8,38 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public record User(
+public record UserDto(
         @Nested @Nullable UserId id,
         @NotNull String email, @NotNull String password, @NotNull String username
 ) {
     @JdbiConstructor
-    public User {}
+    public UserDto {}
 
-    public User(
+    public UserDto(
             final @NotNull String email, final @NotNull String password,
             final @NotNull String username
     ) {
         this(null, email, password, username);
     }
 
-    public User initializeWithId(final @NotNull UserId newId) {
+    public UserDto initializeWithId(final @NotNull UserId newId) {
         if (id != null) {
             throw new UserInitializationException("User is already initialized");
         }
 
-        return new User(newId, email, password, username);
+        return new UserDto(newId, email, password, username);
     }
 
-    public User withEmail(final @NotNull String newEmail) {
-        return new User(id, newEmail, password, username);
+    public UserDto withEmail(final @NotNull String newEmail) {
+        return new UserDto(id, newEmail, password, username);
     }
 
-    public User withPassword(final @NotNull String newPassword) {
-        return new User(id, email, newPassword, username);
+    public UserDto withPassword(final @NotNull String newPassword) {
+        return new UserDto(id, email, newPassword, username);
     }
 
-    public User withUsername(final @NotNull String newUsername) {
-        return new User(id, email, password, newUsername);
+    public UserDto withUsername(final @NotNull String newUsername) {
+        return new UserDto(id, email, password, newUsername);
     }
 
     @Override
@@ -48,11 +48,11 @@ public record User(
             return true;
         }
 
-        if (!(o instanceof User user)) {
+        if (!(o instanceof UserDto userDto)) {
             return false;
         }
 
-        return id != null && id.equals(user.id);
+        return id != null && id.equals(userDto.id);
     }
 
     @Override

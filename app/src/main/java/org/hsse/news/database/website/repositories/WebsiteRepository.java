@@ -4,7 +4,7 @@ import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
-import org.hsse.news.database.website.models.Website;
+import org.hsse.news.database.website.models.WebsiteDto;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,9 +17,9 @@ public interface WebsiteRepository {
     /**
      * @throws WebsiteAlreadyExistsException if the website exist
      */
-    @NotNull Website create(@NotNull Website website);
+    @NotNull WebsiteDto create(@NotNull WebsiteDto websiteDto);
 
-    @NotNull List<Website> getAll();
+    @NotNull List<WebsiteDto> getAll();
 
     @NotNull List<WebsiteInfo> findSubscribedWebsitesByUserId(@NotNull UserId creatorId);
 
@@ -29,7 +29,7 @@ public interface WebsiteRepository {
      * @throws WebsiteNotFoundException if the website does not exist
      * @throws WebsiteAlreadyExistsException if the website exist
      */
-    void update(@NotNull Website website);
+    void update(@NotNull WebsiteDto websiteDto);
 
     /**
      * @throws WebsiteNotFoundException if the website does not exist

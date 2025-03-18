@@ -9,38 +9,38 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public record Website(
+public record WebsiteDto(
         @Nested @Nullable WebsiteId id,
          @NotNull String url, @NotNull String description, @Nullable UserId creatorId
 ) {
     @JdbiConstructor
-    public Website {}
+    public WebsiteDto {}
 
-    public Website(
+    public WebsiteDto(
             final @NotNull String url, final @NotNull String description,
             final @Nullable UserId creatorId
     ) {
         this(null, url, description, creatorId);
     }
 
-    public Website initializeWithId(final @NotNull WebsiteId newId) {
+    public WebsiteDto initializeWithId(final @NotNull WebsiteId newId) {
         if (id != null) {
             throw new UserInitializationException("Website is already initialized");
         }
 
-        return new Website(newId, url, description, creatorId);
+        return new WebsiteDto(newId, url, description, creatorId);
     }
 
-    public Website withUrl(final @NotNull String newUrl) {
-        return new Website(id, newUrl, description, creatorId);
+    public WebsiteDto withUrl(final @NotNull String newUrl) {
+        return new WebsiteDto(id, newUrl, description, creatorId);
     }
 
-    public Website withDescription(final @NotNull String newDescription) {
-        return new Website(id, url, newDescription, creatorId);
+    public WebsiteDto withDescription(final @NotNull String newDescription) {
+        return new WebsiteDto(id, url, newDescription, creatorId);
     }
 
-    public Website withCreators(final @NotNull UserId newCreator) {
-        return new Website(id, url, description, newCreator);
+    public WebsiteDto withCreators(final @NotNull UserId newCreator) {
+        return new WebsiteDto(id, url, description, newCreator);
     }
 
     @Override
@@ -49,11 +49,11 @@ public record Website(
             return true;
         }
 
-        if (!(object instanceof Website website)) {
+        if (!(object instanceof WebsiteDto websiteDto)) {
             return false;
         }
 
-        return id != null && id.equals(website.id);
+        return id != null && id.equals(websiteDto.id);
     }
 
     @Override

@@ -11,7 +11,7 @@ import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPe
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
 import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
-import org.hsse.news.database.website.models.Website;
+import org.hsse.news.database.website.models.WebsiteDto;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.hsse.news.database.website.repositories.JpaWebsitesRepository;
 import org.hsse.news.util.RSSValidator;
@@ -44,8 +44,8 @@ public class WebsiteService {
             throw new WebsiteNotFoundException("Website is not found with id = " + websiteId);
         }
         final WebsiteEntity websiteEntity = optionalWebsite.get();
-        final Website website = WebsiteMapper.toWebsite(websiteEntity);
-        return Optional.of(new WebsiteInfo(websiteEntity.getWebsiteId(), website.url(), website.description()));
+        final WebsiteDto websiteDto = WebsiteMapper.toWebsite(websiteEntity);
+        return Optional.of(new WebsiteInfo(websiteEntity.getWebsiteId(), websiteDto.url(), websiteDto.description()));
     }
 
 
@@ -54,8 +54,8 @@ public class WebsiteService {
         final ArrayList<WebsiteEntity> websiteEntityArrayList = new ArrayList<>(websitesRepository.findSubscribedWebsitesByUserId(userId.value()));
         final ArrayList<WebsiteInfo> websites = new ArrayList<>();
         for(final WebsiteEntity entity : websiteEntityArrayList){
-            final Website website = WebsiteMapper.toWebsite(entity);
-            websites.add(new WebsiteInfo(website.id().value(), website.url(), website.description()));
+            final WebsiteDto websiteDto = WebsiteMapper.toWebsite(entity);
+            websites.add(new WebsiteInfo(websiteDto.id().value(), websiteDto.url(), websiteDto.description()));
         }
         return websites.stream().toList();
     }
@@ -65,8 +65,8 @@ public class WebsiteService {
         final ArrayList<WebsiteEntity> websiteEntityArrayList = new ArrayList<>(websitesRepository.findUnSubscribedWebsitesByUserId(userId.value()));
         final ArrayList<WebsiteInfo> websites = new ArrayList<>();
         for(final WebsiteEntity entity : websiteEntityArrayList){
-            final Website website = WebsiteMapper.toWebsite(entity);
-            websites.add(new WebsiteInfo(website.id().value(), website.url(), website.description()));
+            final WebsiteDto websiteDto = WebsiteMapper.toWebsite(entity);
+            websites.add(new WebsiteInfo(websiteDto.id().value(), websiteDto.url(), websiteDto.description()));
         }
         return websites.stream().toList();
     }
@@ -77,22 +77,22 @@ public class WebsiteService {
     }
 
     @Transactional
-    public Website create(final Website website) {
+    public WebsiteDto create(final WebsiteDto websiteDto) {
         LOG.debug("Method create called");
-        if (!RSSValidator.isRSSFeedValid(website.url())){
+        if (!RSSValidator.isRSSFeedValid(websiteDto.url())){
             throw new WebsiteRSSNotValidException("Not valid rss for website");
         }
-        final Optional<WebsiteEntity> optionalWebsite = websitesRepository.findByUrl(website.url());
+        final Optional<WebsiteEntity> optionalWebsite = websitesRepository.findByUrl(websiteDto.url());
         if (optionalWebsite.isPresent()){
-            throw new WebsiteAlreadyExistsException("Website already exists with url = " + website.url());
+            throw new WebsiteAlreadyExistsException("Website already exists with url = " + websiteDto.url());
         }
-        final Optional<UserEntity> optionalUser = usersRepository.findById(website.creatorId().value());
+        final Optional<UserEntity> optionalUser = usersRepository.findById(websiteDto.creatorId().value());
         final UserEntity userEntity = optionalUser.get();
-        final WebsiteEntity websiteEntity = WebsiteMapper.toWebsiteEntity(website, userEntity);
+        final WebsiteEntity websiteEntity = WebsiteMapper.toWebsiteEntity(websiteDto, userEntity);
         userEntity.addWebsite(websiteEntity);
         final UserEntity savedUser = usersRepository.save(userEntity);
         final WebsiteEntity savedWebsite = savedUser.getCreatedWebsites().stream()
-                .filter(web -> web.getUrl().equals(website.url()))
+                .filter(web -> web.getUrl().equals(websiteDto.url()))
                 .findFirst().get();
         return WebsiteMapper.toWebsite(savedWebsite);
     }
