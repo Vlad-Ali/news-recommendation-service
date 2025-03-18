@@ -35,7 +35,7 @@ public class TopicService {
 
     @Transactional
     public void update(final TopicId id, final CreateCustomTopicRequest data) {
-        Topic topic = repository.findById(id.value()).orElseThrow(() -> new TopicNotFoundException(id));
+        final Topic topic = repository.findById(id.value()).orElseThrow(() -> new TopicNotFoundException(id));
         topic.setName(data.name());
         topic.setCreatorId(data.creatorId().value());
         repository.save(topic);
