@@ -4,7 +4,6 @@ import org.hsse.news.api.schemas.response.website.WebsitesResponse;
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.entity.UserEntity;
 import org.hsse.news.database.entity.WebsiteEntity;
-import org.hsse.news.database.mapper.WebsiteMapper;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.user.repositories.JpaUsersRepository;
 import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPerUserException;
@@ -44,7 +43,7 @@ public class WebsiteService {
             throw new WebsiteNotFoundException("Website is not found with id = " + websiteId);
         }
         final WebsiteEntity websiteEntity = optionalWebsite.get();
-        final WebsiteDto websiteDto = WebsiteMapper.toWebsite(websiteEntity);
+        final WebsiteDto websiteDto = websiteEntity.toWebsiteDto();
         return Optional.of(new WebsiteInfo(websiteEntity.getWebsiteId(), websiteDto.url(), websiteDto.description()));
     }
 
@@ -54,7 +53,7 @@ public class WebsiteService {
         final ArrayList<WebsiteEntity> websiteEntityArrayList = new ArrayList<>(websitesRepository.findSubscribedWebsitesByUserId(userId.value()));
         final ArrayList<WebsiteInfo> websites = new ArrayList<>();
         for(final WebsiteEntity entity : websiteEntityArrayList){
-            final WebsiteDto websiteDto = WebsiteMapper.toWebsite(entity);
+            final WebsiteDto websiteDto = entity.toWebsiteDto();
             websites.add(new WebsiteInfo(websiteDto.id().value(), websiteDto.url(), websiteDto.description()));
         }
         return websites.stream().toList();
@@ -65,7 +64,7 @@ public class WebsiteService {
         final ArrayList<WebsiteEntity> websiteEntityArrayList = new ArrayList<>(websitesRepository.findUnSubscribedWebsitesByUserId(userId.value()));
         final ArrayList<WebsiteInfo> websites = new ArrayList<>();
         for(final WebsiteEntity entity : websiteEntityArrayList){
-            final WebsiteDto websiteDto = WebsiteMapper.toWebsite(entity);
+            final WebsiteDto websiteDto = entity.toWebsiteDto();
             websites.add(new WebsiteInfo(websiteDto.id().value(), websiteDto.url(), websiteDto.description()));
         }
         return websites.stream().toList();
@@ -88,33 +87,14 @@ public class WebsiteService {
         }
         final Optional<UserEntity> optionalUser = usersRepository.findById(websiteDto.creatorId().value());
         final UserEntity userEntity = optionalUser.get();
-        final WebsiteEntity websiteEntity = WebsiteMapper.toWebsiteEntity(websiteDto, userEntity);
+        final WebsiteEntity websiteEntity = websiteDto.toWebsiteEntity(userEntity);
         userEntity.addWebsite(websiteEntity);
         final UserEntity savedUser = usersRepository.save(userEntity);
         final WebsiteEntity savedWebsite = savedUser.getCreatedWebsites().stream()
                 .filter(web -> web.getUrl().equals(websiteDto.url()))
                 .findFirst().get();
-        return WebsiteMapper.toWebsite(savedWebsite);
+        return savedWebsite.toWebsiteDto();
     }
-
-    /**
-     * @throws WebsiteNotFoundException if the website does not exist
-     * @throws WebsiteAlreadyExistsException if the website exist
-     */
-    /*public void update(final WebsiteId websiteId, final String url, final String description) {
-        transactionManager.useTransaction(() -> {
-            final WebsiteInfo websiteInfoToUpdate =
-                    websiteRepository.findById(websiteId)
-                            .orElseThrow(() -> new WebsiteNotFoundException(websiteId));
-            final Website websiteToUpdate = new Website(websiteId, websiteInfoToUpdate.url(), websiteInfoToUpdate.description(), null);
-
-            websiteRepository.update(
-                    websiteToUpdate
-                            .withUrl(url)
-                            .withDescription(description)
-            );
-        });
-    }*/
 
     @Transactional
     public void tryUpdateSubscribedWebsites(final List<WebsiteId> websites, final UserId userId) {

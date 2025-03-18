@@ -1,7 +1,6 @@
 package org.hsse.news.database.user;
 
 import org.hsse.news.database.entity.UserEntity;
-import org.hsse.news.database.mapper.UserMapper;
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.InvalidCurrentPasswordException;
 import org.hsse.news.database.user.exceptions.SameNewPasswordException;
@@ -32,7 +31,7 @@ public class UserService {
         if (optionalUser.isEmpty()){
             throw new UserNotFoundException(userId);
         }
-        return Optional.of(UserMapper.toUser(optionalUser.get()));
+        return Optional.of(optionalUser.get().toUserDto());
     }
 
     public Optional<UserId> authenticate(final AuthenticationCredentials credentials) {
@@ -50,9 +49,9 @@ public class UserService {
         if (optionalUser.isPresent()){
             throw new EmailConflictException("Email is already used");
         }
-        final UserEntity userEntity = UserMapper.toUserEntity(userDto);
-
-        return UserMapper.toUser(usersRepository.save(userEntity));
+        final UserEntity userEntity = userDto.toUserEntity();
+        final UserEntity savedUser = usersRepository.save(userEntity);
+        return savedUser.toUserDto();
     }
 
     /**

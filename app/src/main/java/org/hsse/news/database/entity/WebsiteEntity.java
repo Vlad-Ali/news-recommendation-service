@@ -13,6 +13,9 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import org.hsse.news.database.user.models.UserId;
+import org.hsse.news.database.website.models.WebsiteDto;
+import org.hsse.news.database.website.models.WebsiteId;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -84,7 +87,7 @@ public class WebsiteEntity {
         if (!(o instanceof WebsiteEntity website)) {
             return false;
         }
-        return websiteId != null && websiteId.equals(website.websiteId);
+        return websiteId.equals(website.websiteId);
     }
 
     @Override
@@ -102,5 +105,13 @@ public class WebsiteEntity {
 
     public Set<UserEntity> getSubscribers() {
         return subscribers;
+    }
+
+    public WebsiteDto toWebsiteDto(){
+        final Long websiteId = this.getWebsiteId();
+        final String url = this.getUrl();
+        final String description = this.getDescription();
+        final UUID userId = this.getCreatorId();
+        return new WebsiteDto(new WebsiteId(websiteId), url, description, new UserId(userId));
     }
 }

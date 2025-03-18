@@ -15,6 +15,8 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hsse.news.database.user.models.UserDto;
+import org.hsse.news.database.user.models.UserId;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -116,5 +118,29 @@ public class UserEntity {
 
     public Set<WebsiteEntity> getSubscribedWebsites() {
         return subscribedWebsites;
+    }
+
+    public UserDto toUserDto(){
+        final UUID id = this.getId();
+        final String email = this.getEmail();
+        final String username = this.getUsername();
+        final String password = this.getPassword();
+        return new UserDto(new UserId(id), email, password, username);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof UserEntity user)) {
+            return false;
+        }
+        return id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return UserEntity.class.hashCode();
     }
 }
