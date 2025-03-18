@@ -105,7 +105,8 @@ class TopicServiceTest {
                 () -> service.update(
                         new TopicId(404L),
                         new CreateCustomTopicRequest("", new UserId(UUID.randomUUID()))
-                )
+                ),
+                "Should detect failing to find a topic"
         );
     }
 }

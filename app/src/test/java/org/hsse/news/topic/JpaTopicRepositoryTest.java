@@ -3,7 +3,6 @@ package org.hsse.news.topic;
 import org.hsse.news.Application;
 import org.hsse.news.database.topic.models.Topic;
 import org.hsse.news.database.topic.repositories.TopicRepository;
-import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.dbsuite.DbSuite;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
