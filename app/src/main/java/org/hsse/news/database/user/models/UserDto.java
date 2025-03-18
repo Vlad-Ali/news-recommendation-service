@@ -1,5 +1,6 @@
 package org.hsse.news.database.user.models;
 
+import org.hsse.news.database.entity.UserEntity;
 import org.hsse.news.database.user.exceptions.UserInitializationException;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -40,6 +41,10 @@ public record UserDto(
 
     public UserDto withUsername(final @NotNull String newUsername) {
         return new UserDto(id, email, password, newUsername);
+    }
+
+    public UserEntity toUserEntity(){
+        return new UserEntity(this.email(), this.password(), this.username());
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.hsse.news.api.schemas.request.website.SubWebsitesUpdateRequest;
 import org.hsse.news.api.schemas.response.website.WebsitesResponse;
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.jwt.JwtService;
+import org.hsse.news.database.topic.TopicService;
 import org.hsse.news.database.user.UserService;
 import org.hsse.news.database.user.models.AuthenticationCredentials;
 import org.hsse.news.database.user.models.UserDto;
@@ -62,6 +63,9 @@ public class WebsitesControllerTest {
 
     @MockitoBean
     private WebsiteService websiteService;
+
+    @MockitoBean
+    private TopicService topicService;
 
     @BeforeEach
     void beforeEach() throws Exception {

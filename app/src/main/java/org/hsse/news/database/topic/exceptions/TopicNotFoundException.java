@@ -8,4 +8,6 @@ public class TopicNotFoundException extends RuntimeException {
   public TopicNotFoundException(final TopicId topicId) {
     super(String.format(DEFAULT_MESSAGE, topicId));
   }
+
+  public TopicNotFoundException(final String message){super(message);}
 }

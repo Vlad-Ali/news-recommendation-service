@@ -2,9 +2,13 @@ package org.hsse.news.api.controllers.website;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import org.hsse.news.api.schemas.request.website.CustomWebsiteCreateRequest;
+import org.hsse.news.api.schemas.request.website.RecommendedWebsitesByTopic;
 import org.hsse.news.api.schemas.request.website.SubWebsitesUpdateRequest;
 import org.hsse.news.api.schemas.response.website.WebsitesResponse;
+import org.hsse.news.api.schemas.shared.TopicInfo;
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
+import org.hsse.news.database.topic.TopicService;
+import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.WebsiteService;
 import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPerUserException;
@@ -36,10 +40,12 @@ public class WebsitesController implements WebsiteOperations {
   private static final int MAX_WEBSITES_PER_USER =
           10;
   private final WebsiteService websiteService;
+  private final TopicService topicService;
 
   public WebsitesController(
-          final WebsiteService websiteService) {
+          final WebsiteService websiteService, final TopicService topicService) {
     this.websiteService = websiteService;
+    this.topicService = topicService;
   }
 
   @Override
@@ -101,6 +107,14 @@ public class WebsitesController implements WebsiteOperations {
     websiteService.delete(new WebsiteId(websiteId), userId);
     LOG.debug("Successfully deleted website with id = {} by user with id = {}", websiteId, userId);
     return ResponseEntity.ok("Website deleted");
+  }
+
+  @Override
+  public ResponseEntity<RecommendedWebsitesByTopic> getRecommendedWebsitesByTopic() {
+    final UserId userId = getCurrentUserId();
+    final List<TopicInfo> topicInfos = topicService.getSubscribedTopicsByUserId(userId);
+    final TopicInfo topicInfo = topicInfos.get((int)(Math.random() * topicInfos.size()));
+    return ResponseEntity.ok(new RecommendedWebsitesByTopic(websiteService.getWebsitesByUserTopic(new TopicId(topicInfo.topicID()), userId), topicInfo));
   }
 
   private UserId getCurrentUserId() {

@@ -15,6 +15,8 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hsse.news.database.user.models.UserDto;
+import org.hsse.news.database.user.models.UserId;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -54,6 +56,17 @@ public class UserEntity {
     )
     private Set<WebsiteEntity> subscribedWebsites = new HashSet<>();
 
+    @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<TopicEntity> createdTopics = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_topics",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "topic_id")
+    )
+    private Set<TopicEntity> subscribedTopics = new HashSet<>();
+
     protected UserEntity() {}
 
     public UserEntity(final String email,final String password,final String username) {
@@ -72,6 +85,16 @@ public class UserEntity {
         website.setCreator(null);
     }
 
+    public void addTopic(final TopicEntity topic){
+        createdTopics.add(topic);
+        topic.setCreator(this);
+    }
+
+    public void removeTopic(final TopicEntity topic){
+        createdTopics.remove(topic);
+        topic.setCreator(null);
+    }
+
     public void subscribeToWebsite(final WebsiteEntity website) {
         subscribedWebsites.add(website);
         website.getSubscribers().add(this);
@@ -80,6 +103,16 @@ public class UserEntity {
     public void unsubscribeFromWebsite(final WebsiteEntity website) {
         subscribedWebsites.remove(website);
         website.getSubscribers().remove(this);
+    }
+
+    public void subscribeToTopic(final TopicEntity topic){
+        subscribedTopics.add(topic);
+        topic.getSubscribers().add(this);
+    }
+
+    public void unsubscribeFromTopic(final TopicEntity topic){
+        subscribedTopics.remove(topic);
+        topic.getSubscribers().remove(this);
     }
 
     public UUID getId() {
@@ -116,5 +149,37 @@ public class UserEntity {
 
     public Set<WebsiteEntity> getSubscribedWebsites() {
         return subscribedWebsites;
+    }
+
+    public Set<TopicEntity> getCreatedTopics() {
+        return createdTopics;
+    }
+
+    public Set<TopicEntity> getSubscribedTopics() {
+        return subscribedTopics;
+    }
+
+    public UserDto toUserDto(){
+        final UUID id = this.getId();
+        final String email = this.getEmail();
+        final String username = this.getUsername();
+        final String password = this.getPassword();
+        return new UserDto(new UserId(id), email, password, username);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof UserEntity user)) {
+            return false;
+        }
+        return id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return UserEntity.class.hashCode();
     }
 }

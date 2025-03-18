@@ -21,4 +21,11 @@ public interface JpaWebsitesRepository extends JpaRepository<WebsiteEntity, Long
             + "WHERE uw.website_id IS NULL", nativeQuery = true)
     List<WebsiteEntity> findUnSubscribedWebsitesByUserId(@Param("user_id") UUID userId);
     Optional<WebsiteEntity> findByUrl(String url);
+
+    @Query(value = "SELECT w.* FROM websites w " +
+            "JOIN user_websites uw ON w.website_id = uw.website_id " +
+            "JOIN user_topics ut ON uw.user_id = ut.user_id " +
+            "WHERE ut.topic_id = :topicId " +
+            "AND w.website_id NOT IN (SELECT uw2.website_id FROM user_websites uw2 WHERE uw2.user_id = :userId)", nativeQuery = true)
+    List<WebsiteEntity> getWebsitesByUserTopic(@Param("topicId") Long topicId, @Param("userId") UUID userId);
 }

@@ -3,7 +3,7 @@ package org.hsse.news.database.util;
 import org.flywaydb.core.Flyway;
 import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleId;
-import org.hsse.news.database.topic.models.Topic;
+import org.hsse.news.database.topic.models.TopicDto;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
@@ -32,7 +32,7 @@ public final class TestcontainersUtil { // NOPMD - suppressed TestClassWithoutTe
 
         jdbi.registerRowMapper(UserDto.class, ConstructorMapper.of(UserDto.class));
         jdbi.registerRowMapper(UserId.class, ConstructorMapper.of(UserId.class));
-        jdbi.registerRowMapper(Topic.class, ConstructorMapper.of(Topic.class));
+        jdbi.registerRowMapper(TopicDto.class, ConstructorMapper.of(TopicDto.class));
         jdbi.registerRowMapper(TopicId.class, ConstructorMapper.of(TopicId.class));
         jdbi.registerRowMapper(WebsiteDto.class, ConstructorMapper.of(WebsiteDto.class));
         jdbi.registerRowMapper(WebsiteId.class, ConstructorMapper.of(WebsiteId.class));

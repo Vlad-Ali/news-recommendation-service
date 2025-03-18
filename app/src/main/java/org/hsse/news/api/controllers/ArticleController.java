@@ -69,7 +69,7 @@ public final class ArticleController implements Controller {
 
                     for (final Article article : articleList) {
                         if (responses.containsKey(article.url())) {
-                            responses.get(article.url()).addTopic(topicService.getTopicNameById(article.topicId()));
+                            responses.get(article.url()).addTopic(topicService.findById(article.topicId()).get().description());
                         } else {
                             responses.put(article.url(), castUtil.fromArticle(article));
                         }
