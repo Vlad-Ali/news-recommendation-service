@@ -1,122 +1,79 @@
 package org.hsse.news.api.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hsse.news.api.authorizers.Authorizer;
-import org.hsse.news.api.util.ControllerUtil;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.hsse.news.api.schemas.request.topic.CreateCustomTopicRequest;
 import org.hsse.news.database.topic.TopicService;
+import org.hsse.news.database.topic.models.Topic;
+import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import spark.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Optional;
+import java.util.List;
 
-public class TopicController implements Controller {
-    private static final Logger LOG = LoggerFactory.getLogger(TopicController.class);
-    private static final String TOPICS_PREFIX = "/topics";
-    private static final String ACCEPT_TYPE = "application/json";
+@RestController
+@RequestMapping("/topics")
+@AllArgsConstructor
+@Slf4j
+@Tag(name = "Topic API", description = "Управление топиками")
+public class TopicController {
+    private final TopicService topicService;
 
-    private final String routePrefix;
-    private final Service service;
-    private final TopicService topicService; // NOPMD - suppressed UnusedPrivateField - TODO not yet implemented
-    private final ObjectMapper objectMapper; // NOPMD - suppressed UnusedPrivateField - TODO not yet implemented
-    private final Authorizer authorizer;
-
-    public TopicController(
-            final String apiPrefix,
-            final Service service,
-            final TopicService topicService,
-            final ObjectMapper objectMapper,
-            final Authorizer authorizer
-    ) {
-        this.routePrefix = apiPrefix + TOPICS_PREFIX;
-        this.service = service;
-        this.topicService = topicService;
-        this.objectMapper = objectMapper;
-        this.authorizer = authorizer;
+    @GetMapping
+    private List<Topic> get() {
+        final UserId userId = getCurrentUserId();
+        log.error("Get not implemented");
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Not implemented");
     }
 
-    @Override
-    public void initializeEndpoints() {
-        get();
-        put();
-        createCustom();
-        deleteCustom();
+    @GetMapping("/{id}")
+    private Topic get(@PathVariable @Parameter(description = "ID пользователя") TopicId id) {
+        final UserId userId = getCurrentUserId();
+        log.error("Get by id not implemented");
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Not implemented");
     }
 
-    private void get() {
-        final String path = routePrefix;
-
-        service.get(
-                path,
-                ACCEPT_TYPE,
-                (request, response) -> {
-                    ControllerUtil.logRequest(request, path);
-
-                    final Optional<UserId> userIdOptional = authorizer.authorizeOptional(request); // NOPMD - suppressed UnusedLocalVariable - TODO not yet implemented
-
-                    LOG.error("Not implemented"); // NOPMD - suppressed AvoidDuplicateLiterals - TODO temporal behaviour
-
-                    service.halt(501, "Not Implemented"); // NOPMD - suppressed AvoidDuplicateLiterals - TODO temporal behaviour
-                    return null;
-                }
-        );
+    @PostMapping
+    private void create(@RequestBody CreateCustomTopicRequest request) {
+        final UserId userId = getCurrentUserId();
+        log.error("Create not implemented");
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Not implemented");
     }
 
-    private void put() {
-        final String path = routePrefix;
-
-        service.put(
-                path,
-                ACCEPT_TYPE,
-                (request, response) -> {
-                    ControllerUtil.logRequest(request, path);
-
-                    final UserId userId = authorizer.authorizeStrict(request); // NOPMD - suppressed UnusedLocalVariable - TODO not yet implemented
-
-                    LOG.error("Not implemented");
-
-                    service.halt(501, "Not Implemented");
-                    return null;
-                }
-        );
+    @PutMapping("/{id}")
+    private void put(@PathVariable @Parameter(description = "ID пользователя") TopicId id,
+                     @RequestBody CreateCustomTopicRequest request) {
+        final UserId userId = getCurrentUserId();
+        log.error("Put not implemented");
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Not implemented");
     }
 
-    private void createCustom() {
-        final String path = routePrefix + "/custom";
-
-        service.post(
-                path,
-                ACCEPT_TYPE,
-                (request, response) -> {
-                    ControllerUtil.logRequest(request, path);
-
-                    final UserId userId = authorizer.authorizeStrict(request); // NOPMD - suppressed UnusedLocalVariable - TODO not yet implemented
-
-                    LOG.error("Not implemented");
-
-                    service.halt(501, "Not Implemented");
-                    return null;
-                }
-        );
+    @DeleteMapping("/{id}")
+    private void delete(@PathVariable @Parameter(description = "ID пользователя") TopicId id) {
+        final UserId userId = getCurrentUserId();
+        log.error("Delete not implemented");
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Not implemented");
     }
 
-    private void deleteCustom() {
-        final String path = routePrefix + "/custom/:id";
-
-        service.delete(
-                path,
-                ACCEPT_TYPE,
-                (request, response) -> {
-                    ControllerUtil.logRequest(request, path);
-
-                    final UserId userId = authorizer.authorizeStrict(request); // NOPMD - suppressed UnusedLocalVariable - TODO not yet implemented
-
-                    LOG.error("Not implemented");
-
-                    service.halt(501, "Not Implemented");
-                    return null;
-                }
-        );
+    private UserId getCurrentUserId() {
+        final Object principal = SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        if ("anonymousUser".equals(principal)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Authorization required");
+        }
+        return (UserId) principal;
     }
 }
