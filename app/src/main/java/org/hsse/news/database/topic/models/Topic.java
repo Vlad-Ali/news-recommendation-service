@@ -25,15 +25,15 @@ public class Topic {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(description = "1")
-    Long topicId;
+    private Long topicId;
 
     @Schema(description = "Название топика", example = "Новости")
     @NotNull
-    String name;
+    private String name;
 
     @Schema(description = "ID автора", example = "5014e384-d3de-4804-bb93-2502e02894c6")
     @NotNull
-    UUID creatorId;
+    private UUID creatorId;
 
     public Topic(final @NotNull String name, final @NotNull UserId creator) {
         this.name = name;

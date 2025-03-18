@@ -26,18 +26,17 @@ import java.util.UUID;
 @Testcontainers
 @ContextConfiguration(classes = Application.class)
 class JpaTopicRepositoryTest extends DbSuite {
-
   @Autowired
   private TopicRepository topicRepository;
 
-  private Topic TOPIC_1 = new Topic("test", new UserId(UUID.randomUUID()));
-  private static final Topic TOPIC_2 = new Topic("test2", new UserId(UUID.randomUUID()));
+  private Topic topic1 = new Topic("test", new UserId(UUID.randomUUID()));
+  private final Topic topic2 = new Topic("test2", new UserId(UUID.randomUUID()));
 
   @BeforeEach
   @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public void setup() {
     topicRepository.deleteAll();
-    TOPIC_1 = topicRepository.save(TOPIC_1);
+    topic1 = topicRepository.save(topic1);
   }
 
   @Test
@@ -47,30 +46,30 @@ class JpaTopicRepositoryTest extends DbSuite {
 
   @Test
   void shouldFindTopic() {
-    final Optional<Topic> topic = topicRepository.findById(TOPIC_1.getTopicId());
+    final Optional<Topic> topic = topicRepository.findById(topic1.getTopicId());
 
     Assertions.assertTrue(topic.isPresent());
-    Assertions.assertEquals(TOPIC_1.getName(), topic.get().getName());
-    Assertions.assertEquals(TOPIC_1.getCreatorId(), topic.get().getCreatorId());
+    Assertions.assertEquals(topic1.getName(), topic.get().getName());
+    Assertions.assertEquals(topic1.getCreatorId(), topic.get().getCreatorId());
   }
 
   @Test
   void shouldNotFindTopic() {
-    final Optional<Topic> topic = topicRepository.findById(TOPIC_1.getTopicId() + 100);
+    final Optional<Topic> topic = topicRepository.findById(topic1.getTopicId() + 100);
     Assertions.assertFalse(topic.isPresent());
   }
 
   @Test
   void shouldGetAllArticles() {
-    topicRepository.save(TOPIC_2);
+    topicRepository.save(topic2);
     final List<Topic> topics = topicRepository.findAll();
     Assertions.assertEquals(2, topics.size());
   }
 
   @Test
   void shouldDeleteArticle() {
-    Assertions.assertTrue(topicRepository.findById(TOPIC_1.getTopicId()).isPresent());
-    topicRepository.deleteById(TOPIC_1.getTopicId());
-    Assertions.assertFalse(topicRepository.findById(TOPIC_1.getTopicId()).isPresent());
+    Assertions.assertTrue(topicRepository.findById(topic1.getTopicId()).isPresent());
+    topicRepository.deleteById(topic1.getTopicId());
+    Assertions.assertFalse(topicRepository.findById(topic1.getTopicId()).isPresent());
   }
 }

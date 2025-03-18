@@ -28,12 +28,12 @@ public class TopicService {
     }
 
     @Transactional
-    public void create(CreateCustomTopicRequest data) {
+    public void create(final CreateCustomTopicRequest data) {
         repository.save(new Topic(data.name(), data.creatorId()));
     }
 
     @Transactional
-    public void update(final TopicId id, CreateCustomTopicRequest data) {
+    public void update(final TopicId id, final CreateCustomTopicRequest data) {
         repository.findById(id.value()).ifPresent((topic) -> {
             topic.setName(data.name());
             topic.setCreatorId(data.creatorId().value());
