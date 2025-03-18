@@ -1,8 +1,6 @@
 package org.hsse.news.database.util;
 
 import org.flywaydb.core.Flyway;
-import org.hsse.news.database.topic.models.Topic;
-import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.models.Website;
