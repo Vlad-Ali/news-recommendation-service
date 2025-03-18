@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class Topic {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,9 +37,9 @@ public class Topic {
     @NotNull
     private UUID creatorId;
 
-    public Topic(final @NotNull String name, final @NotNull UserId creator) {
+    public Topic(final @NotNull String name, final @NotNull UUID creatorId) {
         this.name = name;
-        creatorId = creator.value();
+        this.creatorId = creatorId;
     }
 
     public TopicDto toDto() {

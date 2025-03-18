@@ -29,8 +29,8 @@ class JpaTopicRepositoryTest extends DbSuite {
   @Autowired
   private TopicRepository topicRepository;
 
-  private Topic topic1 = new Topic("test", new UserId(UUID.randomUUID()));
-  private final Topic topic2 = new Topic("test2", new UserId(UUID.randomUUID()));
+  private Topic topic1 = new Topic("test", UUID.randomUUID());
+  private final Topic topic2 = new Topic("test2", UUID.randomUUID());
 
   @BeforeEach
   @Transactional(propagation = Propagation.NOT_SUPPORTED)

@@ -2,6 +2,7 @@ package org.hsse.news.database.topic;
 
 import lombok.AllArgsConstructor;
 import org.hsse.news.api.schemas.request.topic.CreateCustomTopicRequest;
+import org.hsse.news.database.topic.exceptions.TopicNotFoundException;
 import org.hsse.news.database.topic.models.Topic;
 import org.hsse.news.database.topic.models.TopicDto;
 import org.hsse.news.database.topic.models.TopicId;
@@ -29,16 +30,15 @@ public class TopicService {
 
     @Transactional
     public void create(final CreateCustomTopicRequest data) {
-        repository.save(new Topic(data.name(), data.creatorId()));
+        repository.save(new Topic(data.name(), data.creatorId().value()));
     }
 
     @Transactional
     public void update(final TopicId id, final CreateCustomTopicRequest data) {
-        repository.findById(id.value()).ifPresent((topic) -> {
-            topic.setName(data.name());
-            topic.setCreatorId(data.creatorId().value());
-            repository.save(topic);
-        });
+        Topic topic = repository.findById(id.value()).orElseThrow(() -> new TopicNotFoundException(id));
+        topic.setName(data.name());
+        topic.setCreatorId(data.creatorId().value());
+        repository.save(topic);
     }
 
     @Transactional
