@@ -1,32 +1,47 @@
 package org.hsse.news.database.topic.models;
 
-import org.hsse.news.database.user.exceptions.UserInitializationException;
-import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hsse.news.database.user.models.UserId;
 
 import java.util.Objects;
+import java.util.UUID;
 
-public record Topic(
-        @Nullable TopicId id, @NotNull String description
-) {
-    @JdbiConstructor
-    public Topic {}
+@Entity
+@Table(name = "topics")
+@Schema(name = "Topic", description = "Сущность темы")
+@Getter
+@Setter
+@NoArgsConstructor
+public class Topic {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "1")
+    Long topicId;
 
-    public Topic(final @NotNull String description){
-        this(null, description);
+    @Schema(description = "Название топика", example = "Новости")
+    @NotNull
+    String name;
+
+    @Schema(description = "ID автора", example = "5014e384-d3de-4804-bb93-2502e02894c6")
+    @NotNull
+    UUID creatorId;
+
+    public Topic(final @NotNull String name, final @NotNull UserId creator) {
+        this.name = name;
+        creatorId = creator.value();
     }
 
-    public Topic initializeWithId(final @NotNull TopicId newId) {
-        if (id != null) {
-            throw new UserInitializationException("Topic is already initialized");
-        }
-
-        return new Topic(newId, description);
-    }
-
-    public Topic withDescription(final @NotNull String newDescription) {
-        return new Topic(id, newDescription);
+    public TopicDto toDto() {
+        return new TopicDto(new TopicId(topicId), name, new UserId(creatorId));
     }
 
     @Override
@@ -39,11 +54,11 @@ public record Topic(
             return false;
         }
 
-        return id != null && id.equals(topic.id);
+        return topicId != null && topicId.equals(topic.topicId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(topicId);
     }
 }

@@ -3,8 +3,6 @@ package org.hsse.news;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.flywaydb.core.Flyway;
-import org.hsse.news.database.topic.models.Topic;
-import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.User;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.models.Website;
@@ -46,8 +44,6 @@ public class Application {
 
         jdbi.registerRowMapper(User.class, ConstructorMapper.of(User.class));
         jdbi.registerRowMapper(UserId.class, ConstructorMapper.of(UserId.class));
-        jdbi.registerRowMapper(Topic.class, ConstructorMapper.of(Topic.class));
-        jdbi.registerRowMapper(TopicId.class, ConstructorMapper.of(TopicId.class));
         jdbi.registerRowMapper(Website.class, ConstructorMapper.of(Website.class));
         jdbi.registerRowMapper(WebsiteId.class, ConstructorMapper.of(WebsiteId.class));
 
