@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
@@ -68,11 +68,14 @@ public class NewsBot extends TelegramLongPollingBot {
         return "HsseNewsTeam1Bot";
     }
 
-    private static KeyboardRow getNoPostCommandsRow() {
-        final KeyboardRow commandsRow = new KeyboardRow();
-        commandsRow.add(NEXT_POST_COMMAND);
-        commandsRow.add(ADD_SOURCE_COMMAND);
-        return commandsRow;
+    private static List<InlineKeyboardButton> getNoPostCommandsRow() {
+        return List.of(
+                InlineKeyboardButton.builder()
+                        .text(NEXT_POST_COMMAND)
+                        .callbackData(NEXT_POST_COMMAND).build(),
+                InlineKeyboardButton.builder()
+                        .text(ADD_SOURCE_COMMAND)
+                        .callbackData(ADD_SOURCE_COMMAND).build());
     }
 
     private ReplyKeyboard getKeyboard(final ChatState state) {
@@ -81,22 +84,34 @@ public class NewsBot extends TelegramLongPollingBot {
         }
 
         if (normalChatState.post().isEmpty()) {
-            return new ReplyKeyboardMarkup(List.of(getNoPostCommandsRow()));
+            return new InlineKeyboardMarkup(List.of(getNoPostCommandsRow()));
         } else if (normalChatState.isLiked()) {
-            final KeyboardRow likeRow = new KeyboardRow();
-            likeRow.add(UNLIKE_COMMAND);
-            likeRow.add(DISLIKE_COMMAND);
-            return new ReplyKeyboardMarkup(List.of(likeRow, getNoPostCommandsRow()));
+            return new InlineKeyboardMarkup(List.of(List.of(
+                            InlineKeyboardButton.builder()
+                                    .text(UNLIKE_COMMAND)
+                                    .callbackData(UNLIKE_COMMAND).build(),
+                            InlineKeyboardButton.builder()
+                                    .text(DISLIKE_COMMAND)
+                                    .callbackData(DISLIKE_COMMAND).build()),
+                    getNoPostCommandsRow()));
         } else if (normalChatState.isDisliked()) {
-            final KeyboardRow likeRow = new KeyboardRow();
-            likeRow.add(LIKE_COMMAND);
-            likeRow.add(UNDISLIKE_COMMAND);
-            return new ReplyKeyboardMarkup(List.of(likeRow, getNoPostCommandsRow()));
+            return new InlineKeyboardMarkup(List.of(List.of(
+                            InlineKeyboardButton.builder()
+                                    .text(LIKE_COMMAND)
+                                    .callbackData(LIKE_COMMAND).build(),
+                            InlineKeyboardButton.builder()
+                                    .text(UNDISLIKE_COMMAND)
+                                    .callbackData(UNDISLIKE_COMMAND).build()),
+                    getNoPostCommandsRow()));
         } else {
-            final KeyboardRow likeRow = new KeyboardRow();
-            likeRow.add(LIKE_COMMAND);
-            likeRow.add(DISLIKE_COMMAND);
-            return new ReplyKeyboardMarkup(List.of(likeRow, getNoPostCommandsRow()));
+            return new InlineKeyboardMarkup(List.of(List.of(
+                            InlineKeyboardButton.builder()
+                                    .text(LIKE_COMMAND)
+                                    .callbackData(LIKE_COMMAND).build(),
+                            InlineKeyboardButton.builder()
+                                    .text(DISLIKE_COMMAND)
+                                    .callbackData(DISLIKE_COMMAND).build()),
+                    getNoPostCommandsRow()));
         }
     }
 
@@ -170,11 +185,7 @@ public class NewsBot extends TelegramLongPollingBot {
         return false;
     }
 
-    @Override
-    @SneakyThrows
-    public void onUpdateReceived(final Update update) {
-        final long chatId = update.getMessage().getChatId();
-        final String text = update.getMessage().getText();
+    private void handleCommand(long chatId, String text) throws TelegramApiException {
         final ChatState state = chatStates.get(chatId);
 
         if (STOP_COMMAND.equalsIgnoreCase(text)) {
@@ -189,6 +200,17 @@ public class NewsBot extends TelegramLongPollingBot {
             sendMessage(chatId, "Источник " + text + " добавлен");
         } else if (!handleNormalState(chatId, state, text)) {
             sendMessage(chatId, "Операция " + text + " не поддерживается");
+        }
+    }
+
+    @Override
+    @SneakyThrows
+    public void onUpdateReceived(final Update update) {
+        if (update.hasMessage()) {
+            handleCommand(update.getMessage().getChatId(), update.getMessage().getText());
+        } else if (update.hasCallbackQuery()) {
+            handleCommand(update.getCallbackQuery().getMessage().getChatId(),
+                    update.getCallbackQuery().getData());
         }
     }
 }
