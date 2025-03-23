@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -133,14 +134,23 @@ public class NewsBot extends TelegramLongPollingBot {
                         .callbackData(LIST_NOT_SUBBED_COMMAND).build()),
                 List.of(InlineKeyboardButton.builder()
                         .text("Добавить...")
-                        .callbackData(SUB_CUSTOM_COMMAND).build())));
+                        .callbackData(SUB_CUSTOM_COMMAND).build()),
+                List.of(InlineKeyboardButton.builder()
+                        .text("Назад")
+                        .callbackData("/menu").build())));
     }
 
     private InlineKeyboardMarkup buildWebsitesListMenu(List<Website> websites) {
-        return new InlineKeyboardMarkup(websites.stream().map(
-                website -> List.of(InlineKeyboardButton.builder()
-                        .text(website.description())
-                        .callbackData(VIEW_COMMAND + " " + website.id().value()).build())).toList());
+        final List<List<InlineKeyboardButton>> buttons = new ArrayList<>(
+                websites.stream().map(
+                        website -> List.of(InlineKeyboardButton.builder()
+                                .text(website.description())
+                                .callbackData(VIEW_COMMAND + " " + website.id().value())
+                                .build())).toList());
+        buttons.add(List.of(InlineKeyboardButton.builder()
+                .text("Назад")
+                .callbackData(WEBSITES_MENU_COMMAND).build()));
+        return new InlineKeyboardMarkup(buttons);
     }
 
     private InlineKeyboardMarkup getTopicsMenu() {
@@ -153,21 +163,24 @@ public class NewsBot extends TelegramLongPollingBot {
                         .callbackData(LIST_NOT_SUBBED_TOPICS_COMMAND).build()),
                 List.of(InlineKeyboardButton.builder()
                         .text("Добавить...")
-                        .callbackData(SUB_CUSTOM_TOPIC_COMMAND).build())));
+                        .callbackData(SUB_CUSTOM_TOPIC_COMMAND).build()),
+                List.of(InlineKeyboardButton.builder()
+                        .text("Назад")
+                        .callbackData("/menu").build())));
     }
 
-    private InlineKeyboardMarkup getSubbedTopicsMenu() {
-        return new InlineKeyboardMarkup(getSubbedTopics().stream().map(
-                topic -> List.of(InlineKeyboardButton.builder()
-                        .text(topic.description())
-                        .callbackData(VIEW_TOPIC_COMMAND + " " + topic.id()).build())).toList());
-    }
-
-    private InlineKeyboardMarkup getUnsubbedTopicsMenu() {
-        return new InlineKeyboardMarkup(getUnsubbedTopics().stream().map(
-                topic -> List.of(InlineKeyboardButton.builder()
-                        .text(topic.description())
-                        .callbackData(VIEW_TOPIC_COMMAND + " " + topic.id()).build())).toList());
+    private InlineKeyboardMarkup buildTopicListMenu(List<Topic> topics) {
+        final List<List<InlineKeyboardButton>> buttons = new ArrayList<>(
+                topics.stream().map(
+                        topic -> List.of(InlineKeyboardButton.builder()
+                                .text(topic.description())
+                                .callbackData(VIEW_TOPIC_COMMAND + " " + topic.id())
+                                .build())).toList());
+        buttons.add(List.of(
+                InlineKeyboardButton.builder()
+                        .text("Назад")
+                        .callbackData(TOPICS_MENU_COMMAND).build()));
+        return new InlineKeyboardMarkup(buttons);
     }
 
     private static InlineKeyboardMarkup getNeutralArticle(ArticleId id) {
@@ -253,14 +266,21 @@ public class NewsBot extends TelegramLongPollingBot {
         final Optional<WebsiteId> id = parseWebsiteIdArg(text, VIEW_COMMAND);
         if (id.isPresent()) {
             final Website website = findWebsite(id.get()).orElseThrow();
-            final String subCommandName = isSubbed(id.get()) ? "Отписаться" : "Подписаться";
-            final String subCommand = isSubbed(id.get()) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND;
+            final String subCommand =
+                    (isSubbed(id.get()) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND)
+                            + " " + id.get();
 
             sendMenuMessage(chatId, website.description() + "\n" + website.url(),
                     new InlineKeyboardMarkup(List.of(
                             List.of(InlineKeyboardButton.builder()
-                                    .text(subCommandName)
-                                    .callbackData(subCommand + " " + id.get()).build()))));
+                                    .text(isSubbed(id.get()) ? "Отписаться" : "Подписаться")
+                                    .callbackData(subCommand + " " + id.get()).build()),
+                            List.of(InlineKeyboardButton.builder()
+                                    .text("Назад")
+                                    .callbackData(isSubbed(id.get())
+                                            ? LIST_SUBBED_COMMAND
+                                            : LIST_NOT_SUBBED_COMMAND)
+                                    .build()))));
             return true;
         } else {
             return false;
@@ -290,23 +310,22 @@ public class NewsBot extends TelegramLongPollingBot {
         return true;
     }
 
-    private boolean handleViewTopic(long chatId, String text)
-            throws TelegramApiException {
-        final Optional<TopicId> id = parseTopicIdArg(text, VIEW_TOPIC_COMMAND);
-        if (id.isPresent()) {
-            final Topic topic = findTopic(id.get()).orElseThrow();
-            final String subCommandName = isSubbed(id.get()) ? "Отписаться" : "Подписаться";
-            final String subCommand = isSubbed(id.get()) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND;
+    private void sendViewTopic(long chatId, TopicId id) throws TelegramApiException {
+        final Topic topic = findTopic(id).orElseThrow();
+        final String subCommandName = isSubbed(id) ? "Отписаться" : "Подписаться";
+        final String subCommand = isSubbed(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND;
 
-            sendMenuMessage(chatId, topic.description(),
-                    new InlineKeyboardMarkup(List.of(
-                            List.of(InlineKeyboardButton.builder()
-                                    .text(subCommandName)
-                                    .callbackData(subCommand + " " + id.get()).build()))));
-            return true;
-        } else {
-            return false;
-        }
+        sendMenuMessage(chatId, topic.description(),
+                new InlineKeyboardMarkup(List.of(
+                        List.of(InlineKeyboardButton.builder()
+                                .text(subCommandName)
+                                .callbackData(subCommand + " " + id).build()),
+                        List.of(InlineKeyboardButton.builder()
+                                .text("Назад")
+                                .callbackData(isSubbed(id)
+                                        ? LIST_SUBBED_TOPICS_COMMAND
+                                        : LIST_NOT_SUBBED_TOPICS_COMMAND)
+                                .build()))));
     }
 
     private boolean handleTopicsCommand(long chatId, String text)
@@ -314,20 +333,27 @@ public class NewsBot extends TelegramLongPollingBot {
         if (TOPICS_MENU_COMMAND.equalsIgnoreCase(text)) {
             sendMenuMessage(chatId, "Темы", getTopicsMenu());
         } else if (LIST_SUBBED_TOPICS_COMMAND.equalsIgnoreCase(text)) {
-            sendMenuMessage(chatId, "Подписки:", getSubbedTopicsMenu());
+            sendMenuMessage(chatId, "Подписки:", buildTopicListMenu(getSubbedTopics()));
         } else if (LIST_NOT_SUBBED_TOPICS_COMMAND.equalsIgnoreCase(text)) {
-            sendMenuMessage(chatId, "Вы не подписаны на:", getUnsubbedTopicsMenu());
+            sendMenuMessage(chatId, "Вы не подписаны на:", buildTopicListMenu(getUnsubbedTopics()));
+        } else if (parseTopicIdArg(text, VIEW_TOPIC_COMMAND).isPresent()) {
+            final TopicId id = parseTopicIdArg(text, SUB_TOPIC_COMMAND).get();
+            sendViewTopic(chatId, id);
         } else if (SUB_CUSTOM_TOPIC_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, ChatState.AWAITING_CUSTOM_TOPIC_NAME);
-            sendMenuMessage(chatId, "Введите название темы:", null);
+            sendMenuMessage(chatId, "Введите название темы:",
+                    new InlineKeyboardMarkup(List.of(List.of(
+                            InlineKeyboardButton.builder()
+                                    .text("Отмена")
+                                    .callbackData(WEBSITES_MENU_COMMAND).build()))));
         } else if (parseTopicIdArg(text, SUB_TOPIC_COMMAND).isPresent()) {
             final TopicId id = parseTopicIdArg(text, SUB_TOPIC_COMMAND).get();
-            sendMenuMessage(chatId, "Предстааавьте, что вы подписались на тему " + id, null);
+            sendViewTopic(chatId, id);
         } else if (parseTopicIdArg(text, UNSUB_TOPIC_COMMAND).isPresent()) {
             final TopicId id = parseTopicIdArg(text, UNSUB_TOPIC_COMMAND).get();
-            sendMenuMessage(chatId, "Предстааавьте, что вы отписались от темы " + id, null);
+            sendViewTopic(chatId, id);
         } else {
-            return handleViewTopic(chatId, text);
+            return false;
         }
         return true;
     }
@@ -362,7 +388,7 @@ public class NewsBot extends TelegramLongPollingBot {
         } else if (!handleWebsitesCommand(chatId, text)
                 && !handleTopicsCommand(chatId, text)
                 && !handleLikesCommand(chatId, text)) {
-            sendMenuMessage(chatId, "Операция " + text + " не поддерживается", null);
+            sendMenuMessage(chatId, "Операция " + text + " не поддерживается", getMainMenu());
         }
     }
 
@@ -384,8 +410,8 @@ public class NewsBot extends TelegramLongPollingBot {
             handleInput(update.getMessage().getChatId(), update.getMessage().getText());
         } else if (update.hasCallbackQuery()) {
             long chatId = update.getCallbackQuery().getMessage().getChatId();
-            handleCommand(chatId, update.getCallbackQuery().getData());
             chatStates.put(chatId, ChatState.NORMAL);
+            handleCommand(chatId, update.getCallbackQuery().getData());
         }
     }
 }
