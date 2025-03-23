@@ -49,41 +49,10 @@ public class NewsBot extends TelegramLongPollingBot {
 
     private final Map<Long, ChatState> chatStates = new ConcurrentHashMap<>();
 
-    private sealed interface ChatState {
-    }
-
-    private record NormalChatState(Optional<Long> post, Optional<Boolean> liked) implements ChatState {
-        public NormalChatState() {
-            this(Optional.empty(), Optional.empty());
-        }
-
-        public NormalChatState(final long post) {
-            this(Optional.of(post), Optional.empty());
-        }
-
-        public NormalChatState(final long post, final boolean liked) {
-            this(Optional.of(post), Optional.of(liked));
-        }
-
-        boolean isLiked() {
-            return liked.equals(Optional.of(true));
-        }
-
-        boolean isDisliked() {
-            return liked.equals(Optional.of(false));
-        }
-    }
-
-    private static final class WebsitesChatState implements ChatState {
-    }
-
-    private static final class AwaitingUriChatState implements ChatState {
-    }
-
-    private static final class TopicsChatState implements ChatState {
-    }
-
-    private static final class AwaitingTopicChatState implements ChatState {
+    enum ChatState {
+        NORMAL,
+        AWAITING_CUSTOM_WEBSITE_URI,
+        AWAITING_CUSTOM_TOPIC_NAME
     }
 
     @Autowired
@@ -285,21 +254,14 @@ public class NewsBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleCommand(long chatId, final ChatState state, String text)
+    private void handleCommand(long chatId, String text)
             throws TelegramApiException {
-        if (state == null) {
-            chatStates.put(chatId, new NormalChatState());
-        }
-
         if (START_COMMAND.equalsIgnoreCase(text)) {
-            chatStates.put(chatId, new NormalChatState());
             sendMessage(chatId, "Привет! " +
                     "Добавь источники и ты сможешь смотреть ленту новостей в этом боте! ", getMainMenu());
         } else if (MENU_COMMAND.equalsIgnoreCase(text)) {
-            chatStates.put(chatId, new NormalChatState());
             sendMessage(chatId, "", getMainMenu());
         } else if (WEBSITES_MENU_COMMAND.equalsIgnoreCase(text)) {
-            chatStates.put(chatId, new WebsitesChatState());
             sendMessage(chatId, "Источники", getWebsitesMenu());
         } else if (LIST_SUBBED_COMMAND.equalsIgnoreCase(text)) {
             sendMessage(chatId, "Подписки:", getSubbedWebsitesMenu());
@@ -316,7 +278,7 @@ public class NewsBot extends TelegramLongPollingBot {
                                     .text(subAction)
                                     .callbackData(subAction + " " + id).build()))));
         } else if (SUB_CUSTOM_COMMAND.equalsIgnoreCase(text)) {
-            chatStates.put(chatId, new AwaitingUriChatState());
+            chatStates.put(chatId, ChatState.AWAITING_CUSTOM_WEBSITE_URI);
             sendMessage(chatId, "Введите URI:", null);
         } else if (parseWebsiteIdArg(text, SUB_COMMAND).isPresent()) {
             final WebsiteId id = parseWebsiteIdArg(text, SUB_COMMAND).get();
@@ -325,7 +287,6 @@ public class NewsBot extends TelegramLongPollingBot {
             final WebsiteId id = parseWebsiteIdArg(text, UNSUB_COMMAND).get();
             sendMessage(chatId, "Предстааавьте, что вы отписались от вебсайта " + id, null);
         } else if (TOPICS_MENU_COMMAND.equalsIgnoreCase(text)) {
-            chatStates.put(chatId, new TopicsChatState());
             sendMessage(chatId, "Темы", getTopicsMenu());
         } else if (LIST_SUBBED_TOPICS_COMMAND.equalsIgnoreCase(text)) {
             sendMessage(chatId, "Подписки:", getSubbedTopicsMenu());
@@ -342,7 +303,7 @@ public class NewsBot extends TelegramLongPollingBot {
                                     .text(subAction)
                                     .callbackData(subAction + " " + id).build()))));
         } else if (SUB_CUSTOM_TOPIC_COMMAND.equalsIgnoreCase(text)) {
-            chatStates.put(chatId, new AwaitingTopicChatState());
+            chatStates.put(chatId, ChatState.AWAITING_CUSTOM_TOPIC_NAME);
             sendMessage(chatId, "Введите название темы:", null);
         } else if (parseTopicIdArg(text, SUB_TOPIC_COMMAND).isPresent()) {
             final TopicId id = parseTopicIdArg(text, SUB_TOPIC_COMMAND).get();
@@ -368,21 +329,14 @@ public class NewsBot extends TelegramLongPollingBot {
     }
 
     private void handleInput(long chatId, String text) throws TelegramApiException {
-        final ChatState state = chatStates.get(chatId);
-
-        if (state == null || START_COMMAND.equalsIgnoreCase(text)) {
-            chatStates.put(chatId, new NormalChatState());
-            sendMessage(chatId, "Привет! " +
-                    "Добавь источники и ты сможешь смотреть ленту новостей в этом боте! ", getMainMenu());
-        } else if (state instanceof AwaitingUriChatState) {
-            chatStates.put(chatId, new WebsitesChatState());
-            sendMessage(chatId, "Источник " + text + " добавлен", getWebsitesMenu());
-        } else if (state instanceof AwaitingTopicChatState) {
-            chatStates.put(chatId, new WebsitesChatState());
-            sendMessage(chatId, "Источник " + text + " добавлен", getTopicsMenu());
-        } else {
-            handleCommand(chatId, state, text);
+        switch (chatStates.getOrDefault(chatId, ChatState.NORMAL)) {
+            case NORMAL -> handleCommand(chatId, text);
+            case AWAITING_CUSTOM_WEBSITE_URI ->
+                    sendMessage(chatId, "Источник " + text + " добавлен", getWebsitesMenu());
+            case AWAITING_CUSTOM_TOPIC_NAME ->
+                    sendMessage(chatId, "Тема " + text + " добавлена", getTopicsMenu());
         }
+        chatStates.put(chatId, ChatState.NORMAL);
     }
 
     @Override
@@ -391,9 +345,9 @@ public class NewsBot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             handleInput(update.getMessage().getChatId(), update.getMessage().getText());
         } else if (update.hasCallbackQuery()) {
-            handleCommand(update.getCallbackQuery().getMessage().getChatId(),
-                    chatStates.get(update.getCallbackQuery().getMessage().getChatId()),
-                    update.getCallbackQuery().getData());
+            long chatId = update.getCallbackQuery().getMessage().getChatId();
+            handleCommand(chatId, update.getCallbackQuery().getData());
+            chatStates.put(chatId, ChatState.NORMAL);
         }
     }
 }
