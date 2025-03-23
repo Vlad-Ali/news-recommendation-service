@@ -12,6 +12,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -392,13 +393,24 @@ public class NewsBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleInput(long chatId, String text) throws TelegramApiException {
+    private void deleteMessage(long chatId, int messageId) throws TelegramApiException {
+        final DeleteMessage request = new DeleteMessage();
+        request.setChatId(chatId);
+        request.setMessageId(messageId);
+        execute(request);
+    }
+
+    private void handleInput(long chatId, String text, int messageId) throws TelegramApiException {
         switch (chatStates.getOrDefault(chatId, ChatState.NORMAL)) {
             case NORMAL -> handleCommand(chatId, text);
-            case AWAITING_CUSTOM_WEBSITE_URI -> sendMenuMessage(
-                    chatId, "Источник " + text + " добавлен", getWebsitesMenu());
-            case AWAITING_CUSTOM_TOPIC_NAME -> sendMenuMessage(
-                    chatId, "Тема " + text + " добавлена", getTopicsMenu());
+            case AWAITING_CUSTOM_WEBSITE_URI -> {
+                sendMenuMessage(chatId, "Источник " + text + " добавлен", getWebsitesMenu());
+                deleteMessage(chatId, messageId);
+            }
+            case AWAITING_CUSTOM_TOPIC_NAME -> {
+                sendMenuMessage(chatId, "Тема " + text + " добавлена", getTopicsMenu());
+                deleteMessage(chatId, messageId);
+            }
         }
         chatStates.put(chatId, ChatState.NORMAL);
     }
@@ -407,7 +419,9 @@ public class NewsBot extends TelegramLongPollingBot {
     @SneakyThrows
     public void onUpdateReceived(final Update update) {
         if (update.hasMessage()) {
-            handleInput(update.getMessage().getChatId(), update.getMessage().getText());
+            handleInput(update.getMessage().getChatId(), update.getMessage().getText(),
+                    update.getMessage().getMessageId());
+            deleteMessage(update.getMessage().getChatId(), update.getMessage().getMessageId());
         } else if (update.hasCallbackQuery()) {
             long chatId = update.getCallbackQuery().getMessage().getChatId();
             chatStates.put(chatId, ChatState.NORMAL);
