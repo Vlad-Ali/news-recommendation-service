@@ -12,14 +12,12 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,7 +49,7 @@ public class NewsBot extends TelegramLongPollingBot {
     private final static String CLOSE_COMMAND = "/close";
 
     private final Map<Long, ChatState> chatStates = new ConcurrentHashMap<>();
-    private final Map<UUID, Integer> messageIds = new ConcurrentHashMap<>();
+    private final Map<Long, Integer> latestMenuMessageId = new ConcurrentHashMap<>();
 
     enum ChatState {
         NORMAL,
@@ -202,38 +200,28 @@ public class NewsBot extends TelegramLongPollingBot {
                         .callbackData(UNDISLIKE_COMMAND + " " + id.value()).build())));
     }
 
-    private void sendMessage(final long chatId, final String text,
-                             final ReplyKeyboard keyboard, final UUID id)
+    private void sendMenuMessage(final long chatId, final String text,
+                                 final InlineKeyboardMarkup keyboard)
             throws TelegramApiException {
-        final SendMessage message = new SendMessage();
-        message.setChatId(chatId);
+        final Integer messageId = latestMenuMessageId.get(chatId);
+        if (messageId == null) {
+            final SendMessage message = new SendMessage();
+            message.setChatId(chatId);
 
-        message.setText(text);
-        message.setReplyMarkup(keyboard);
+            message.setText(text);
+            message.setReplyMarkup(keyboard);
 
-        int telegramId = execute(message).getMessageId();
-        messageIds.put(id, telegramId);
-    }
+            int id = execute(message).getMessageId();
+            latestMenuMessageId.put(chatId, id);
+        } else {
+            final EditMessageText edit = new EditMessageText();
+            edit.setChatId(chatId);
+            edit.setMessageId(messageId);
+            edit.setText(text);
+            edit.setReplyMarkup(keyboard);
 
-    private void sendMessage(final long chatId, final String text)
-            throws TelegramApiException {
-        sendMessage(chatId, text, null, UUID.randomUUID());
-    }
-
-    private void sendClosableMessage(final long chatId, final String text,
-                                     InlineKeyboardMarkup keyboard) throws TelegramApiException {
-        final UUID id = UUID.randomUUID();
-
-        if (keyboard == null) {
-            keyboard = new InlineKeyboardMarkup();
+            execute(edit);
         }
-        keyboard.setKeyboard(new ArrayList<>(keyboard.getKeyboard()));
-        keyboard.getKeyboard().add(List.of(
-                InlineKeyboardButton.builder()
-                        .text("Закрыть")
-                        .callbackData(CLOSE_COMMAND + " " + id).build()));
-
-        sendMessage(chatId, text, keyboard, id);
     }
 
     private Optional<WebsiteId> parseWebsiteIdArg(String text, String command) {
@@ -260,15 +248,6 @@ public class NewsBot extends TelegramLongPollingBot {
         }
     }
 
-    private Optional<Integer> parseMessageId(String text, String command) {
-        if (text.toLowerCase().startsWith(command)) {
-            return Optional.ofNullable(
-                    messageIds.get(UUID.fromString(text.substring(command.length()).strip())));
-        } else {
-            return Optional.empty();
-        }
-    }
-
     private boolean handleViewWebsite(long chatId, String text)
             throws TelegramApiException {
         final Optional<WebsiteId> id = parseWebsiteIdArg(text, VIEW_COMMAND);
@@ -277,7 +256,7 @@ public class NewsBot extends TelegramLongPollingBot {
             final String subCommandName = isSubbed(id.get()) ? "Отписаться" : "Подписаться";
             final String subCommand = isSubbed(id.get()) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND;
 
-            sendClosableMessage(chatId, website.description() + "\n" + website.url(),
+            sendMenuMessage(chatId, website.description() + "\n" + website.url(),
                     new InlineKeyboardMarkup(List.of(
                             List.of(InlineKeyboardButton.builder()
                                     .text(subCommandName)
@@ -291,20 +270,20 @@ public class NewsBot extends TelegramLongPollingBot {
     private boolean handleWebsitesCommand(long chatId, String text)
             throws TelegramApiException {
         if (WEBSITES_MENU_COMMAND.equalsIgnoreCase(text)) {
-            sendClosableMessage(chatId, "Источники", getWebsitesMenu());
+            sendMenuMessage(chatId, "Источники", getWebsitesMenu());
         } else if (LIST_SUBBED_COMMAND.equalsIgnoreCase(text)) {
-            sendClosableMessage(chatId, "Подписки:", buildWebsitesListMenu(getSubbedWebsites()));
+            sendMenuMessage(chatId, "Подписки:", buildWebsitesListMenu(getSubbedWebsites()));
         } else if (LIST_NOT_SUBBED_COMMAND.equalsIgnoreCase(text)) {
-            sendClosableMessage(chatId, "Вы не подписаны на:", buildWebsitesListMenu(getUnsubbedWebsites()));
+            sendMenuMessage(chatId, "Вы не подписаны на:", buildWebsitesListMenu(getUnsubbedWebsites()));
         } else if (SUB_CUSTOM_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, ChatState.AWAITING_CUSTOM_WEBSITE_URI);
-            sendMessage(chatId, "Введите URI:");
+            sendMenuMessage(chatId, "Введите URI:", null);
         } else if (parseWebsiteIdArg(text, SUB_COMMAND).isPresent()) {
             final WebsiteId id = parseWebsiteIdArg(text, SUB_COMMAND).get();
-            sendMessage(chatId, "Предстааавьте, что вы подписались на вебсайт " + id);
+            sendMenuMessage(chatId, "Предстааавьте, что вы подписались на вебсайт " + id, null);
         } else if (parseWebsiteIdArg(text, UNSUB_COMMAND).isPresent()) {
             final WebsiteId id = parseWebsiteIdArg(text, UNSUB_COMMAND).get();
-            sendMessage(chatId, "Предстааавьте, что вы отписались от вебсайта " + id);
+            sendMenuMessage(chatId, "Предстааавьте, что вы отписались от вебсайта " + id, null);
         } else {
             return handleViewWebsite(chatId, text);
         }
@@ -319,7 +298,7 @@ public class NewsBot extends TelegramLongPollingBot {
             final String subCommandName = isSubbed(id.get()) ? "Отписаться" : "Подписаться";
             final String subCommand = isSubbed(id.get()) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND;
 
-            sendClosableMessage(chatId, topic.description(),
+            sendMenuMessage(chatId, topic.description(),
                     new InlineKeyboardMarkup(List.of(
                             List.of(InlineKeyboardButton.builder()
                                     .text(subCommandName)
@@ -333,20 +312,20 @@ public class NewsBot extends TelegramLongPollingBot {
     private boolean handleTopicsCommand(long chatId, String text)
             throws TelegramApiException {
         if (TOPICS_MENU_COMMAND.equalsIgnoreCase(text)) {
-            sendClosableMessage(chatId, "Темы", getTopicsMenu());
+            sendMenuMessage(chatId, "Темы", getTopicsMenu());
         } else if (LIST_SUBBED_TOPICS_COMMAND.equalsIgnoreCase(text)) {
-            sendClosableMessage(chatId, "Подписки:", getSubbedTopicsMenu());
+            sendMenuMessage(chatId, "Подписки:", getSubbedTopicsMenu());
         } else if (LIST_NOT_SUBBED_TOPICS_COMMAND.equalsIgnoreCase(text)) {
-            sendClosableMessage(chatId, "Вы не подписаны на:", getUnsubbedTopicsMenu());
+            sendMenuMessage(chatId, "Вы не подписаны на:", getUnsubbedTopicsMenu());
         } else if (SUB_CUSTOM_TOPIC_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, ChatState.AWAITING_CUSTOM_TOPIC_NAME);
-            sendMessage(chatId, "Введите название темы:");
+            sendMenuMessage(chatId, "Введите название темы:", null);
         } else if (parseTopicIdArg(text, SUB_TOPIC_COMMAND).isPresent()) {
             final TopicId id = parseTopicIdArg(text, SUB_TOPIC_COMMAND).get();
-            sendMessage(chatId, "Предстааавьте, что вы подписались на тему " + id);
+            sendMenuMessage(chatId, "Предстааавьте, что вы подписались на тему " + id, null);
         } else if (parseTopicIdArg(text, UNSUB_TOPIC_COMMAND).isPresent()) {
             final TopicId id = parseTopicIdArg(text, UNSUB_TOPIC_COMMAND).get();
-            sendMessage(chatId, "Предстааавьте, что вы отписались от темы " + id);
+            sendMenuMessage(chatId, "Предстааавьте, что вы отписались от темы " + id, null);
         } else {
             return handleViewTopic(chatId, text);
         }
@@ -357,16 +336,16 @@ public class NewsBot extends TelegramLongPollingBot {
             throws TelegramApiException {
         if (parseArticleIdArg(text, LIKE_COMMAND).isPresent()) {
             final ArticleId id = parseArticleIdArg(text, LIKE_COMMAND).get();
-            sendMessage(chatId, "Предстааавьте, что мы поставили лайк на статью " + id);
+            sendMenuMessage(chatId, "Предстааавьте, что мы поставили лайк на статью " + id, null);
         } else if (parseArticleIdArg(text, DISLIKE_COMMAND).isPresent()) {
             final ArticleId id = parseArticleIdArg(text, DISLIKE_COMMAND).get();
-            sendMessage(chatId, "Предстааавьте, что мы убрали лайк со статьи " + id);
+            sendMenuMessage(chatId, "Предстааавьте, что мы убрали лайк со статьи " + id, null);
         } else if (parseArticleIdArg(text, UNLIKE_COMMAND).isPresent()) {
             final ArticleId id = parseArticleIdArg(text, UNLIKE_COMMAND).get();
-            sendMessage(chatId, "Предстааавьте, что мы поставили дизлайк на статью " + id);
+            sendMenuMessage(chatId, "Предстааавьте, что мы поставили дизлайк на статью " + id, null);
         } else if (parseArticleIdArg(text, UNDISLIKE_COMMAND).isPresent()) {
             final ArticleId id = parseArticleIdArg(text, UNDISLIKE_COMMAND).get();
-            sendMessage(chatId, "Предстааавьте, что мы убрали дизлайк со статьи " + id);
+            sendMenuMessage(chatId, "Предстааавьте, что мы убрали дизлайк со статьи " + id, null);
         } else {
             return false;
         }
@@ -376,28 +355,23 @@ public class NewsBot extends TelegramLongPollingBot {
     private void handleCommand(long chatId, String text)
             throws TelegramApiException {
         if (START_COMMAND.equalsIgnoreCase(text)) {
-            sendClosableMessage(chatId, "Привет! " +
+            sendMenuMessage(chatId, "Привет! " +
                     "Добавь источники и ты сможешь смотреть ленту новостей в этом боте! ", getMainMenu());
         } else if (MENU_COMMAND.equalsIgnoreCase(text)) {
-            sendClosableMessage(chatId, "Меню", getMainMenu());
-        } else if (parseMessageId(text, CLOSE_COMMAND).isPresent()) {
-            DeleteMessage action = new DeleteMessage();
-            action.setChatId(chatId);
-            action.setMessageId(parseMessageId(text, CLOSE_COMMAND).get());
-            execute(action);
+            sendMenuMessage(chatId, "Меню", getMainMenu());
         } else if (!handleWebsitesCommand(chatId, text)
                 && !handleTopicsCommand(chatId, text)
                 && !handleLikesCommand(chatId, text)) {
-            sendMessage(chatId, "Операция " + text + " не поддерживается");
+            sendMenuMessage(chatId, "Операция " + text + " не поддерживается", null);
         }
     }
 
     private void handleInput(long chatId, String text) throws TelegramApiException {
         switch (chatStates.getOrDefault(chatId, ChatState.NORMAL)) {
             case NORMAL -> handleCommand(chatId, text);
-            case AWAITING_CUSTOM_WEBSITE_URI -> sendClosableMessage(
+            case AWAITING_CUSTOM_WEBSITE_URI -> sendMenuMessage(
                     chatId, "Источник " + text + " добавлен", getWebsitesMenu());
-            case AWAITING_CUSTOM_TOPIC_NAME -> sendClosableMessage(
+            case AWAITING_CUSTOM_TOPIC_NAME -> sendMenuMessage(
                     chatId, "Тема " + text + " добавлена", getTopicsMenu());
         }
         chatStates.put(chatId, ChatState.NORMAL);
