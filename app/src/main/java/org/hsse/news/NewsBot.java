@@ -1,6 +1,7 @@
 package org.hsse.news;
 
 import lombok.SneakyThrows;
+import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.topic.models.Topic;
 import org.hsse.news.database.topic.models.TopicId;
@@ -13,13 +14,17 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +53,7 @@ public class NewsBot extends TelegramLongPollingBot {
     private final static String UNLIKE_COMMAND = "/unlike";
     private final static String DISLIKE_COMMAND = "/dislike";
     private final static String UNDISLIKE_COMMAND = "/undislike";
-    private final static String CLOSE_COMMAND = "/close";
+    private final static String SEND_TEST_ARTICLE_COMMAND = "/test-feed";
 
     private final Map<Long, ChatState> chatStates = new ConcurrentHashMap<>();
     private final Map<Long, Integer> latestMenuMessageId = new ConcurrentHashMap<>();
@@ -184,36 +189,6 @@ public class NewsBot extends TelegramLongPollingBot {
         return new InlineKeyboardMarkup(buttons);
     }
 
-    private static InlineKeyboardMarkup getNeutralArticle(ArticleId id) {
-        return new InlineKeyboardMarkup(List.of(List.of(
-                InlineKeyboardButton.builder()
-                        .text("\uD83D\uDC4D")
-                        .callbackData(LIKE_COMMAND + " " + id.value()).build(),
-                InlineKeyboardButton.builder()
-                        .text("\uD83D\uDC4E")
-                        .callbackData(DISLIKE_COMMAND + " " + id.value()).build())));
-    }
-
-    private static InlineKeyboardMarkup getLikedArticle(ArticleId id) {
-        return new InlineKeyboardMarkup(List.of(List.of(
-                InlineKeyboardButton.builder()
-                        .text("✅\uD83D\uDC4D")
-                        .callbackData(UNLIKE_COMMAND + " " + id.value()).build(),
-                InlineKeyboardButton.builder()
-                        .text("\uD83D\uDC4E")
-                        .callbackData(DISLIKE_COMMAND + " " + id.value()).build())));
-    }
-
-    private static InlineKeyboardMarkup getDislikedArticle(ArticleId id) {
-        return new InlineKeyboardMarkup(List.of(List.of(
-                InlineKeyboardButton.builder()
-                        .text("\uD83D\uDC4D")
-                        .callbackData(LIKE_COMMAND + " " + id.value()).build(),
-                InlineKeyboardButton.builder()
-                        .text("✅\uD83D\uDC4E")
-                        .callbackData(UNDISLIKE_COMMAND + " " + id.value()).build())));
-    }
-
     private void sendMenuMessage(final long chatId, final String text,
                                  final InlineKeyboardMarkup keyboard)
             throws TelegramApiException {
@@ -254,9 +229,20 @@ public class NewsBot extends TelegramLongPollingBot {
         }
     }
 
-    private Optional<ArticleId> parseArticleIdArg(String text, String command) {
+    record SendArticleData(ArticleId id, int messageId) {
+    }
+
+    private Optional<SendArticleData> parseSendArticleDataArg(String text, String command) {
         if (text.toLowerCase().startsWith(command)) {
-            return Optional.of(new ArticleId(UUID.fromString(text.substring(command.length()).strip())));
+            List<String> words = Arrays.stream(
+                            text.substring(command.length()).split(" "))
+                    .filter((string) -> !string.isBlank()).toList();
+            if (words.size() != 2) {
+                return Optional.empty();
+            }
+            return Optional.of(new SendArticleData(
+                    new ArticleId(UUID.fromString(words.get(0).strip())),
+                    Integer.parseInt(words.get(1).strip())));
         } else {
             return Optional.empty();
         }
@@ -361,18 +347,18 @@ public class NewsBot extends TelegramLongPollingBot {
 
     private boolean handleLikesCommand(long chatId, String text)
             throws TelegramApiException {
-        if (parseArticleIdArg(text, LIKE_COMMAND).isPresent()) {
-            final ArticleId id = parseArticleIdArg(text, LIKE_COMMAND).get();
-            sendMenuMessage(chatId, "Предстааавьте, что мы поставили лайк на статью " + id, null);
-        } else if (parseArticleIdArg(text, DISLIKE_COMMAND).isPresent()) {
-            final ArticleId id = parseArticleIdArg(text, DISLIKE_COMMAND).get();
-            sendMenuMessage(chatId, "Предстааавьте, что мы убрали лайк со статьи " + id, null);
-        } else if (parseArticleIdArg(text, UNLIKE_COMMAND).isPresent()) {
-            final ArticleId id = parseArticleIdArg(text, UNLIKE_COMMAND).get();
-            sendMenuMessage(chatId, "Предстааавьте, что мы поставили дизлайк на статью " + id, null);
-        } else if (parseArticleIdArg(text, UNDISLIKE_COMMAND).isPresent()) {
-            final ArticleId id = parseArticleIdArg(text, UNDISLIKE_COMMAND).get();
-            sendMenuMessage(chatId, "Предстааавьте, что мы убрали дизлайк со статьи " + id, null);
+        if (parseSendArticleDataArg(text, LIKE_COMMAND).isPresent()) {
+            final SendArticleData data = parseSendArticleDataArg(text, LIKE_COMMAND).get();
+            updateArticleMenu(data.id(), ArticleOpinion.LIKED, chatId, data.messageId());
+        } else if (parseSendArticleDataArg(text, DISLIKE_COMMAND).isPresent()) {
+            final SendArticleData data = parseSendArticleDataArg(text, DISLIKE_COMMAND).get();
+            updateArticleMenu(data.id(), ArticleOpinion.DISLIKED, chatId, data.messageId());
+        } else if (parseSendArticleDataArg(text, UNLIKE_COMMAND).isPresent()) {
+            final SendArticleData data = parseSendArticleDataArg(text, UNLIKE_COMMAND).get();
+            updateArticleMenu(data.id(), ArticleOpinion.NEUTRAL, chatId, data.messageId());
+        } else if (parseSendArticleDataArg(text, UNDISLIKE_COMMAND).isPresent()) {
+            final SendArticleData data = parseSendArticleDataArg(text, UNDISLIKE_COMMAND).get();
+            updateArticleMenu(data.id(), ArticleOpinion.NEUTRAL, chatId, data.messageId());
         } else {
             return false;
         }
@@ -386,11 +372,61 @@ public class NewsBot extends TelegramLongPollingBot {
                     "Добавь источники и ты сможешь смотреть ленту новостей в этом боте! ", getMainMenu());
         } else if (MENU_COMMAND.equalsIgnoreCase(text)) {
             sendMenuMessage(chatId, "Меню", getMainMenu());
+        } else if (SEND_TEST_ARTICLE_COMMAND.equalsIgnoreCase(text)) {
+            sendArticle(chatId, new Article(
+                            new ArticleId(UUID.randomUUID()), "test", "example.com/test",
+                            Timestamp.from(Instant.now()), new TopicId(0L), new WebsiteId(0L)),
+                    ArticleOpinion.NEUTRAL);
         } else if (!handleWebsitesCommand(chatId, text)
                 && !handleTopicsCommand(chatId, text)
                 && !handleLikesCommand(chatId, text)) {
             sendMenuMessage(chatId, "Операция " + text + " не поддерживается", getMainMenu());
         }
+    }
+
+    public enum ArticleOpinion {
+        LIKED,
+        NEUTRAL,
+        DISLIKED
+    }
+
+    private void updateArticleMenu(
+            ArticleId id, ArticleOpinion opinion, long chatId, int messageId)
+            throws TelegramApiException {
+        final EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
+        edit.setChatId(chatId);
+        edit.setMessageId(messageId);
+        edit.setReplyMarkup(new InlineKeyboardMarkup(List.of(List.of(
+                opinion == ArticleOpinion.LIKED
+                        ? InlineKeyboardButton.builder()
+                        .text("✅\uD83D\uDC4D")
+                        .callbackData(UNLIKE_COMMAND + " " + id.value() + " " + messageId).build()
+                        : InlineKeyboardButton.builder()
+                        .text("\uD83D\uDC4D")
+                        .callbackData(LIKE_COMMAND + " " + id.value() + " " + messageId).build(),
+                opinion == ArticleOpinion.DISLIKED
+                        ? InlineKeyboardButton.builder()
+                        .text("✅\uD83D\uDC4E")
+                        .callbackData(UNDISLIKE_COMMAND + " " + id.value() + " " + messageId).build()
+                        : InlineKeyboardButton.builder()
+                        .text("\uD83D\uDC4E")
+                        .callbackData(DISLIKE_COMMAND + " " + id.value() + " " + messageId).build()))));
+        execute(edit);
+    }
+
+    public void sendArticle(long chatId, Article article, ArticleOpinion articleOpinion)
+            throws TelegramApiException {
+        if (latestMenuMessageId.containsKey(chatId)) {
+            deleteMessage(chatId, latestMenuMessageId.get(chatId));
+        }
+
+        final SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+
+        message.setText(article.title() + "\n" + article.url());
+
+        int messageId = execute(message).getMessageId();
+        updateArticleMenu(article.id(), articleOpinion, chatId, messageId);
     }
 
     private void deleteMessage(long chatId, int messageId) throws TelegramApiException {
