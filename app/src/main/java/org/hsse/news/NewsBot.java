@@ -261,6 +261,30 @@ public class NewsBot extends TelegramLongPollingBot {
         execute(message);
     }
 
+    private Optional<WebsiteId> parseWebsiteIdArg(String text, String command) {
+        if (text.toLowerCase().startsWith(command)) {
+            return Optional.of(new WebsiteId(Long.parseLong(text.substring(command.length()).strip())));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<TopicId> parseTopicIdArg(String text, String command) {
+        if (text.toLowerCase().startsWith(command)) {
+            return Optional.of(new TopicId(Long.parseLong(text.substring(command.length()).strip())));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<ArticleId> parseArticleIdArg(String text, String command) {
+        if (text.toLowerCase().startsWith(command)) {
+            return Optional.of(new ArticleId(UUID.fromString(text.substring(command.length()).strip())));
+        } else {
+            return Optional.empty();
+        }
+    }
+
     private void handleCommand(long chatId, final ChatState state, String text)
             throws TelegramApiException {
         if (state == null) {
@@ -281,8 +305,8 @@ public class NewsBot extends TelegramLongPollingBot {
             sendMessage(chatId, "Подписки:", getSubbedWebsitesMenu());
         } else if (LIST_NOT_SUBBED_COMMAND.equalsIgnoreCase(text)) {
             sendMessage(chatId, "Вы не подписаны на:", getUnsubbedWebsitesMenu());
-        } else if (text.toLowerCase().startsWith(VIEW_COMMAND)) {
-            final WebsiteId id = new WebsiteId(Long.parseLong(text.substring(VIEW_COMMAND.length()).strip()));
+        } else if (parseWebsiteIdArg(text, VIEW_COMMAND).isPresent()) {
+            final WebsiteId id = parseWebsiteIdArg(text, VIEW_COMMAND).get();
             final Website website = findWebsite(id).orElseThrow();
             final String subAction = isSubbed(id) ? UNSUB_COMMAND : SUB_COMMAND;
 
@@ -294,11 +318,11 @@ public class NewsBot extends TelegramLongPollingBot {
         } else if (SUB_CUSTOM_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, new AwaitingUriChatState());
             sendMessage(chatId, "Введите URI:", null);
-        } else if (text.toLowerCase().startsWith(SUB_COMMAND)) {
-            final WebsiteId id = new WebsiteId(Long.parseLong(text.substring(SUB_COMMAND.length()).strip()));
+        } else if (parseWebsiteIdArg(text, SUB_COMMAND).isPresent()) {
+            final WebsiteId id = parseWebsiteIdArg(text, SUB_COMMAND).get();
             sendMessage(chatId, "Предстааавьте, что вы подписались на вебсайт " + id, null);
-        } else if (text.toLowerCase().startsWith(UNSUB_COMMAND)) {
-            final WebsiteId id = new WebsiteId(Long.parseLong(text.substring(UNSUB_COMMAND.length()).strip()));
+        } else if (parseWebsiteIdArg(text, UNSUB_COMMAND).isPresent()) {
+            final WebsiteId id = parseWebsiteIdArg(text, UNSUB_COMMAND).get();
             sendMessage(chatId, "Предстааавьте, что вы отписались от вебсайта " + id, null);
         } else if (TOPICS_MENU_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, new TopicsChatState());
@@ -320,23 +344,23 @@ public class NewsBot extends TelegramLongPollingBot {
         } else if (SUB_CUSTOM_TOPIC_COMMAND.equalsIgnoreCase(text)) {
             chatStates.put(chatId, new AwaitingTopicChatState());
             sendMessage(chatId, "Введите название темы:", null);
-        } else if (text.toLowerCase().startsWith(SUB_TOPIC_COMMAND)) {
-            final TopicId id = new TopicId(Long.parseLong(text.substring(SUB_TOPIC_COMMAND.length()).strip()));
+        } else if (parseTopicIdArg(text, SUB_TOPIC_COMMAND).isPresent()) {
+            final TopicId id = parseTopicIdArg(text, SUB_TOPIC_COMMAND).get();
             sendMessage(chatId, "Предстааавьте, что вы подписались на тему " + id, null);
-        } else if (text.toLowerCase().startsWith(UNSUB_TOPIC_COMMAND)) {
-            final TopicId id = new TopicId(Long.parseLong(text.substring(UNSUB_TOPIC_COMMAND.length()).strip()));
+        } else if (parseTopicIdArg(text, UNSUB_TOPIC_COMMAND).isPresent()) {
+            final TopicId id = parseTopicIdArg(text, UNSUB_TOPIC_COMMAND).get();
             sendMessage(chatId, "Предстааавьте, что вы отписались от темы " + id, null);
-        } else if (text.toLowerCase().startsWith(LIKE_COMMAND)) {
-            final ArticleId id = new ArticleId(UUID.fromString(text.substring(LIKE_COMMAND.length()).strip()));
+        } else if (parseArticleIdArg(text, LIKE_COMMAND).isPresent()) {
+            final ArticleId id = parseArticleIdArg(text, LIKE_COMMAND).get();
             sendMessage(chatId, "Предстааавьте, что мы поставили лайк на статью " + id, null);
-        } else if (text.toLowerCase().startsWith(DISLIKE_COMMAND)) {
-            final ArticleId id = new ArticleId(UUID.fromString(text.substring(DISLIKE_COMMAND.length()).strip()));
+        } else if (parseArticleIdArg(text, DISLIKE_COMMAND).isPresent()) {
+            final ArticleId id = parseArticleIdArg(text, DISLIKE_COMMAND).get();
             sendMessage(chatId, "Предстааавьте, что мы убрали лайк со статьи " + id, null);
-        } else if (text.toLowerCase().startsWith(UNLIKE_COMMAND)) {
-            final ArticleId id = new ArticleId(UUID.fromString(text.substring(UNLIKE_COMMAND.length()).strip()));
+        } else if (parseArticleIdArg(text, UNLIKE_COMMAND).isPresent()) {
+            final ArticleId id = parseArticleIdArg(text, UNLIKE_COMMAND).get();
             sendMessage(chatId, "Предстааавьте, что мы поставили дизлайк на статью " + id, null);
-        } else if (text.toLowerCase().startsWith(UNDISLIKE_COMMAND)) {
-            final ArticleId id = new ArticleId(UUID.fromString(text.substring(UNDISLIKE_COMMAND.length()).strip()));
+        } else if (parseArticleIdArg(text, UNDISLIKE_COMMAND).isPresent()) {
+            final ArticleId id = parseArticleIdArg(text, UNDISLIKE_COMMAND).get();
             sendMessage(chatId, "Предстааавьте, что мы убрали дизлайк со статьи " + id, null);
         } else {
             sendMessage(chatId, "Операция " + text + " не поддерживается", null);
