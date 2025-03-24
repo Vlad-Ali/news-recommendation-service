@@ -5,6 +5,7 @@ import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.topic.models.Topic;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.website.models.Website;
+import org.hsse.news.database.website.models.WebsiteId;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -134,6 +135,25 @@ public class NewsBotHandlers {
         return new InlineKeyboardMarkup(buttons);
     }
 
+    private TelegramBot.Message viewWebsiteMessage(WebsiteId id) {
+        final Website website = dataProvider.findWebsite(id).orElseThrow();
+        final String subCommand =
+                (dataProvider.isSubbed(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND)
+                        + " " + id;
+
+        return new TelegramBot.Message(website.description() + "\n" + website.url(),
+                new InlineKeyboardMarkup(List.of(
+                        List.of(InlineKeyboardButton.builder()
+                                .text(dataProvider.isSubbed(id) ? "Отписаться" : "Подписаться")
+                                .callbackData(subCommand + " " + id).build()),
+                        List.of(InlineKeyboardButton.builder()
+                                .text(BACK_TEXT)
+                                .callbackData(dataProvider.isSubbed(id)
+                                        ? LIST_SUBBED_WEBSITES_COMMAND
+                                        : LIST_NOT_SUBBED_WEBSITES_COMMAND)
+                                .build()))));
+    }
+
     private void addWebsitesHandlers(TelegramBot bot) {
         bot.command(WEBSITES_MENU_COMMAND, () ->
                 new TelegramBot.Message("Источники", getWebsitesMenu()));
@@ -143,34 +163,18 @@ public class NewsBotHandlers {
         bot.command(LIST_NOT_SUBBED_WEBSITES_COMMAND, () ->
                 new TelegramBot.Message("Вы не подписаны на:",
                         buildWebsitesListMenu(dataProvider.getUnsubbedWebsites())));
-        bot.commandWebsite(SUB_WEBSITE_COMMAND,
-                (id) -> new TelegramBot.Message("Предстааавьте, что вы подписались на вебсайт " + id,
-                        (InlineKeyboardMarkup) null));
-        bot.commandWebsite(UNSUB_WEBSITE_COMMAND,
-                (id) -> new TelegramBot.Message("Предстааавьте, что вы отписались от вебсайта " + id,
-                        (InlineKeyboardMarkup) null));
+        bot.commandWebsite(SUB_WEBSITE_COMMAND, this::viewWebsiteMessage);
+        bot.commandWebsite(UNSUB_WEBSITE_COMMAND, this::viewWebsiteMessage);
         bot.command(SUB_CUSTOM_WEBSITE_COMMAND, () ->
-                new TelegramBot.Message("Введите URI:", (text) ->
-                        new TelegramBot.Message("Источник " + text + " добавлен",
-                                getWebsitesMenu())));
-        bot.commandWebsite(VIEW_WEBSITE_COMMAND, id -> {
-            final Website website = dataProvider.findWebsite(id).orElseThrow();
-            final String subCommand =
-                    (dataProvider.isSubbed(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND)
-                            + " " + id;
-
-            return new TelegramBot.Message(website.description() + "\n" + website.url(),
-                    new InlineKeyboardMarkup(List.of(
-                            List.of(InlineKeyboardButton.builder()
-                                    .text(dataProvider.isSubbed(id) ? "Отписаться" : "Подписаться")
-                                    .callbackData(subCommand + " " + id).build()),
-                            List.of(InlineKeyboardButton.builder()
-                                    .text(BACK_TEXT)
-                                    .callbackData(dataProvider.isSubbed(id)
-                                            ? LIST_SUBBED_WEBSITES_COMMAND
-                                            : LIST_NOT_SUBBED_WEBSITES_COMMAND)
-                                    .build()))));
-        });
+                new TelegramBot.Message("Введите URI:",
+                        new InlineKeyboardMarkup(List.of(List.of(
+                                InlineKeyboardButton.builder()
+                                        .text("Отмена")
+                                        .callbackData(TOPICS_MENU_COMMAND).build()))),
+                        (text) ->
+                                new TelegramBot.Message("Источник " + text + " добавлен",
+                                        getWebsitesMenu())));
+        bot.commandWebsite(VIEW_WEBSITE_COMMAND, this::viewWebsiteMessage);
 
     }
 

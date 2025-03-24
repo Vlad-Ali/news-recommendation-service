@@ -36,10 +36,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         Message(String text, InlineKeyboardMarkup keyboard) {
             this(text, keyboard, null);
         }
-
-        Message(String text, Function<String, Message> onNextMessage) {
-            this(text, null, onNextMessage);
-        }
     }
 
     private final Map<String, Runnable> noArgsNoMessage = new ConcurrentHashMap<>();
