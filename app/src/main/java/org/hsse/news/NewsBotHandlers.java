@@ -18,12 +18,12 @@ public class NewsBotHandlers {
     private final static String START_COMMAND = "/start";
     private final static String MENU_COMMAND = "/menu";
     private final static String WEBSITES_MENU_COMMAND = "/websites";
-    private final static String LIST_SUBBED_COMMAND = "/subs";
-    private final static String LIST_NOT_SUBBED_COMMAND = "/browse";
-    private final static String VIEW_COMMAND = "/view-website";
-    private final static String SUB_COMMAND = "/sub";
-    private final static String UNSUB_COMMAND = "/unsub";
-    private final static String SUB_CUSTOM_COMMAND = "/sub-custom";
+    private final static String LIST_SUBBED_WEBSITES_COMMAND = "/subs";
+    private final static String LIST_NOT_SUBBED_WEBSITES_COMMAND = "/browse-websites";
+    private final static String VIEW_WEBSITE_COMMAND = "/view-website";
+    private final static String SUB_WEBSITE_COMMAND = "/sub";
+    private final static String UNSUB_WEBSITE_COMMAND = "/unsub";
+    private final static String SUB_CUSTOM_WEBSITE_COMMAND = "/sub-custom";
     private final static String TOPICS_MENU_COMMAND = "/topics";
     private final static String LIST_SUBBED_TOPICS_COMMAND = "/unblocked-topics";
     private final static String LIST_NOT_SUBBED_TOPICS_COMMAND = "/blocked-topics";
@@ -79,13 +79,13 @@ public class NewsBotHandlers {
         return new InlineKeyboardMarkup(List.of(
                 List.of(InlineKeyboardButton.builder()
                         .text("Подписан")
-                        .callbackData(LIST_SUBBED_COMMAND).build()),
+                        .callbackData(LIST_SUBBED_WEBSITES_COMMAND).build()),
                 List.of(InlineKeyboardButton.builder()
                         .text("Не подписан")
-                        .callbackData(LIST_NOT_SUBBED_COMMAND).build()),
+                        .callbackData(LIST_NOT_SUBBED_WEBSITES_COMMAND).build()),
                 List.of(InlineKeyboardButton.builder()
                         .text("Добавить...")
-                        .callbackData(SUB_CUSTOM_COMMAND).build()),
+                        .callbackData(SUB_CUSTOM_WEBSITE_COMMAND).build()),
                 List.of(InlineKeyboardButton.builder()
                         .text(BACK_TEXT)
                         .callbackData("/menu").build())));
@@ -96,7 +96,7 @@ public class NewsBotHandlers {
                 websites.stream().map(
                         website -> List.of(InlineKeyboardButton.builder()
                                 .text(website.description())
-                                .callbackData(VIEW_COMMAND + " " + website.id().value())
+                                .callbackData(VIEW_WEBSITE_COMMAND + " " + website.id().value())
                                 .build())).toList());
         buttons.add(List.of(InlineKeyboardButton.builder()
                 .text(BACK_TEXT)
@@ -137,23 +137,23 @@ public class NewsBotHandlers {
     private void addWebsitesHandlers(TelegramBot bot) {
         bot.command(WEBSITES_MENU_COMMAND, () ->
                 new TelegramBot.Message("Источники", getWebsitesMenu()));
-        bot.command(LIST_SUBBED_COMMAND, () ->
+        bot.command(LIST_SUBBED_WEBSITES_COMMAND, () ->
                 new TelegramBot.Message("Подписки:",
                         buildWebsitesListMenu(dataProvider.getSubbedWebsites())));
-        bot.command(LIST_NOT_SUBBED_COMMAND, () ->
+        bot.command(LIST_NOT_SUBBED_WEBSITES_COMMAND, () ->
                 new TelegramBot.Message("Вы не подписаны на:",
                         buildWebsitesListMenu(dataProvider.getUnsubbedWebsites())));
-        bot.commandWebsite(SUB_COMMAND,
+        bot.commandWebsite(SUB_WEBSITE_COMMAND,
                 (id) -> new TelegramBot.Message("Предстааавьте, что вы подписались на вебсайт " + id,
                         (InlineKeyboardMarkup) null));
-        bot.commandWebsite(UNSUB_COMMAND,
+        bot.commandWebsite(UNSUB_WEBSITE_COMMAND,
                 (id) -> new TelegramBot.Message("Предстааавьте, что вы отписались от вебсайта " + id,
                         (InlineKeyboardMarkup) null));
-        bot.command(SUB_CUSTOM_COMMAND, () ->
+        bot.command(SUB_CUSTOM_WEBSITE_COMMAND, () ->
                 new TelegramBot.Message("Введите URI:", (text) ->
                         new TelegramBot.Message("Источник " + text + " добавлен",
                                 getWebsitesMenu())));
-        bot.commandWebsite(VIEW_COMMAND, id -> {
+        bot.commandWebsite(VIEW_WEBSITE_COMMAND, id -> {
             final Website website = dataProvider.findWebsite(id).orElseThrow();
             final String subCommand =
                     (dataProvider.isSubbed(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND)
@@ -167,8 +167,8 @@ public class NewsBotHandlers {
                             List.of(InlineKeyboardButton.builder()
                                     .text(BACK_TEXT)
                                     .callbackData(dataProvider.isSubbed(id)
-                                            ? LIST_SUBBED_COMMAND
-                                            : LIST_NOT_SUBBED_COMMAND)
+                                            ? LIST_SUBBED_WEBSITES_COMMAND
+                                            : LIST_NOT_SUBBED_WEBSITES_COMMAND)
                                     .build()))));
         });
 
