@@ -31,26 +31,25 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final Set<Long> activeChats = new HashSet<>();
     private final Map<Long, Integer> latestMenuMessageId = new ConcurrentHashMap<>();
 
-    public record Message(String text, InlineKeyboardMarkup keyboard,
-                          Function<String, Message> onNextMessage) {
-        Message(String text, InlineKeyboardMarkup keyboard) {
-            this(text, keyboard, null);
-        }
-    }
-
     private final Map<String, Runnable> noArgsNoMessage = new ConcurrentHashMap<>();
     private final Map<String, Producer<Message>> noArgs = new ConcurrentHashMap<>();
     private final Map<String, Function<WebsiteId, Message>> websiteIdArg = new ConcurrentHashMap<>();
     private final Map<String, Function<TopicId, Message>> topicIdArg = new ConcurrentHashMap<>();
+    private final Map<String, ArticleCommand> articleArg = new ConcurrentHashMap<>();
+
+    private final Map<Long, Function<String, Message>> onNextMessage = new ConcurrentHashMap<>();
+
+    public record Message(String text, InlineKeyboardMarkup keyboard,
+                          Function<String, Message> onNextMessage) {
+        Message(final String text, final InlineKeyboardMarkup keyboard) {
+            this(text, keyboard, null);
+        }
+    }
 
     @FunctionalInterface
     public interface ArticleCommand {
         Message apply(ArticleId id, int messageId);
     }
-
-    private final Map<String, ArticleCommand> articleArg = new ConcurrentHashMap<>();
-
-    private final Map<Long, Function<String, Message>> onNextMessage = new ConcurrentHashMap<>();
 
     @Autowired
     public TelegramBot(final Environment environment) {
@@ -62,23 +61,23 @@ public class TelegramBot extends TelegramLongPollingBot {
         return "HsseNewsTeam1Bot";
     }
 
-    public void command(String text, Runnable command) {
+    public void command(final String text, final Runnable command) {
         noArgsNoMessage.put(text, command);
     }
 
-    public void command(String text, Producer<Message> command) {
+    public void command(final String text, final Producer<Message> command) {
         noArgs.put(text, command);
     }
 
-    public void commandWebsite(String prefix, Function<WebsiteId, Message> command) {
+    public void commandWebsite(final String prefix, final Function<WebsiteId, Message> command) {
         websiteIdArg.put(prefix, command);
     }
 
-    public void commandTopic(String prefix, Function<TopicId, Message> command) {
+    public void commandTopic(final String prefix, final Function<TopicId, Message> command) {
         topicIdArg.put(prefix, command);
     }
 
-    public void commandArticle(String prefix, ArticleCommand command) {
+    public void commandArticle(final String prefix, final ArticleCommand command) {
         articleArg.put(prefix, command);
     }
 
@@ -113,7 +112,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @SneakyThrows
     public void sendArticle(final Function<Integer, Message> messageIdToMessage) {
-        for (long chatId : activeChats) {
+        for (final long chatId : activeChats) {
             if (latestMenuMessageId.containsKey(chatId)) {
                 deleteMessage(chatId, latestMenuMessageId.get(chatId));
             }
@@ -125,7 +124,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             final int messageId = execute(send).getMessageId();
             final Message message = messageIdToMessage.apply(messageId);
 
-            EditMessageText edit = new EditMessageText();
+            final EditMessageText edit = new EditMessageText();
             edit.setChatId(chatId);
             edit.setMessageId(messageId);
             edit.setText(message.text());
@@ -142,39 +141,39 @@ public class TelegramBot extends TelegramLongPollingBot {
         execute(request);
     }
 
-    private void handleCommand(long chatId, String text)
+    private void handleCommand(final long chatId, final String text)
             throws TelegramApiException {
         onNextMessage.remove(chatId);
 
-        Runnable noArgNoMessageCommand = noArgsNoMessage.get(text.toLowerCase(Locale.US));
+        final Runnable noArgNoMessageCommand = noArgsNoMessage.get(text.toLowerCase(Locale.US));
         if (noArgNoMessageCommand != null) {
             noArgNoMessageCommand.run();
             return;
         }
 
-        Producer<Message> noArgCommand = noArgs.get(text.toLowerCase(Locale.US));
+        final Producer<Message> noArgCommand = noArgs.get(text.toLowerCase(Locale.US));
         if (noArgCommand != null) {
             sendMenuMessage(chatId, noArgCommand.call());
             return;
         }
 
-        for (String command : websiteIdArg.keySet()) {
+        for (final String command : websiteIdArg.keySet()) {
             if (text.toLowerCase(Locale.US).startsWith(command)) {
-                WebsiteId id = new WebsiteId(Long.parseLong(text.substring(command.length()).strip()));
+                final WebsiteId id = new WebsiteId(Long.parseLong(text.substring(command.length()).strip()));
                 sendMenuMessage(chatId, websiteIdArg.get(command).apply(id));
                 return;
             }
         }
 
-        for (String command : topicIdArg.keySet()) {
+        for (final String command : topicIdArg.keySet()) {
             if (text.toLowerCase(Locale.US).startsWith(command)) {
-                TopicId id = new TopicId(Long.parseLong(text.substring(command.length()).strip()));
+                final TopicId id = new TopicId(Long.parseLong(text.substring(command.length()).strip()));
                 sendMenuMessage(chatId, topicIdArg.get(command).apply(id));
                 return;
             }
         }
 
-        for (String command : articleArg.keySet()) {
+        for (final String command : articleArg.keySet()) {
             if (text.toLowerCase(Locale.US).startsWith(command)) {
                 final List<String> params = Arrays.stream(
                                 text.substring(command.length()).split(" "))
@@ -184,12 +183,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                ArticleId id = new ArticleId(UUID.fromString(params.get(0).strip()));
-                int messageId = Integer.parseInt(params.get(1).strip());
+                final ArticleId id = new ArticleId(UUID.fromString(params.get(0).strip()));
+                final int messageId = Integer.parseInt(params.get(1).strip());
 
-                Message newMessage = articleArg.get(command).apply(id, messageId);
+                final Message newMessage = articleArg.get(command).apply(id, messageId);
 
-                EditMessageText edit = new EditMessageText();
+                final EditMessageText edit = new EditMessageText();
                 edit.setChatId(chatId);
                 edit.setMessageId(messageId);
                 edit.setText(newMessage.text());
@@ -201,11 +200,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleInput(long chatId, String text, int messageId)
+    private void handleInput(final long chatId, final String text, final int messageId)
             throws TelegramApiException {
         final Function<String, Message> callback = onNextMessage.get(chatId);
         if (callback != null) {
-            Message message = callback.apply(text);
+            final Message message = callback.apply(text);
             sendMenuMessage(chatId, message);
             deleteMessage(chatId, messageId);
         } else {

@@ -135,7 +135,7 @@ public class NewsBotHandlers {
         return new InlineKeyboardMarkup(buttons);
     }
 
-    private TelegramBot.Message viewWebsiteMessage(WebsiteId id) {
+    private TelegramBot.Message viewWebsiteMessage(final WebsiteId id) {
         final Website website = dataProvider.findWebsite(id).orElseThrow();
         final String subCommand =
                 (dataProvider.isSubbed(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND)
@@ -154,7 +154,7 @@ public class NewsBotHandlers {
                                 .build()))));
     }
 
-    private void addWebsitesHandlers(TelegramBot bot) {
+    private void addWebsitesHandlers(final TelegramBot bot) {
         bot.command(WEBSITES_MENU_COMMAND, () ->
                 new TelegramBot.Message("Источники", getWebsitesMenu()));
         bot.command(LIST_SUBBED_WEBSITES_COMMAND, () ->
@@ -178,7 +178,7 @@ public class NewsBotHandlers {
 
     }
 
-    private TelegramBot.Message viewTopicMessage(TopicId id) {
+    private TelegramBot.Message viewTopicMessage(final TopicId id) {
         final Topic topic = dataProvider.findTopic(id).orElseThrow();
         final String subCommandName = dataProvider.isSubbed(id) ? "Отписаться" : "Подписаться";
         final String subCommand = dataProvider.isSubbed(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND;
@@ -196,7 +196,7 @@ public class NewsBotHandlers {
                                 .build()))));
     }
 
-    private void addTopicsHandlers(TelegramBot bot) {
+    private void addTopicsHandlers(final TelegramBot bot) {
         bot.command(TOPICS_MENU_COMMAND, () ->
                 new TelegramBot.Message("Темы", getWebsitesMenu()));
         bot.command(LIST_SUBBED_TOPICS_COMMAND, () ->
@@ -219,7 +219,7 @@ public class NewsBotHandlers {
         bot.commandTopic(VIEW_TOPIC_COMMAND, this::viewTopicMessage);
     }
 
-    private void addLikesHandlers(TelegramBot bot) {
+    private void addLikesHandlers(final TelegramBot bot) {
         bot.commandArticle(LIKE_COMMAND, (id, messageId) ->
                 articleMessage(id, ArticleOpinion.LIKED, messageId));
         bot.commandArticle(DISLIKE_COMMAND, (id, messageId) ->
@@ -249,8 +249,9 @@ public class NewsBotHandlers {
                         .callbackData(DISLIKE_COMMAND + " " + id.value() + " " + messageId).build())));
     }
 
-    private TelegramBot.Message articleMessage(ArticleId id, ArticleOpinion opinion, int messageId) {
-        Article article = dataProvider.getExampleArticle();
+    private TelegramBot.Message articleMessage(
+            final ArticleId id, final ArticleOpinion opinion, final int messageId) {
+        final Article article = dataProvider.getExampleArticle();
         return new TelegramBot.Message(article.title() + "\n" + article.url(),
                 articleMenu(id, opinion, messageId));
     }
