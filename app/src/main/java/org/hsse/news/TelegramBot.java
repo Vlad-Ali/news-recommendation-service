@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -174,44 +175,42 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
 
-        for (final String command : websiteIdArg.keySet()) {
-            if (text.toLowerCase(Locale.US).startsWith(command)) {
-                sendMenuMessage(chatId, websiteIdArg.get(command).apply(
-                        parseWebsiteId(text.substring(command.length()))));
-                return;
-            }
+        final Optional<String> websiteArgCommand = websiteIdArg.keySet().stream()
+                .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix)).findFirst();
+        if (websiteArgCommand.isPresent()) {
+            sendMenuMessage(chatId, websiteIdArg.get(websiteArgCommand.get()).apply(
+                    parseWebsiteId(text.substring(websiteArgCommand.get().length()))));
+            return;
         }
 
-        for (final String command : topicIdArg.keySet()) {
-            if (text.toLowerCase(Locale.US).startsWith(command)) {
-                sendMenuMessage(chatId, topicIdArg.get(command).apply(
-                        parseTopicId(text.substring(command.length()))));
-                return;
-            }
+        final Optional<String> topicArgCommand = topicIdArg.keySet().stream()
+                .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix)).findFirst();
+        if (topicArgCommand.isPresent()) {
+            sendMenuMessage(chatId, topicIdArg.get(topicArgCommand.get()).apply(
+                    parseTopicId(text.substring(topicArgCommand.get().length()))));
+            return;
         }
 
         final EditMessageText edit = new EditMessageText();
-        for (final String command : articleArg.keySet()) {
-            if (text.toLowerCase(Locale.US).startsWith(command)) {
-                final List<String> params = Arrays.stream(
-                                text.substring(command.length()).split(" "))
-                        .filter((string) -> !string.isBlank()).toList();
-                final int requiredParamCount = 2;
-                if (params.size() != requiredParamCount) {
-                    return;
-                }
-
-                final Message newMessage = articleArg.get(command).apply(
-                        parseArticleId(params.get(0)), parseMessageId(params.get(1)));
-
-                edit.setChatId(chatId);
-                edit.setMessageId(parseMessageId(params.get(1)));
-                edit.setText(newMessage.text());
-                edit.setReplyMarkup(newMessage.keyboard());
-                execute(edit);
-
+        final Optional<String> articleArgCommand = articleArg.keySet().stream()
+                .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix)).findFirst();
+        if (articleArgCommand.isPresent()) {
+            final List<String> params = Arrays.stream(
+                            text.substring(articleArgCommand.get().length()).split(" "))
+                    .filter((string) -> !string.isBlank()).toList();
+            final int requiredParamCount = 2;
+            if (params.size() != requiredParamCount) {
                 return;
             }
+
+            final Message newMessage = articleArg.get(articleArgCommand.get()).apply(
+                    parseArticleId(params.get(0)), parseMessageId(params.get(1)));
+
+            edit.setChatId(chatId);
+            edit.setMessageId(parseMessageId(params.get(1)));
+            edit.setText(newMessage.text());
+            edit.setReplyMarkup(newMessage.keyboard());
+            execute(edit);
         }
     }
 
