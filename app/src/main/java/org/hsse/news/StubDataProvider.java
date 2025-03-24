@@ -7,6 +7,7 @@ import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.models.Website;
 import org.hsse.news.database.website.models.WebsiteId;
+import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Component
 public class StubDataProvider {
     private final static String EXAMPLE_URI = "example.com";
     private final static UserId EXAMPLE_USER_ID =
