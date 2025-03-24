@@ -3,6 +3,7 @@ package org.hsse.news;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.flywaydb.core.Flyway;
+import org.hsse.news.bot.TelegramBot;
 import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.topic.models.Topic;

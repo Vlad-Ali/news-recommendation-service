@@ -1,4 +1,4 @@
-package org.hsse.news;
+package org.hsse.news.bot;
 
 import lombok.SneakyThrows;
 import org.glassfish.jersey.internal.util.Producer;

@@ -1,4 +1,4 @@
-package org.hsse.news;
+package org.hsse.news.bot;
 
 import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleId;
