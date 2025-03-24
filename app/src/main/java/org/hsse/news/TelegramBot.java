@@ -112,19 +112,20 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @SneakyThrows
     public void sendArticle(final Function<Integer, Message> messageIdToMessage) {
+        final SendMessage send = new SendMessage();
+        final EditMessageText edit = new EditMessageText();
+
         for (final long chatId : activeChats) {
             if (latestMenuMessageId.containsKey(chatId)) {
                 deleteMessage(chatId, latestMenuMessageId.get(chatId));
             }
 
-            final SendMessage send = new SendMessage();
             send.setChatId(chatId);
             send.setText("...fetching article...");
 
             final int messageId = execute(send).getMessageId();
             final Message message = messageIdToMessage.apply(messageId);
 
-            final EditMessageText edit = new EditMessageText();
             edit.setChatId(chatId);
             edit.setMessageId(messageId);
             edit.setText(message.text());
@@ -139,6 +140,22 @@ public class TelegramBot extends TelegramLongPollingBot {
         request.setChatId(chatId);
         request.setMessageId(messageId);
         execute(request);
+    }
+
+    private WebsiteId parseWebsiteId(final String text) {
+        return new WebsiteId(Long.parseLong(text.strip()));
+    }
+
+    private TopicId parseTopicId(final String text) {
+        return new TopicId(Long.parseLong(text.strip()));
+    }
+
+    private ArticleId parseArticleId(final String text) {
+        return new ArticleId(UUID.fromString(text.strip()));
+    }
+
+    private int parseMessageId(final String text) {
+        return Integer.parseInt(text.strip());
     }
 
     private void handleCommand(final long chatId, final String text)
@@ -159,20 +176,21 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         for (final String command : websiteIdArg.keySet()) {
             if (text.toLowerCase(Locale.US).startsWith(command)) {
-                final WebsiteId id = new WebsiteId(Long.parseLong(text.substring(command.length()).strip()));
-                sendMenuMessage(chatId, websiteIdArg.get(command).apply(id));
+                sendMenuMessage(chatId, websiteIdArg.get(command).apply(
+                        parseWebsiteId(text.substring(command.length()))));
                 return;
             }
         }
 
         for (final String command : topicIdArg.keySet()) {
             if (text.toLowerCase(Locale.US).startsWith(command)) {
-                final TopicId id = new TopicId(Long.parseLong(text.substring(command.length()).strip()));
-                sendMenuMessage(chatId, topicIdArg.get(command).apply(id));
+                sendMenuMessage(chatId, topicIdArg.get(command).apply(
+                        parseTopicId(text.substring(command.length()))));
                 return;
             }
         }
 
+        final EditMessageText edit = new EditMessageText();
         for (final String command : articleArg.keySet()) {
             if (text.toLowerCase(Locale.US).startsWith(command)) {
                 final List<String> params = Arrays.stream(
@@ -183,14 +201,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                final ArticleId id = new ArticleId(UUID.fromString(params.get(0).strip()));
-                final int messageId = Integer.parseInt(params.get(1).strip());
+                final Message newMessage = articleArg.get(command).apply(
+                        parseArticleId(params.get(0)), parseMessageId(params.get(1)));
 
-                final Message newMessage = articleArg.get(command).apply(id, messageId);
-
-                final EditMessageText edit = new EditMessageText();
                 edit.setChatId(chatId);
-                edit.setMessageId(messageId);
+                edit.setMessageId(parseMessageId(params.get(1)));
                 edit.setText(newMessage.text());
                 edit.setReplyMarkup(newMessage.keyboard());
                 execute(edit);
