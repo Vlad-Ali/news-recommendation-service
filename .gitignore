@@ -1,7 +1,5 @@
 ### Custom
 .env
-app/src/main/resources/application.properties
-
 app/src/main/resources/onnx_model/
 
 

@@ -33,7 +33,6 @@ jobs:
       - name: Prepare configuration
         run: |
           cd app/src/main/resources/
-          cp application.properties.example application.properties
           cd -
 
       - name: Setup Gradle
