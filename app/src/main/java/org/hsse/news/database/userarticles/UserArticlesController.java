@@ -12,7 +12,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Tag(name = "User articles API", description = "Управление связями пользователь-статья")
 public class UserArticlesController implements UserArticlesOperations {
-
     private final UserArticlesService userArticlesService;
 
     @Override

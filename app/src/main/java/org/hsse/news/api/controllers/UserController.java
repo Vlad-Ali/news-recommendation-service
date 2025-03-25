@@ -32,7 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("api/v1/articles")
 @AllArgsConstructor
 @Slf4j
 @Tag(name = "User API", description = "Управление текущим пользователем")

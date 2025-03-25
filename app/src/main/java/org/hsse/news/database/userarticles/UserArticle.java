@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.hsse.news.database.article.models.Article;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -27,21 +28,26 @@ public class UserArticle {
     private UUID userId;
 
     @NotNull()
-    private UUID articleId;
+    @JoinColumn(name = "article_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Article articleId;
 
+    /**
+     * Реакция пользователя на статью (лайк/дизлайк)
+     */
     @NotNull()
-    @Column(name = "mark", columnDefinition = "int default 0")
-    private Integer mark;
+    @Column(name = "grade", columnDefinition = "int default 0")
+    private Integer grade;
 
     public UserArticle() {
-        mark = 0;
+        grade = 0;
     }
 
     public static UserArticleDto toDto(final UserArticle userArticle) {
         return new UserArticleDto(
-                userArticle.articleId,
+                userArticle.getUserId(),
                 userArticle.userId,
-                userArticle.mark
+                userArticle.grade
         );
     }
 

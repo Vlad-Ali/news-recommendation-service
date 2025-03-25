@@ -1,5 +1,6 @@
 package org.hsse.news.api.controllers;
 
+import lombok.RequiredArgsConstructor;
 import org.hsse.news.api.operations.ArticleOperations;
 import org.hsse.news.database.article.ArticlesService;
 import org.hsse.news.database.article.models.*;
@@ -15,14 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("api/articles")
+@RequestMapping("api/v1/articles")
+@RequiredArgsConstructor
 @Tag(name = "Article API", description = "Управление статьями")
 public class ArticlesController implements ArticleOperations {
   private final ArticlesService articleService;
-
-  public ArticlesController(final ArticlesService articleService) {
-    this.articleService = articleService;
-  }
 
   @Override
   public ResponseEntity<List<ArticleDto>> getAll() {
@@ -39,7 +37,7 @@ public class ArticlesController implements ArticleOperations {
   @Override
   public ResponseEntity<List<UserArticleDto>> getUserArticles(final UUID userId) {
     final List<UserArticleDto> articles = articleService.getUserArticles(userId);
-    return new  ResponseEntity<>(articles, HttpStatus.OK);
+    return new ResponseEntity<>(articles, HttpStatus.OK);
   }
 
   @Override
@@ -50,11 +48,7 @@ public class ArticlesController implements ArticleOperations {
 
   @Override
   public ResponseEntity<String> updateArticle(final UUID articleId, final ArticleDto articleDto) {
-    articleService.update(
-        new ArticleId(articleId),
-            articleDto.title(),
-            articleDto.url()
-    );
+    articleService.update(new ArticleId(articleId), articleDto.title(), articleDto.url());
 
     return new ResponseEntity<>(articleId.toString(), HttpStatus.OK);
   }

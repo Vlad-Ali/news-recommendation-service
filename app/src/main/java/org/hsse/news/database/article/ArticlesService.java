@@ -27,7 +27,7 @@ public class ArticlesService {
     @Transactional(readOnly = true)
     public List<ArticleDto> getAll() {
         final List<Article> articles = articleRepository.findAll();
-        return articles.stream().map(Article::toDto).collect(Collectors.toList());
+        return articles.stream().map(ArticleDto::fromArticle).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -35,7 +35,7 @@ public class ArticlesService {
         final Article article = articleRepository
             .findById(articleId.value())
             .orElseThrow(() -> new ArticleNotFoundException(articleId));
-        return Article.toDto(article);
+        return ArticleDto.fromArticle(article);
     }
 
     @Transactional(readOnly = true)
