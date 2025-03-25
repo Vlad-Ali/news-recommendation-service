@@ -38,7 +38,7 @@ public class UserService {
         LOG.debug("Method findByChatId called");
         final Optional<UserEntity> optionalUser = usersRepository.findByChatId(chatId);
         if (optionalUser.isEmpty()){
-            throw new UserNotFoundException("User not found with chatId = "+chatId);
+            return Optional.empty();
         }
         return Optional.of(optionalUser.get().toUserDto());
     }
