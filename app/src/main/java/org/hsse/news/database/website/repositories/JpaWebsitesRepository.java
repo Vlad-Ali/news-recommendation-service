@@ -22,7 +22,7 @@ public interface JpaWebsitesRepository extends JpaRepository<WebsiteEntity, Long
     List<WebsiteEntity> findUnSubscribedWebsitesByUserId(@Param("user_id") UUID userId);
     Optional<WebsiteEntity> findByUrl(String url);
 
-    @Query(value = "SELECT w.* FROM websites w " +
+    @Query(value = "SELECT DISTINCT w.* FROM websites w " +
             "JOIN user_websites uw ON w.website_id = uw.website_id " +
             "JOIN user_topics ut ON uw.user_id = ut.user_id " +
             "WHERE ut.topic_id = :topicId " +

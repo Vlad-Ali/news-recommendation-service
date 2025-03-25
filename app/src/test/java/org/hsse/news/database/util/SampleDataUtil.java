@@ -16,14 +16,16 @@ public final class SampleDataUtil {
                     new UserId(UUID.fromString("11111111-1111-1111-1111-111111111111")),
                     "test@example.com",
                     "test_password",
-                    "TestUser"
+                    "TestUser",
+                    111_111L
             );
     public static final UserDto NEW_USER_DTO =
             new UserDto(
                     new UserId(UUID.fromString("22222222-2222-2222-2222-222222222222")),
                     "new@example.com",
                     "new_password",
-                    "NewUser"
+                    "NewUser",
+                    222_222L
             );
     public static final WebsiteDto DEFAULT_WEBSITE_DTO = new WebsiteDto(new WebsiteId(1L), "https://alex.com/RSS", "xxxx", new UserId(UUID.fromString("11111111-1111-1111-1111-111111111111")));
     public static final WebsiteInfo DEFAULT_WEBSITE_INFO = new WebsiteInfo(1L, "https://alex.com/RSS", "xxxx");

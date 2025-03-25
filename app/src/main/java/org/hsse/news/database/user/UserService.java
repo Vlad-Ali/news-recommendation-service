@@ -27,9 +27,18 @@ public class UserService {
 
     public Optional<UserDto> findById(final UserId userId) {
         LOG.debug("Method findById called");
-        final Optional<UserEntity> optionalUser= usersRepository.findById(userId.value());
+        final Optional<UserEntity> optionalUser = usersRepository.findById(userId.value());
         if (optionalUser.isEmpty()){
             throw new UserNotFoundException(userId);
+        }
+        return Optional.of(optionalUser.get().toUserDto());
+    }
+
+    public Optional<UserDto> findByChatId(final Long chatId){
+        LOG.debug("Method findByChatId called");
+        final Optional<UserEntity> optionalUser = usersRepository.findByChatId(chatId);
+        if (optionalUser.isEmpty()){
+            throw new UserNotFoundException("User not found with chatId = "+chatId);
         }
         return Optional.of(optionalUser.get().toUserDto());
     }

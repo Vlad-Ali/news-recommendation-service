@@ -3,10 +3,13 @@ CREATE TABLE IF NOT EXISTS users
     user_id  uuid        NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     email    text UNIQUE NOT NULL,
     password text        NOT NULL,
-    username text        NOT NULL
+    username text        NOT NULL,
+    chat_id  bigserial UNIQUE NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS index_users_email ON users (email);
+
+CREATE INDEX IF NOT EXISTS index_users_chat_id ON users (chat_id);
 
 
 CREATE TABLE IF NOT EXISTS topics

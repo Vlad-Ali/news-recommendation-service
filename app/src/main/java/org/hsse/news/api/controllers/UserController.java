@@ -44,11 +44,6 @@ public class UserController {
     private UserService userService;
     private JwtService jwtService;
 
-    /*public UserController(UserService userService, JwtService jwtService) {
-        this.userService = userService;
-        this.jwtService = jwtService;
-    }*/
-
     @PostMapping("/register")
     @Operation(summary = "Зарегистрировать пользователя")
     @ApiResponse(responseCode = "200",
@@ -58,9 +53,7 @@ public class UserController {
         final UserDto userDto = userService.register(
                 new UserDto(userRegisterRequest.email(),
                         userRegisterRequest.password(),
-                        userRegisterRequest.username()));
-
-        assert userDto.id() != null;
+                        userRegisterRequest.username(), (long) (Math.random() * Long.MAX_VALUE)));
         LOG.debug("Registered user with id = {}", userDto.id());
         return ResponseEntity.ok(jwtService.generateToken(userDto.id()));
     }

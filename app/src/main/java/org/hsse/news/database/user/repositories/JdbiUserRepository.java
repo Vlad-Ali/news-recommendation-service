@@ -72,7 +72,7 @@ public Optional<UserId> authenticate(final @NotNull AuthenticationCredentials cr
     @Override
     public void update(final @NotNull UserDto userDto) {
         if (userDto.id() == null) {
-            throw new UserNotFoundException(null);
+            throw new UserNotFoundException("");
         }
 
         jdbi.useTransaction(handle -> {

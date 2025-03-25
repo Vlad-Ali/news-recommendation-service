@@ -18,4 +18,6 @@ public interface JpaUsersRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmail(String email);
 
     Optional<UserEntity> findByEmailAndPassword(String email, String password);
+
+    Optional<UserEntity> findByChatId(Long chatId);
 }

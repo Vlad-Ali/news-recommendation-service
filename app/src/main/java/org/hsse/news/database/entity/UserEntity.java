@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @Entity
 @Getter
-@Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
+@Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = {"email"}), @UniqueConstraint(columnNames = {"chat_id"})})
 public class UserEntity {
     @Id
     @Column(name = "user_id", updatable = false, nullable = false)
@@ -45,6 +45,12 @@ public class UserEntity {
     @Setter
     @NotNull
     private String username;
+
+    @Column(name = "chat_id")
+    @Setter
+    @NotNull
+    private Long chatId;
+
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<WebsiteEntity> createdWebsites = new HashSet<>();
 
@@ -69,10 +75,11 @@ public class UserEntity {
 
     protected UserEntity() {}
 
-    public UserEntity(final String email,final String password,final String username) {
+    public UserEntity(final String email,final String password,final String username, final Long chatId) {
         this.email = email;
         this.password = password;
         this.username = username;
+        this.chatId = chatId;
     }
 
     public void addWebsite(final WebsiteEntity website) {
@@ -151,6 +158,10 @@ public class UserEntity {
         return subscribedWebsites;
     }
 
+    public @NotNull Long getChatId() {
+        return chatId;
+    }
+
     public Set<TopicEntity> getCreatedTopics() {
         return createdTopics;
     }
@@ -164,7 +175,8 @@ public class UserEntity {
         final String email = this.getEmail();
         final String username = this.getUsername();
         final String password = this.getPassword();
-        return new UserDto(new UserId(id), email, password, username);
+        final Long chatId = this.getChatId();
+        return new UserDto(new UserId(id), email, password, username, chatId);
     }
 
     @Override

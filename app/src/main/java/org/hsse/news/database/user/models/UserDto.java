@@ -11,16 +11,16 @@ import java.util.Objects;
 
 public record UserDto(
         @Nested @Nullable UserId id,
-        @NotNull String email, @NotNull String password, @NotNull String username
+        @NotNull String email, @NotNull String password, @NotNull String username, @NotNull Long chatId
 ) {
     @JdbiConstructor
     public UserDto {}
 
     public UserDto(
             final @NotNull String email, final @NotNull String password,
-            final @NotNull String username
+            final @NotNull String username, final @NotNull Long chatId
     ) {
-        this(null, email, password, username);
+        this(null, email, password, username, chatId);
     }
 
     public UserDto initializeWithId(final @NotNull UserId newId) {
@@ -28,23 +28,23 @@ public record UserDto(
             throw new UserInitializationException("User is already initialized");
         }
 
-        return new UserDto(newId, email, password, username);
+        return new UserDto(newId, email, password, username, chatId);
     }
 
     public UserDto withEmail(final @NotNull String newEmail) {
-        return new UserDto(id, newEmail, password, username);
+        return new UserDto(id, newEmail, password, username, chatId);
     }
 
     public UserDto withPassword(final @NotNull String newPassword) {
-        return new UserDto(id, email, newPassword, username);
+        return new UserDto(id, email, newPassword, username, chatId);
     }
 
     public UserDto withUsername(final @NotNull String newUsername) {
-        return new UserDto(id, email, password, newUsername);
+        return new UserDto(id, email, password, newUsername, chatId);
     }
 
     public UserEntity toUserEntity(){
-        return new UserEntity(this.email(), this.password(), this.username());
+        return new UserEntity(this.email(), this.password(), this.username(), this.chatId);
     }
 
     @Override

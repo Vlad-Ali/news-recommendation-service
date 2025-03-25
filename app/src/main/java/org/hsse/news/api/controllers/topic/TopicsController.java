@@ -64,7 +64,7 @@ public class TopicsController implements TopicOperations{
             throw new QuantityLimitExceededTopicsPerUserException(String.format("Chosen topics more than limit = %s", MAX_TOPICS_PER_USER));
         }
         LOG.debug("Successfully updated subTopics for user with id = {}", userId.value());
-        return ResponseEntity.ok("SubWebsites updated");
+        return ResponseEntity.ok("SubTopics updated");
     }
 
     @Override
