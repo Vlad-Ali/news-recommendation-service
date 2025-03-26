@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.hsse.news.api.schemas.request.website.CustomWebsiteCreateRequest;
+import org.hsse.news.api.schemas.request.website.RecommendedWebsitesByTopic;
 import org.hsse.news.api.schemas.request.website.SubWebsitesUpdateRequest;
 import org.hsse.news.api.schemas.response.website.WebsitesResponse;
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
@@ -55,6 +56,11 @@ public interface WebsiteOperations {
     @DeleteMapping("/custom/{websiteId}")
     ResponseEntity<String> delete(
             @Parameter(description = "ID созданного сайта для удаления") @PathVariable Long websiteId) throws WebsiteNotFoundException;
+
+    @Operation(summary = "Рекомендации сайтов пользователю по его выбранной теме")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Сайты получены")})
+    @GetMapping("/user/recommendation")
+    ResponseEntity<RecommendedWebsitesByTopic> getRecommendedWebsitesByTopic();
 
 
 }

@@ -14,7 +14,7 @@ import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.InvalidCurrentPasswordException;
 import org.hsse.news.database.user.exceptions.SameNewPasswordException;
 import org.hsse.news.database.user.models.AuthenticationCredentials;
-import org.hsse.news.database.user.models.User;
+import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,25 +44,18 @@ public class UserController {
     private UserService userService;
     private JwtService jwtService;
 
-    /*public UserController(UserService userService, JwtService jwtService) {
-        this.userService = userService;
-        this.jwtService = jwtService;
-    }*/
-
     @PostMapping("/register")
     @Operation(summary = "Зарегистрировать пользователя")
     @ApiResponse(responseCode = "200",
             description = "Токен для доступа в аккаунт нового пользователя")
     public ResponseEntity<String> register(
             final @RequestBody UserRegisterRequest userRegisterRequest) {
-        final User user = userService.register(
-                new User(userRegisterRequest.email(),
+        final UserDto userDto = userService.register(
+                new UserDto(userRegisterRequest.email(),
                         userRegisterRequest.password(),
-                        userRegisterRequest.username()));
-
-        assert user.id() != null;
-        LOG.debug("Registered user with id = {}", user.id());
-        return ResponseEntity.ok(jwtService.generateToken(user.id()));
+                        userRegisterRequest.username(), (long) (Math.random() * Long.MAX_VALUE)));
+        LOG.debug("Registered user with id = {}", userDto.id());
+        return ResponseEntity.ok(jwtService.generateToken(userDto.id()));
     }
 
     @PostMapping("/sign-in")
@@ -88,7 +81,7 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "Данные пользователя")
     public ResponseEntity<UserInfo> get() {
         final UserId userId = getCurrentUserId();
-        final Optional<User> userOptional = userService.findById(userId);
+        final Optional<UserDto> userOptional = userService.findById(userId);
         if (userOptional.isEmpty()) {
             LOG.warn("User not found for id = {}", userId);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,

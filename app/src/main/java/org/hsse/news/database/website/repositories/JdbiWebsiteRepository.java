@@ -5,7 +5,7 @@ import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteNotFoundException;
-import org.hsse.news.database.website.models.Website;
+import org.hsse.news.database.website.models.WebsiteDto;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.hsse.news.util.JdbiProvider;
 import org.jdbi.v3.core.Jdbi;
@@ -37,31 +37,31 @@ public class JdbiWebsiteRepository implements WebsiteRepository {
     }
 
     @Override
-    public @NotNull Website create(final @NotNull Website website) {
+    public @NotNull WebsiteDto create(final @NotNull WebsiteDto websiteDto) {
         return jdbi.inTransaction(handle -> {
             try {
-                return website.initializeWithId(handle.createUpdate(
+                return websiteDto.initializeWithId(handle.createUpdate(
                                 "INSERT INTO websites (url, description, creator_id) " +
                                         "VALUES (:url, :description, :creator_id)"
                         )
-                        .bind("url", website.url()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
-                        .bind("description", website.description()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
-                        .bind("creator_id", website.creatorId().value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                        .bind("url", websiteDto.url()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                        .bind("description", websiteDto.description()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                        .bind("creator_id", websiteDto.creatorId().value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
                         .executeAndReturnGeneratedKeys("website_id") // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
                         .mapTo(WebsiteId.class)
                         .one()
                 );
             } catch (UnableToExecuteStatementException e) {
-                throw new WebsiteAlreadyExistsException(website.id(), website.url()); // NOPMD - suppressed PreserveStackTrace - irrelevant
+                throw new WebsiteAlreadyExistsException(websiteDto.id(), websiteDto.url()); // NOPMD - suppressed PreserveStackTrace - irrelevant
             }
         });
     }
 
     @Override
-    public @NotNull List<Website> getAll() {
+    public @NotNull List<WebsiteDto> getAll() {
         return jdbi.inTransaction(handle ->
                 handle.createQuery("SELECT * FROM websites WHERE creator_id IS NULL")
-                        .mapTo(Website.class)
+                        .mapTo(WebsiteDto.class)
                         .list()
         );
     }
@@ -116,20 +116,20 @@ public class JdbiWebsiteRepository implements WebsiteRepository {
     }
 
     @Override
-    public void update(final @NotNull Website website) {
-        if (website.id() == null) {
+    public void update(final @NotNull WebsiteDto websiteDto) {
+        if (websiteDto.id() == null) {
             throw new WebsiteNotFoundException("Website with id = null does not exist");
         }
 
         jdbi.useTransaction(handle -> {
             try {
                 handle.createUpdate("UPDATE websites SET url = :url, description = :description WHERE website_id = :website_id")
-                        .bind("url", website.url()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
-                        .bind("description", website.description()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
-                        .bind("website_id", website.id().value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                        .bind("url", websiteDto.url()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                        .bind("description", websiteDto.description()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
+                        .bind("website_id", websiteDto.id().value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
                         .execute();
             } catch (UnableToExecuteStatementException e) {
-                throw new WebsiteAlreadyExistsException(website.id(), website.url()); // NOPMD - suppressed PreserveStackTrace - irrelevant
+                throw new WebsiteAlreadyExistsException(websiteDto.id(), websiteDto.url()); // NOPMD - suppressed PreserveStackTrace - irrelevant
             }
         });
     }

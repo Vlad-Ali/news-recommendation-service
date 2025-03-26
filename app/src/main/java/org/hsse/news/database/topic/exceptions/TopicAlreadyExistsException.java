@@ -8,4 +8,8 @@ public class TopicAlreadyExistsException extends RuntimeException {
     public TopicAlreadyExistsException(final TopicId topicId, final String description) {
         super(String.format(DEFAULT_MESSAGE, topicId, description));
     }
+
+    public TopicAlreadyExistsException(final String message){
+        super(message);
+    }
 }

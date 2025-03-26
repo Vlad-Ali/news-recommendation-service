@@ -2,16 +2,11 @@ package org.hsse.news;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.flywaydb.core.Flyway;
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.article.models.Article;
 import org.hsse.news.database.article.models.ArticleId;
-import org.hsse.news.database.topic.models.Topic;
-import org.hsse.news.database.topic.models.TopicId;
-import org.hsse.news.database.user.models.User;
+import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
-import org.hsse.news.database.website.models.Website;
-import org.hsse.news.database.website.models.WebsiteId;
 import org.hsse.news.util.JdbiProvider;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
@@ -37,7 +32,7 @@ public class Application {
     private static void initializeDatabase() {
         final Config config = ConfigFactory.load();
 
-        final Flyway flyway =
+        /*final Flyway flyway =
             Flyway.configure()
                 .outOfOrder(true)
                 .locations("classpath:db/migrations")
@@ -47,7 +42,7 @@ public class Application {
                         config.getString("database.password")
                 )
                 .load();
-        flyway.migrate();
+        flyway.migrate();*/
 
         final Jdbi jdbi = Jdbi.create(
                 config.getString("database.url"),
@@ -55,12 +50,12 @@ public class Application {
                 config.getString("database.password")
         );
 
-        jdbi.registerRowMapper(User.class, ConstructorMapper.of(User.class));
+        jdbi.registerRowMapper(UserDto.class, ConstructorMapper.of(UserDto.class));
         jdbi.registerRowMapper(UserId.class, ConstructorMapper.of(UserId.class));
-        jdbi.registerRowMapper(Topic.class, ConstructorMapper.of(Topic.class));
+        /*jdbi.registerRowMapper(TopicDto.class, ConstructorMapper.of(TopicDto.class));
         jdbi.registerRowMapper(TopicId.class, ConstructorMapper.of(TopicId.class));
-        jdbi.registerRowMapper(Website.class, ConstructorMapper.of(Website.class));
-        jdbi.registerRowMapper(WebsiteId.class, ConstructorMapper.of(WebsiteId.class));
+        jdbi.registerRowMapper(WebsiteDto.class, ConstructorMapper.of(WebsiteDto.class));
+        jdbi.registerRowMapper(WebsiteId.class, ConstructorMapper.of(WebsiteId.class));*/
         jdbi.registerRowMapper(Article.class, ConstructorMapper.of(Article.class));
         jdbi.registerRowMapper(ArticleId.class, ConstructorMapper.of(ArticleId.class));
         jdbi.registerRowMapper(WebsiteInfo.class, ConstructorMapper.of(WebsiteInfo.class));

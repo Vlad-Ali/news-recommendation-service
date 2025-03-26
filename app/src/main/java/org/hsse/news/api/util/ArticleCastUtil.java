@@ -22,7 +22,7 @@ public final class ArticleCastUtil {
                 article.title(),
                 article.url(),
                 String.valueOf(article.createdAt()),
-                new ArrayList<>(List.of(topicService.getTopicNameById(article.topicId()))), // NOPMD
+                new ArrayList<>(List.of(topicService.findById(article.topicId()).get().description())), // NOPMD
                 websiteService.findById(article.websiteId()).get().description() // NOPMD
         );
     }

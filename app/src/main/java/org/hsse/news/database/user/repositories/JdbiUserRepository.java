@@ -3,7 +3,7 @@ package org.hsse.news.database.user.repositories;
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.UserNotFoundException;
 import org.hsse.news.database.user.models.AuthenticationCredentials;
-import org.hsse.news.database.user.models.User;
+import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.util.JdbiProvider;
 import org.jdbi.v3.core.Jdbi;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public final class JdbiUserRepository implements UserRepository {
+public class JdbiUserRepository implements UserRepository {
     private final Jdbi jdbi;
 
     public JdbiUserRepository(final @NotNull Jdbi jdbi) {
@@ -26,11 +26,11 @@ public final class JdbiUserRepository implements UserRepository {
     }
 
     @Override
-    public Optional<User> findById(final @NotNull UserId userId) {
+    public Optional<UserDto> findById(final @NotNull UserId userId) {
         return jdbi.inTransaction(handle ->
                 handle.createQuery("SELECT * FROM users WHERE user_id = :user_id")
                         .bind("user_id", userId.value()) // NOPMD - suppressed AvoidDuplicateLiterals - irrelevant
-                        .mapTo(User.class)
+                        .mapTo(UserDto.class)
                         .findFirst()
         );
     }
@@ -40,25 +40,25 @@ public Optional<UserId> authenticate(final @NotNull AuthenticationCredentials cr
         return jdbi.inTransaction(handle ->
                 handle.createQuery("SELECT * FROM users WHERE email = :email")
                         .bind("email", credentials.email())
-                        .mapTo(User.class)
+                        .mapTo(UserDto.class)
                         .findFirst()
                         .filter(user -> user.password().equals(credentials.password()))
-                        .map(User::id)
+                        .map(UserDto::id)
         );
     }
 
     @Override
-    public @NotNull User create(final @NotNull User user) {
+    public @NotNull UserDto create(final @NotNull UserDto userDto) {
         return jdbi.inTransaction(handle -> {
             try {
-                return user.initializeWithId(
+                return userDto.initializeWithId(
                         handle.createUpdate(
                                 "INSERT INTO users (email, password, username) " +
                                         "VALUES (:email, :password, :username)"
                                 )
-                                .bind("email", user.email())
-                                .bind("password", user.password())
-                                .bind("username", user.username())
+                                .bind("email", userDto.email())
+                                .bind("password", userDto.password())
+                                .bind("username", userDto.username())
                                 .executeAndReturnGeneratedKeys("user_id")
                                 .mapTo(UserId.class)
                                 .one()
@@ -70,24 +70,24 @@ public Optional<UserId> authenticate(final @NotNull AuthenticationCredentials cr
     }
 
     @Override
-    public void update(final @NotNull User user) {
-        if (user.id() == null) {
-            throw new UserNotFoundException(null);
+    public void update(final @NotNull UserDto userDto) {
+        if (userDto.id() == null) {
+            throw new UserNotFoundException("");
         }
 
         jdbi.useTransaction(handle -> {
             try {
-                final Optional<User> userOptional = findById(user.id());
+                final Optional<UserDto> userOptional = findById(userDto.id());
 
                 if (userOptional.isEmpty()) {
-                    throw new UserNotFoundException(user.id());
+                    throw new UserNotFoundException(userDto.id());
                 }
 
                 handle.createUpdate("UPDATE users SET email = :email, password = :password, username = :username WHERE user_id = :user_id")
-                        .bind("email", user.email())
-                        .bind("password", user.password())
-                        .bind("username", user.username())
-                        .bind("user_id", user.id().value())
+                        .bind("email", userDto.email())
+                        .bind("password", userDto.password())
+                        .bind("username", userDto.username())
+                        .bind("user_id", userDto.id().value())
                         .execute();
             } catch (UnableToExecuteStatementException e) {
                 throw new EmailConflictException(e);
@@ -98,7 +98,7 @@ public Optional<UserId> authenticate(final @NotNull AuthenticationCredentials cr
     @Override
     public void delete(final @NotNull UserId userId) {
         jdbi.useTransaction(handle -> {
-            final Optional<User> userOptional = findById(userId);
+            final Optional<UserDto> userOptional = findById(userId);
 
             if (userOptional.isEmpty()) {
                 throw new UserNotFoundException(userId);

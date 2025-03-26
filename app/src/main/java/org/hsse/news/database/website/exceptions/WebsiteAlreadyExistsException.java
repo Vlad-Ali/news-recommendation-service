@@ -8,4 +8,6 @@ public class WebsiteAlreadyExistsException extends RuntimeException {
     public WebsiteAlreadyExistsException(final WebsiteId websiteId, final String url) {
         super(String.format(DEFAULT_MESSAGE, websiteId, url));
     }
+
+    public WebsiteAlreadyExistsException(final String message){super(message);}
 }
