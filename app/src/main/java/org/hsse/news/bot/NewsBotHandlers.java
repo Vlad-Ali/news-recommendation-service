@@ -139,7 +139,7 @@ public class NewsBotHandlers {
     private TelegramBot.Message viewWebsiteMessage(final WebsiteId id) {
         final Website website = dataProvider.findWebsite(id).orElseThrow();
         final String subCommand =
-                (dataProvider.isSubbed(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND)
+                (dataProvider.isSubbed(id) ? UNSUB_WEBSITE_COMMAND : SUB_WEBSITE_COMMAND)
                         + " " + id;
 
         return new TelegramBot.Message(website.description() + "\n" + website.url(),
