@@ -26,7 +26,7 @@ public class Application {
         final ApplicationContext context = SpringApplication.run(Application.class, args);
 
         final TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-        botsApi.registerBot(context.getBean("newsBot", NewsBot.class));
+        botsApi.registerBot(context.getBean("telegramBot", TelegramBot.class));
     }
 
     private static void initializeDatabase() {

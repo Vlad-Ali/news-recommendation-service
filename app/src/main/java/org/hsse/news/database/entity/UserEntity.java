@@ -187,7 +187,7 @@ public class UserEntity {
         if (!(o instanceof UserEntity user)) {
             return false;
         }
-        return id.equals(user.id);
+        return id!=null && id.equals(user.id);
     }
 
     @Override

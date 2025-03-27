@@ -87,7 +87,7 @@ public class WebsiteEntity {
         if (!(o instanceof WebsiteEntity website)) {
             return false;
         }
-        return websiteId.equals(website.websiteId);
+        return websiteId!= null && websiteId.equals(website.websiteId);
     }
 
     @Override

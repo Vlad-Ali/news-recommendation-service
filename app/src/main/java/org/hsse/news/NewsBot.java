@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class NewsBot extends TelegramLongPollingBot {
     private final static String START_COMMAND = "/start";
     private final static String STOP_COMMAND = "/stop";
