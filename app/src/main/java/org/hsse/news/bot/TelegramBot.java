@@ -44,7 +44,7 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
     private ApplicationContext applicationContext;
 
     private final Set<Long> activeChats = new HashSet<>();
-    private final Map<Long, Integer> latestMenuMessageId = new ConcurrentHashMap<>();
+    private final Map<Long, MessageId> latestMenuMessageId = new ConcurrentHashMap<>();
 
     private final Map<String, Function<List<String>, Optional<Message>>> commands = new ConcurrentHashMap<>();
 
@@ -88,6 +88,9 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
                         } else if (param.getParameterType() == TopicId.class) {
                             methodArgs.add(new TopicId(Long.parseLong(args.get(currentArg))));
                             ++currentArg;
+                        } else if (param.getParameterType() == MessageId.class) {
+                            methodArgs.add(new MessageId(Integer.parseInt(args.get(currentArg))));
+                            ++currentArg;
                         }
                     }
 
@@ -113,9 +116,20 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         return "HsseNewsTeam1Bot";
     }
 
+    private void editMessage(final long chatId, final Message message, final MessageId replaced)
+            throws TelegramApiException {
+        final EditMessageText edit = new EditMessageText();
+        edit.setChatId(chatId);
+        edit.setMessageId(replaced.value());
+        edit.setText(message.text());
+        edit.setReplyMarkup(message.keyboard());
+
+        execute(edit);
+    }
+
     private void sendMenuMessage(final long chatId, final Message message)
             throws TelegramApiException {
-        final Integer messageId = latestMenuMessageId.get(chatId);
+        final MessageId messageId = latestMenuMessageId.get(chatId);
         if (messageId == null) {
             final SendMessage send = new SendMessage();
             send.setChatId(chatId);
@@ -123,16 +137,10 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
             send.setText(message.text());
             send.setReplyMarkup(message.keyboard());
 
-            final int id = execute(send).getMessageId();
+            final MessageId id = new MessageId(execute(send).getMessageId());
             latestMenuMessageId.put(chatId, id);
         } else {
-            final EditMessageText edit = new EditMessageText();
-            edit.setChatId(chatId);
-            edit.setMessageId(messageId);
-            edit.setText(message.text());
-            edit.setReplyMarkup(message.keyboard());
-
-            execute(edit);
+            editMessage(chatId, message, messageId);
         }
 
         if (message.onNextMessage() != null) {
@@ -142,8 +150,16 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         }
     }
 
+    private void sendMessage(final long chatId, final Message message) throws TelegramApiException {
+        if (message.replace().isPresent()) {
+            editMessage(chatId, message, message.replace().get());
+        } else {
+            sendMenuMessage(chatId, message);
+        }
+    }
+
     @SneakyThrows
-    public void sendArticle(final Function<Integer, Message> messageIdToMessage) {
+    public void sendArticle(final Function<MessageId, Message> messageIdToMessage) {
         final SendMessage send = new SendMessage();
         final EditMessageText edit = new EditMessageText();
 
@@ -155,22 +171,18 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
             send.setChatId(chatId);
             send.setText("...fetching article...");
 
-            final int messageId = execute(send).getMessageId();
+            final MessageId messageId = new MessageId(execute(send).getMessageId());
             final Message message = messageIdToMessage.apply(messageId);
 
-            edit.setChatId(chatId);
-            edit.setMessageId(messageId);
-            edit.setText(message.text());
-            edit.setReplyMarkup(message.keyboard());
-            execute(edit);
+            editMessage(chatId, message, messageId);
         }
     }
 
-    private void deleteMessage(final long chatId, final int messageId)
+    private void deleteMessage(final long chatId, final MessageId messageId)
             throws TelegramApiException {
         final DeleteMessage request = new DeleteMessage();
         request.setChatId(chatId);
-        request.setMessageId(messageId);
+        request.setMessageId(messageId.value());
         execute(request);
     }
 
@@ -187,19 +199,19 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         commands.get(largestPrefix).apply(args)
                 .ifPresent((message) -> {
                     try {
-                        sendMenuMessage(chatId, message);
+                        sendMessage(chatId, message);
                     } catch (TelegramApiException e) {
                         throw new RuntimeException(e);
                     }
                 });
     }
 
-    private void handleInput(final long chatId, final String text, final int messageId)
+    private void handleInput(final long chatId, final String text, final MessageId messageId)
             throws TelegramApiException {
         final Function<String, Message> callback = onNextMessage.get(chatId);
         if (callback != null) {
             final Message message = callback.apply(text);
-            sendMenuMessage(chatId, message);
+            sendMessage(chatId, message);
             deleteMessage(chatId, messageId);
         } else {
             handleCommand(chatId, text);
@@ -212,8 +224,9 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         if (update.hasMessage()) {
             activeChats.add(update.getMessage().getChatId());
             handleInput(update.getMessage().getChatId(), update.getMessage().getText(),
-                    update.getMessage().getMessageId());
-            deleteMessage(update.getMessage().getChatId(), update.getMessage().getMessageId());
+                    new MessageId(update.getMessage().getMessageId()));
+            deleteMessage(update.getMessage().getChatId(),
+                    new MessageId(update.getMessage().getMessageId()));
         } else if (update.hasCallbackQuery()) {
             activeChats.add(update.getCallbackQuery().getMessage().getChatId());
             handleCommand(update.getCallbackQuery().getMessage().getChatId(),
