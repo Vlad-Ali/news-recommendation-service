@@ -27,6 +27,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -181,21 +182,24 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         execute(request);
     }
 
-    private void handleCommand(final long chatId, final String text)
-            throws TelegramApiException {
+    private void handleCommand(final long chatId, final String text) {
         onNextMessage.remove(chatId);
 
-        for (String prefix : commands.keySet()) {
-            if (text.toLowerCase(Locale.US).startsWith(prefix.toLowerCase(Locale.US))) {
-                final List<String> args = Arrays.stream(text.substring(prefix.length()).split(" "))
-                        .filter(string -> !string.isBlank()).toList();
-                final Optional<Message> message = commands.get(prefix).apply(args);
-                if (message.isPresent()) {
-                    sendMenuMessage(chatId, message.get());
-                }
-                return;
-            }
-        }
+        String largestPrefix = commands.keySet().stream()
+                .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix.toLowerCase(Locale.US)))
+                .max(Comparator.comparing(String::length)).orElseThrow();
+
+        final List<String> args = Arrays.stream(text.substring(largestPrefix.length()).split(" "))
+                .filter(string -> !string.isBlank()).toList();
+
+        commands.get(largestPrefix).apply(args)
+                .ifPresent((message) -> {
+                    try {
+                        sendMenuMessage(chatId, message);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     private void handleInput(final long chatId, final String text, final int messageId)
