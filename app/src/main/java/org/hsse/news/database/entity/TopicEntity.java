@@ -80,7 +80,7 @@ public class TopicEntity {
         if (!(o instanceof TopicEntity topic)) {
             return false;
         }
-        return topicId.equals(topic.topicId);
+        return topicId!=null && topicId.equals(topic.topicId);
     }
 
     @Override
