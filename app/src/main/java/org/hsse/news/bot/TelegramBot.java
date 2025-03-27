@@ -1,13 +1,21 @@
 package org.hsse.news.bot;
 
+import jakarta.annotation.PostConstruct;
+import lombok.Setter;
 import lombok.SneakyThrows;
-import org.glassfish.jersey.internal.util.Producer;
+import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.website.models.WebsiteId;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.MethodParameter;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ReflectionUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -16,6 +24,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -27,16 +37,16 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+@Slf4j
 @Component
-public class TelegramBot extends TelegramLongPollingBot {
+public class TelegramBot extends TelegramLongPollingBot implements ApplicationContextAware {
+    @Setter
+    private ApplicationContext applicationContext;
+
     private final Set<Long> activeChats = new HashSet<>();
     private final Map<Long, Integer> latestMenuMessageId = new ConcurrentHashMap<>();
 
-    private final Map<String, Runnable> noArgsNoMessage = new ConcurrentHashMap<>();
-    private final Map<String, Producer<Message>> noArgs = new ConcurrentHashMap<>();
-    private final Map<String, Function<WebsiteId, Message>> websiteIdArg = new ConcurrentHashMap<>();
-    private final Map<String, Function<TopicId, Message>> topicIdArg = new ConcurrentHashMap<>();
-    private final Map<String, ArticleCommand> articleArg = new ConcurrentHashMap<>();
+    private final Map<String, Function<List<String>, Optional<Message>>> commands = new ConcurrentHashMap<>();
 
     private final Map<Long, Function<String, Message>> onNextMessage = new ConcurrentHashMap<>();
 
@@ -57,29 +67,57 @@ public class TelegramBot extends TelegramLongPollingBot {
         super(environment.getProperty("bot-token"));
     }
 
+    @PostConstruct
+    public void findBotMappings() {
+        for (final String beanName : applicationContext.getBeanDefinitionNames()) {
+            if (beanName.equals("telegramBot")) continue;
+
+            final Object bean = applicationContext.getBean(beanName);
+            final Class<?> beanClass = AopUtils.getTargetClass(bean);
+            ReflectionUtils.doWithMethods(beanClass, (method) -> {
+                BotMapping annotation = AnnotationUtils.findAnnotation(method, BotMapping.class);
+                if (annotation == null) {
+                    return;
+                }
+
+                String mapping = annotation.value();
+                commands.put(mapping, (args) -> {
+                    int currentArg = 0;
+                    final List<Object> methodArgs = new ArrayList<>();
+                    for (int i = 0; i < method.getParameterCount(); i++) {
+                        MethodParameter param = new MethodParameter(method, i);
+                        if (param.getParameterType() == WebsiteId.class) {
+                            methodArgs.add(new WebsiteId(Long.parseLong(args.get(currentArg))));
+                            ++currentArg;
+                        } else if (param.getParameterType() == ArticleId.class) {
+                            methodArgs.add(new ArticleId(UUID.fromString(args.get(currentArg))));
+                            ++currentArg;
+                        } else if (param.getParameterType() == TopicId.class) {
+                            methodArgs.add(new TopicId(Long.parseLong(args.get(currentArg))));
+                            ++currentArg;
+                        }
+                    }
+
+                    Object result;
+                    try {
+                        result = method.invoke(bean, methodArgs.toArray());
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    if (result instanceof Message) {
+                        return Optional.of((Message) result);
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+            });
+        }
+    }
+
     @Override
     public String getBotUsername() {
         return "HsseNewsTeam1Bot";
-    }
-
-    public void command(final String text, final Runnable command) {
-        noArgsNoMessage.put(text, command);
-    }
-
-    public void command(final String text, final Producer<Message> command) {
-        noArgs.put(text, command);
-    }
-
-    public void commandWebsite(final String prefix, final Function<WebsiteId, Message> command) {
-        websiteIdArg.put(prefix, command);
-    }
-
-    public void commandTopic(final String prefix, final Function<TopicId, Message> command) {
-        topicIdArg.put(prefix, command);
-    }
-
-    public void commandArticle(final String prefix, final ArticleCommand command) {
-        articleArg.put(prefix, command);
     }
 
     private void sendMenuMessage(final long chatId, final Message message)
@@ -143,74 +181,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         execute(request);
     }
 
-    private WebsiteId parseWebsiteId(final String text) {
-        return new WebsiteId(Long.parseLong(text.strip()));
-    }
-
-    private TopicId parseTopicId(final String text) {
-        return new TopicId(Long.parseLong(text.strip()));
-    }
-
-    private ArticleId parseArticleId(final String text) {
-        return new ArticleId(UUID.fromString(text.strip()));
-    }
-
-    private int parseMessageId(final String text) {
-        return Integer.parseInt(text.strip());
-    }
-
     private void handleCommand(final long chatId, final String text)
             throws TelegramApiException {
         onNextMessage.remove(chatId);
 
-        final Runnable noArgNoMessageCommand = noArgsNoMessage.get(text.toLowerCase(Locale.US));
-        if (noArgNoMessageCommand != null) {
-            noArgNoMessageCommand.run();
-            return;
-        }
-
-        final Producer<Message> noArgCommand = noArgs.get(text.toLowerCase(Locale.US));
-        if (noArgCommand != null) {
-            sendMenuMessage(chatId, noArgCommand.call());
-            return;
-        }
-
-        final Optional<String> websiteArgCommand = websiteIdArg.keySet().stream()
-                .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix)).findFirst();
-        if (websiteArgCommand.isPresent()) {
-            sendMenuMessage(chatId, websiteIdArg.get(websiteArgCommand.get()).apply(
-                    parseWebsiteId(text.substring(websiteArgCommand.get().length()))));
-            return;
-        }
-
-        final Optional<String> topicArgCommand = topicIdArg.keySet().stream()
-                .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix)).findFirst();
-        if (topicArgCommand.isPresent()) {
-            sendMenuMessage(chatId, topicIdArg.get(topicArgCommand.get()).apply(
-                    parseTopicId(text.substring(topicArgCommand.get().length()))));
-            return;
-        }
-
-        final EditMessageText edit = new EditMessageText();
-        final Optional<String> articleArgCommand = articleArg.keySet().stream()
-                .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix)).findFirst();
-        if (articleArgCommand.isPresent()) {
-            final List<String> params = Arrays.stream(
-                            text.substring(articleArgCommand.get().length()).split(" "))
-                    .filter((string) -> !string.isBlank()).toList();
-            final int requiredParamCount = 2;
-            if (params.size() != requiredParamCount) {
+        for (String prefix : commands.keySet()) {
+            if (text.toLowerCase(Locale.US).startsWith(prefix.toLowerCase(Locale.US))) {
+                final List<String> args = Arrays.stream(text.substring(prefix.length()).split(" "))
+                        .filter(string -> !string.isBlank()).toList();
+                final Optional<Message> message = commands.get(prefix).apply(args);
+                if (message.isPresent()) {
+                    sendMenuMessage(chatId, message.get());
+                }
                 return;
             }
-
-            final Message newMessage = articleArg.get(articleArgCommand.get()).apply(
-                    parseArticleId(params.get(0)), parseMessageId(params.get(1)));
-
-            edit.setChatId(chatId);
-            edit.setMessageId(parseMessageId(params.get(1)));
-            edit.setText(newMessage.text());
-            edit.setReplyMarkup(newMessage.keyboard());
-            execute(edit);
         }
     }
 
