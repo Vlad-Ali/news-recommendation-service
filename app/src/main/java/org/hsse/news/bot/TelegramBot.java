@@ -21,7 +21,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -50,13 +49,6 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
     private final Map<String, Function<List<String>, Optional<Message>>> commands = new ConcurrentHashMap<>();
 
     private final Map<Long, Function<String, Message>> onNextMessage = new ConcurrentHashMap<>();
-
-    public record Message(String text, InlineKeyboardMarkup keyboard,
-                          Function<String, Message> onNextMessage) {
-        Message(final String text, final InlineKeyboardMarkup keyboard) {
-            this(text, keyboard, null);
-        }
-    }
 
     @FunctionalInterface
     public interface ArticleCommand {
@@ -138,7 +130,7 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
             edit.setChatId(chatId);
             edit.setMessageId(messageId);
             edit.setText(message.text());
-            edit.setReplyMarkup(message.keyboard);
+            edit.setReplyMarkup(message.keyboard());
 
             execute(edit);
         }

@@ -49,25 +49,7 @@ public class NewsBotHandlers {
         this.dataProvider = dataProvider;
     }
 
-    @BotMapping(START_COMMAND)
-    public TelegramBot.Message start() {
-        return new TelegramBot.Message(
-                "Привет! Добавь источники и ты сможешь смотреть ленту новостей в этом боте! ",
-                getMainMenu());
-    }
-
-    @BotMapping(MENU_COMMAND)
-    public TelegramBot.Message menu() {
-        return new TelegramBot.Message("Меню", getMainMenu());
-    }
-
-    @BotMapping(SEND_TEST_ARTICLE_COMMAND)
-    public void testArticle() {
-//        bot.sendArticle((messageId) ->
-//                        articleMessage(new ArticleId(UUID.randomUUID()), ArticleOpinion.NEUTRAL, messageId))
-    }
-
-    private InlineKeyboardMarkup getMainMenu() {
+    private static InlineKeyboardMarkup mainMenuKeyboard() {
         return new InlineKeyboardMarkup(List.of(
                 List.of(InlineKeyboardButton.builder()
                         .text("Источники")
@@ -77,7 +59,25 @@ public class NewsBotHandlers {
                         .callbackData(TOPICS_MENU_COMMAND).build())));
     }
 
-    private InlineKeyboardMarkup getWebsitesMenu() {
+    @BotMapping(START_COMMAND)
+    public Message start() {
+        return Message.builder()
+                .text("Привет! Добавь источники и ты сможешь смотреть ленту новостей в этом боте! ")
+                .keyboard(mainMenuKeyboard()).build();
+    }
+
+    @BotMapping(MENU_COMMAND)
+    public Message menu() {
+        return Message.builder().text("Меню").keyboard(mainMenuKeyboard()).build();
+    }
+
+    @BotMapping(SEND_TEST_ARTICLE_COMMAND)
+    public void testArticle() {
+//        bot.sendArticle((messageId) ->
+//                        articleMessage(new ArticleId(UUID.randomUUID()), ArticleOpinion.NEUTRAL, messageId))
+    }
+
+    private InlineKeyboardMarkup websiteMenuKeyboard() {
         return new InlineKeyboardMarkup(List.of(
                 List.of(InlineKeyboardButton.builder()
                         .text("Подписан")
@@ -93,20 +93,81 @@ public class NewsBotHandlers {
                         .callbackData("/menu").build())));
     }
 
-    private InlineKeyboardMarkup buildWebsitesListMenu(final List<Website> websites) {
-        final List<List<InlineKeyboardButton>> buttons = new ArrayList<>(
-                websites.stream().map(
-                        website -> List.of(InlineKeyboardButton.builder()
-                                .text(website.description())
-                                .callbackData(VIEW_WEBSITE_COMMAND + " " + website.id().value())
-                                .build())).toList());
-        buttons.add(List.of(InlineKeyboardButton.builder()
-                .text(BACK_TEXT)
-                .callbackData(WEBSITES_MENU_COMMAND).build()));
-        return new InlineKeyboardMarkup(buttons);
+    @BotMapping(WEBSITES_MENU_COMMAND)
+    public Message websitesMenu() {
+        return Message.builder().text("Источники").keyboard(websiteMenuKeyboard()).build();
     }
 
-    private InlineKeyboardMarkup getTopicsMenu() {
+    private Message websiteListMessage(String text, final List<Website> websites) {
+        final List<InlineKeyboardButton> buttons = new ArrayList<>(
+                websites.stream().map(
+                        website -> InlineKeyboardButton.builder()
+                                .text(website.description())
+                                .callbackData(VIEW_WEBSITE_COMMAND + " " + website.id().value())
+                                .build()).toList());
+        buttons.add(InlineKeyboardButton.builder()
+                .text(BACK_TEXT)
+                .callbackData(WEBSITES_MENU_COMMAND).build());
+        return Message.builder().text(text).verticalKeyboard(buttons).build();
+    }
+
+    @BotMapping(LIST_SUBBED_WEBSITES_COMMAND)
+    public Message listSubbedWebsites() {
+        return websiteListMessage("Подписки:", dataProvider.getSubbedWebsites());
+    }
+
+    @BotMapping(LIST_NOT_SUBBED_WEBSITES_COMMAND)
+    public Message listNotSubbedWebsites() {
+        return websiteListMessage("Вы не подписаны на:", dataProvider.getUnsubbedWebsites());
+    }
+
+    private Message viewWebsiteMessage(final WebsiteId id) {
+        final Website website = dataProvider.findWebsite(id).orElseThrow();
+        final String subCommand =
+                (dataProvider.isSubbed(id) ? UNSUB_WEBSITE_COMMAND : SUB_WEBSITE_COMMAND)
+                        + " " + id;
+
+        return Message.builder().text(website.description() + "\n" + website.url())
+                .verticalKeyboard(List.of(
+                        InlineKeyboardButton.builder()
+                                .text(dataProvider.isSubbed(id) ? "Отписаться" : "Подписаться")
+                                .callbackData(subCommand + " " + id).build(),
+                        InlineKeyboardButton.builder()
+                                .text(BACK_TEXT)
+                                .callbackData(dataProvider.isSubbed(id)
+                                        ? LIST_SUBBED_WEBSITES_COMMAND
+                                        : LIST_NOT_SUBBED_WEBSITES_COMMAND)
+                                .build())).build();
+    }
+
+    @BotMapping(VIEW_WEBSITE_COMMAND)
+    public Message viewWebsite(WebsiteId id) {
+        return viewWebsiteMessage(id);
+    }
+
+    @BotMapping(SUB_WEBSITE_COMMAND)
+    public Message subWebsite(WebsiteId id) {
+        return viewWebsiteMessage(id);
+    }
+
+    @BotMapping(UNSUB_WEBSITE_COMMAND)
+    public Message unsubWebsite(WebsiteId id) {
+        return viewWebsiteMessage(id);
+    }
+
+    @BotMapping(SUB_CUSTOM_WEBSITE_COMMAND)
+    public Message subCustomWebsite() {
+        return Message.builder().text("Введите URI:").singleButton(
+                InlineKeyboardButton.builder()
+                        .text("Отмена")
+                        .callbackData(TOPICS_MENU_COMMAND).build()
+        ).onNextMessage(text -> Message.builder()
+                .text("Источник " + text + " добавлен")
+                .keyboard(websiteMenuKeyboard()).build()
+        ).build();
+    }
+
+    private InlineKeyboardMarkup topicsMenuKeyboard() {
         return new InlineKeyboardMarkup(List.of(
                 List.of(InlineKeyboardButton.builder()
                         .text("Подписан")
@@ -122,143 +183,76 @@ public class NewsBotHandlers {
                         .callbackData("/menu").build())));
     }
 
-    private InlineKeyboardMarkup buildTopicListMenu(final List<Topic> topics) {
-        final List<List<InlineKeyboardButton>> buttons = new ArrayList<>(
+    @BotMapping(TOPICS_MENU_COMMAND)
+    public Message topicsMenu() {
+        return Message.builder().text("Темы").keyboard(topicsMenuKeyboard()).build();
+    }
+
+    private Message topicListMessage(String text, final List<Topic> topics) {
+        final List<InlineKeyboardButton> buttons = new ArrayList<>(
                 topics.stream().map(
-                        topic -> List.of(InlineKeyboardButton.builder()
+                        topic -> InlineKeyboardButton.builder()
                                 .text(topic.description())
                                 .callbackData(VIEW_TOPIC_COMMAND + " " + topic.id())
-                                .build())).toList());
-        buttons.add(List.of(
-                InlineKeyboardButton.builder()
-                        .text(BACK_TEXT)
-                        .callbackData(TOPICS_MENU_COMMAND).build()));
-        return new InlineKeyboardMarkup(buttons);
+                                .build()).toList());
+        buttons.add(InlineKeyboardButton.builder()
+                .text(BACK_TEXT)
+                .callbackData(TOPICS_MENU_COMMAND).build());
+
+        return Message.builder().text(text).verticalKeyboard(buttons).build();
     }
 
-    private TelegramBot.Message viewWebsiteMessage(final WebsiteId id) {
-        final Website website = dataProvider.findWebsite(id).orElseThrow();
-        final String subCommand =
-                (dataProvider.isSubbed(id) ? UNSUB_WEBSITE_COMMAND : SUB_WEBSITE_COMMAND)
-                        + " " + id;
-
-        return new TelegramBot.Message(website.description() + "\n" + website.url(),
-                new InlineKeyboardMarkup(List.of(
-                        List.of(InlineKeyboardButton.builder()
-                                .text(dataProvider.isSubbed(id) ? "Отписаться" : "Подписаться")
-                                .callbackData(subCommand + " " + id).build()),
-                        List.of(InlineKeyboardButton.builder()
-                                .text(BACK_TEXT)
-                                .callbackData(dataProvider.isSubbed(id)
-                                        ? LIST_SUBBED_WEBSITES_COMMAND
-                                        : LIST_NOT_SUBBED_WEBSITES_COMMAND)
-                                .build()))));
+    @BotMapping(LIST_SUBBED_TOPICS_COMMAND)
+    public Message listSubbedTopics() {
+        return topicListMessage("Подписки:", dataProvider.getSubbedTopics());
     }
 
-    @BotMapping(WEBSITES_MENU_COMMAND)
-    public TelegramBot.Message websitesMenu() {
-        return new TelegramBot.Message("Источники", getWebsitesMenu());
+    @BotMapping(LIST_NOT_SUBBED_TOPICS_COMMAND)
+    public Message listUnsubbedTopics() {
+        return topicListMessage("Вы не подписаны на:", dataProvider.getSubbedTopics());
     }
 
-    @BotMapping(LIST_SUBBED_WEBSITES_COMMAND)
-    public TelegramBot.Message listSubbedWebsites() {
-        return new TelegramBot.Message("Подписки:",
-                buildWebsitesListMenu(dataProvider.getSubbedWebsites()));
-    }
-
-    @BotMapping(LIST_NOT_SUBBED_WEBSITES_COMMAND)
-    public TelegramBot.Message listNotSubbedWebsites() {
-        return new TelegramBot.Message("Вы не подписаны на:",
-                buildWebsitesListMenu(dataProvider.getUnsubbedWebsites()));
-    }
-
-    @BotMapping(VIEW_WEBSITE_COMMAND)
-    public TelegramBot.Message viewWebsite(WebsiteId id) {
-        return viewWebsiteMessage(id);
-    }
-
-    @BotMapping(SUB_WEBSITE_COMMAND)
-    public TelegramBot.Message subWebsite(WebsiteId id) {
-        return viewWebsiteMessage(id);
-    }
-
-    @BotMapping(UNSUB_WEBSITE_COMMAND)
-    public TelegramBot.Message unsubWebsite(WebsiteId id) {
-        return viewWebsiteMessage(id);
-    }
-
-    @BotMapping(SUB_CUSTOM_WEBSITE_COMMAND)
-    public TelegramBot.Message subCustomWebsite() {
-        return new TelegramBot.Message("Введите URI:",
-                new InlineKeyboardMarkup(List.of(List.of(
-                        InlineKeyboardButton.builder()
-                                .text("Отмена")
-                                .callbackData(TOPICS_MENU_COMMAND).build()))),
-                (text) ->
-                        new TelegramBot.Message("Источник " + text + " добавлен",
-                                getWebsitesMenu()));
-    }
-
-    private TelegramBot.Message viewTopicMessage(final TopicId id) {
+    private Message viewTopicMessage(final TopicId id) {
         final Topic topic = dataProvider.findTopic(id).orElseThrow();
         final String subCommandName = dataProvider.isSubbed(id) ? "Отписаться" : "Подписаться";
         final String subCommand = dataProvider.isSubbed(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND;
 
-        return new TelegramBot.Message(topic.description(),
-                new InlineKeyboardMarkup(List.of(
-                        List.of(InlineKeyboardButton.builder()
-                                .text(subCommandName)
-                                .callbackData(subCommand + " " + id).build()),
-                        List.of(InlineKeyboardButton.builder()
-                                .text(BACK_TEXT)
-                                .callbackData(dataProvider.isSubbed(id)
-                                        ? LIST_SUBBED_TOPICS_COMMAND
-                                        : LIST_NOT_SUBBED_TOPICS_COMMAND)
-                                .build()))));
-    }
-
-    @BotMapping(TOPICS_MENU_COMMAND)
-    public TelegramBot.Message topicsMenu() {
-        return new TelegramBot.Message("Темы", getTopicsMenu());
-    }
-
-    @BotMapping(LIST_SUBBED_TOPICS_COMMAND)
-    public TelegramBot.Message listSubbedTopics() {
-        return new TelegramBot.Message("Подписки:",
-                buildTopicListMenu(dataProvider.getSubbedTopics()));
-    }
-
-    @BotMapping(LIST_NOT_SUBBED_TOPICS_COMMAND)
-    public TelegramBot.Message listUnsubbedTopics() {
-        return new TelegramBot.Message("Вы не подписаны на:",
-                buildTopicListMenu(dataProvider.getUnsubbedTopics()));
+        return Message.builder().text(topic.description()).verticalKeyboard(List.of(
+                InlineKeyboardButton.builder()
+                        .text(subCommandName)
+                        .callbackData(subCommand + " " + id).build(),
+                InlineKeyboardButton.builder()
+                        .text(BACK_TEXT)
+                        .callbackData(dataProvider.isSubbed(id)
+                                ? LIST_SUBBED_TOPICS_COMMAND
+                                : LIST_NOT_SUBBED_TOPICS_COMMAND)
+                        .build())).build();
     }
 
     @BotMapping(VIEW_TOPIC_COMMAND)
-    public TelegramBot.Message viewTopic(TopicId id) {
+    public Message viewTopic(TopicId id) {
         return viewTopicMessage(id);
     }
 
     @BotMapping(SUB_TOPIC_COMMAND)
-    public TelegramBot.Message subTopic(TopicId id) {
+    public Message subTopic(TopicId id) {
         return viewTopicMessage(id);
     }
 
     @BotMapping(UNSUB_TOPIC_COMMAND)
-    public TelegramBot.Message unsubTopic(TopicId id) {
+    public Message unsubTopic(TopicId id) {
         return viewTopicMessage(id);
     }
 
     @BotMapping(SUB_CUSTOM_TOPIC_COMMAND)
-    public TelegramBot.Message subCustomTopic() {
-        return new TelegramBot.Message("Введите название темы:",
-                new InlineKeyboardMarkup(List.of(List.of(
+    public Message subCustomTopic() {
+        return Message.builder().text("Введите название темы:").singleButton(
                         InlineKeyboardButton.builder()
                                 .text("Отмена")
-                                .callbackData(WEBSITES_MENU_COMMAND).build()))),
-                (text) ->
-                        new TelegramBot.Message("Тема " + text + " добавлена",
-                                getTopicsMenu()));
+                                .callbackData(WEBSITES_MENU_COMMAND).build())
+                .onNextMessage(text -> Message.builder()
+                        .text("Тема " + text + " добавлена")
+                        .keyboard(topicsMenuKeyboard()).build()).build();
     }
 
 //    private void addLikesHandlers(final TelegramBot bot) {
