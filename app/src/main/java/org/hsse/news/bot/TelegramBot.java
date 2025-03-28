@@ -6,9 +6,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.util.ReflectionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -46,8 +46,8 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
     private final Map<ChatId, Function<String, Message>> onNextMessage = new ConcurrentHashMap<>();
 
     @Autowired
-    public TelegramBot(final Environment environment) {
-        super(environment.getProperty("bot-token"));
+    public TelegramBot(final @Value("${bot-token}") String token) {
+        super(token);
     }
 
     @SneakyThrows
