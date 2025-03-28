@@ -19,17 +19,17 @@ public record Message(String text, InlineKeyboardMarkup keyboard,
     }
 
     public static class MessageBuilder {
-        public MessageBuilder verticalKeyboard(List<InlineKeyboardButton> buttons) {
+        public MessageBuilder verticalKeyboard(final List<InlineKeyboardButton> buttons) {
             keyboard = new InlineKeyboardMarkup(buttons.stream().map(List::of).toList());
             return this;
         }
 
-        public MessageBuilder singleButton(InlineKeyboardButton button) {
+        public MessageBuilder singleButton(final InlineKeyboardButton button) {
             keyboard = new InlineKeyboardMarkup(List.of(List.of(button)));
             return this;
         }
 
-        public MessageBuilder replace(MessageId replaced) {
+        public MessageBuilder replace(final MessageId replaced) {
             replace = Optional.of(replaced);
             return this;
         }

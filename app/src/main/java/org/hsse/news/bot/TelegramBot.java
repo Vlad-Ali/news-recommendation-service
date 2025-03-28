@@ -4,18 +4,12 @@ import jakarta.annotation.PostConstruct;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.hsse.news.database.article.models.ArticleId;
-import org.hsse.news.database.topic.models.TopicId;
-import org.hsse.news.database.website.models.WebsiteId;
-import org.springframework.aop.support.AopUtils;
+import org.hsse.news.util.ReflectionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.MethodParameter;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ReflectionUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -23,7 +17,7 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -33,7 +27,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -50,82 +43,42 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
 
     private final Map<Long, Function<String, Message>> onNextMessage = new ConcurrentHashMap<>();
 
-    @FunctionalInterface
-    public interface ArticleCommand {
-        Message apply(ArticleId id, int messageId);
-    }
-
     @Autowired
     public TelegramBot(final Environment environment) {
         super(environment.getProperty("bot-token"));
     }
 
-    private <T> Object parseArg(String arg, Class<T> type) {
-        if (type == String.class) {
-            return arg;
-        } else if (type == int.class) {
-            return Integer.parseInt(arg);
-        } else if (type == long.class) {
-            return Long.parseLong(arg);
+    @SneakyThrows
+    private Optional<Message> runMethod(
+            final Object object, final Method method, final List<String> args) {
+        final List<String> mutableArgs = new ArrayList<>(args);
+        final List<Object> methodArgs = new ArrayList<>();
+        for (int i = 0; i < method.getParameterCount(); i++) {
+            final Class<?> parameterType = ReflectionUtil.parameterType(method, i);
+            if (parameterType == TelegramBot.class) {
+                methodArgs.add(this);
+            } else {
+                methodArgs.add(ReflectionUtil.parseArg(mutableArgs.remove(0),
+                        parameterType));
+            }
+        }
+
+        Object result;
+        result = method.invoke(object, methodArgs.toArray());
+
+        if (result instanceof Message) {
+            return Optional.of((Message) result);
         } else {
-            try {
-                return type.getMethod("fromString", String.class)
-                        .invoke(null, arg);
-            } catch (ReflectiveOperationException ignored) {
-            }
-
-            try {
-                return type.getMethod("valueOf", String.class)
-                        .invoke(null, arg);
-            } catch (ReflectiveOperationException ignored) {
-            }
-
-            throw new IllegalArgumentException("Can't create a parameter of type " + type);
+            return Optional.empty();
         }
     }
 
     @PostConstruct
     public void findBotMappings() {
-        for (final String beanName : applicationContext.getBeanDefinitionNames()) {
-            if (beanName.equals("telegramBot")) continue;
-
-            final Object bean = applicationContext.getBean(beanName);
-            final Class<?> beanClass = AopUtils.getTargetClass(bean);
-            ReflectionUtils.doWithMethods(beanClass, (method) -> {
-                BotMapping annotation = AnnotationUtils.findAnnotation(method, BotMapping.class);
-                if (annotation == null) {
-                    return;
-                }
-
-                String mapping = annotation.value();
-                commands.put(mapping, (args) -> {
-                    final List<String> mutableArgs = new ArrayList<>(args);
-                    final List<Object> methodArgs = new ArrayList<>();
-                    for (int i = 0; i < method.getParameterCount(); i++) {
-                        MethodParameter param = new MethodParameter(method, i);
-                        if (param.getParameterType() == TelegramBot.class) {
-                            methodArgs.add(this);
-                        } else {
-                            methodArgs.add(parseArg(mutableArgs.remove(0),
-                                    param.getParameterType()));
-                        }
-                    }
-
-                    Object result;
-                    try {
-                        result = method.invoke(bean, methodArgs.toArray());
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    if (result instanceof Message) {
-                        return Optional.of((Message) result);
-                    } else {
-                        return Optional.empty();
-                    }
+        ReflectionUtil.forEachAnnotatedMethod(applicationContext,
+                List.of("telegramBot"), BotMapping.class, (annotation, object, method) -> {
+                    commands.put(annotation.value(), args -> runMethod(object, method, args));
                 });
-            });
-        }
     }
 
     @Override
@@ -175,23 +128,26 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         }
     }
 
+    private void sendArticleTo(final long chatId, final Function<MessageId, Message> messageIdToMessage)
+            throws TelegramApiException {
+        if (latestMenuMessageId.containsKey(chatId)) {
+            deleteMessage(chatId, latestMenuMessageId.get(chatId));
+        }
+
+        final SendMessage send = new SendMessage();
+        send.setChatId(chatId);
+        send.setText("...fetching article...");
+
+        final MessageId messageId = new MessageId(execute(send).getMessageId());
+        final Message message = messageIdToMessage.apply(messageId);
+
+        editMessage(chatId, message, messageId);
+    }
+
     @SneakyThrows
     public void sendArticle(final Function<MessageId, Message> messageIdToMessage) {
-        final SendMessage send = new SendMessage();
-        final EditMessageText edit = new EditMessageText();
-
         for (final long chatId : activeChats) {
-            if (latestMenuMessageId.containsKey(chatId)) {
-                deleteMessage(chatId, latestMenuMessageId.get(chatId));
-            }
-
-            send.setChatId(chatId);
-            send.setText("...fetching article...");
-
-            final MessageId messageId = new MessageId(execute(send).getMessageId());
-            final Message message = messageIdToMessage.apply(messageId);
-
-            editMessage(chatId, message, messageId);
+            sendArticleTo(chatId, messageIdToMessage);
         }
     }
 
@@ -203,24 +159,21 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         execute(request);
     }
 
-    private void handleCommand(final long chatId, final String text) {
+    private void handleCommand(final long chatId, final String text)
+            throws TelegramApiException {
         onNextMessage.remove(chatId);
 
-        String largestPrefix = commands.keySet().stream()
+        final String largestPrefix = commands.keySet().stream()
                 .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix.toLowerCase(Locale.US)))
                 .max(Comparator.comparing(String::length)).orElseThrow();
 
         final List<String> args = Arrays.stream(text.substring(largestPrefix.length()).split(" "))
                 .filter(string -> !string.isBlank()).toList();
 
-        commands.get(largestPrefix).apply(args)
-                .ifPresent((message) -> {
-                    try {
-                        sendMessage(chatId, message);
-                    } catch (TelegramApiException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        final Optional<Message> message = commands.get(largestPrefix).apply(args);
+        if (message.isPresent()) {
+            sendMessage(chatId, message.get());
+        }
     }
 
     private void handleInput(final long chatId, final String text, final MessageId messageId)

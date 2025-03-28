@@ -75,7 +75,7 @@ public class NewsBotHandlers {
     }
 
     @BotMapping(SEND_TEST_ARTICLE_COMMAND)
-    public void testArticle(TelegramBot bot) {
+    public void testArticle(final TelegramBot bot) {
         bot.sendArticle((messageId) ->
                 articleMessage(new ArticleId(UUID.randomUUID()), ArticleOpinion.NEUTRAL, messageId));
     }
@@ -101,7 +101,7 @@ public class NewsBotHandlers {
         return Message.builder().text("Источники").keyboard(websiteMenuKeyboard()).build();
     }
 
-    private Message websiteListMessage(String text, final List<Website> websites) {
+    private Message websiteListMessage(final String text, final List<Website> websites) {
         final List<InlineKeyboardButton> buttons = new ArrayList<>(
                 websites.stream().map(
                         website -> InlineKeyboardButton.builder()
@@ -144,17 +144,17 @@ public class NewsBotHandlers {
     }
 
     @BotMapping(VIEW_WEBSITE_COMMAND)
-    public Message viewWebsite(WebsiteId id) {
+    public Message viewWebsite(final WebsiteId id) {
         return viewWebsiteMessage(id);
     }
 
     @BotMapping(SUB_WEBSITE_COMMAND)
-    public Message subWebsite(WebsiteId id) {
+    public Message subWebsite(final WebsiteId id) {
         return viewWebsiteMessage(id);
     }
 
     @BotMapping(UNSUB_WEBSITE_COMMAND)
-    public Message unsubWebsite(WebsiteId id) {
+    public Message unsubWebsite(final WebsiteId id) {
         return viewWebsiteMessage(id);
     }
 
@@ -191,7 +191,7 @@ public class NewsBotHandlers {
         return Message.builder().text("Темы").keyboard(topicsMenuKeyboard()).build();
     }
 
-    private Message topicListMessage(String text, final List<Topic> topics) {
+    private Message topicListMessage(final String text, final List<Topic> topics) {
         final List<InlineKeyboardButton> buttons = new ArrayList<>(
                 topics.stream().map(
                         topic -> InlineKeyboardButton.builder()
@@ -233,17 +233,17 @@ public class NewsBotHandlers {
     }
 
     @BotMapping(VIEW_TOPIC_COMMAND)
-    public Message viewTopic(TopicId id) {
+    public Message viewTopic(final TopicId id) {
         return viewTopicMessage(id);
     }
 
     @BotMapping(SUB_TOPIC_COMMAND)
-    public Message subTopic(TopicId id) {
+    public Message subTopic(final TopicId id) {
         return viewTopicMessage(id);
     }
 
     @BotMapping(UNSUB_TOPIC_COMMAND)
-    public Message unsubTopic(TopicId id) {
+    public Message unsubTopic(final TopicId id) {
         return viewTopicMessage(id);
     }
 
@@ -259,22 +259,22 @@ public class NewsBotHandlers {
     }
 
     @BotMapping(LIKE_COMMAND)
-    Message like(ArticleId id, MessageId messageId) {
+    public Message like(final ArticleId id, final MessageId messageId) {
         return articleMessage(id, ArticleOpinion.LIKED, messageId);
     }
 
     @BotMapping(DISLIKE_COMMAND)
-    Message dislike(ArticleId id, MessageId messageId) {
+    public Message dislike(final ArticleId id, final MessageId messageId) {
         return articleMessage(id, ArticleOpinion.DISLIKED, messageId);
     }
 
     @BotMapping(UNLIKE_COMMAND)
-    Message unlike(ArticleId id, MessageId messageId) {
+    public Message unlike(final ArticleId id, final MessageId messageId) {
         return articleMessage(id, ArticleOpinion.NEUTRAL, messageId);
     }
 
     @BotMapping(UNDISLIKE_COMMAND)
-    Message undislike(ArticleId id, MessageId messageId) {
+    public Message undislike(final ArticleId id, final MessageId messageId) {
         return articleMessage(id, ArticleOpinion.NEUTRAL, messageId);
     }
 
