@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Slf4j
@@ -39,7 +40,8 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
     private final Set<ChatId> activeChats = new HashSet<>();
     private final Map<ChatId, MessageId> latestMenuMessageId = new ConcurrentHashMap<>();
 
-    private final Map<String, Function<List<String>, Optional<Message>>> commands = new ConcurrentHashMap<>();
+    private final Map<String, BiFunction<List<String>, ChatId, Optional<Message>>> commands
+            = new ConcurrentHashMap<>();
 
     private final Map<ChatId, Function<String, Message>> onNextMessage = new ConcurrentHashMap<>();
 
@@ -50,13 +52,16 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
 
     @SneakyThrows
     private Optional<Message> runMethod(
-            final Object object, final Method method, final List<String> args) {
+            final Object object, final Method method,
+            final List<String> args, final ChatId chatId) {
         final List<String> mutableArgs = new ArrayList<>(args);
         final List<Object> methodArgs = new ArrayList<>();
         for (int i = 0; i < method.getParameterCount(); i++) {
             final Class<?> parameterType = ReflectionUtil.parameterType(method, i);
             if (parameterType == TelegramBot.class) {
                 methodArgs.add(this);
+            } else if (parameterType == ChatId.class) {
+                methodArgs.add(chatId);
             } else {
                 methodArgs.add(ReflectionUtil.parseArg(mutableArgs.remove(0),
                         parameterType));
@@ -77,7 +82,8 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
     public void findBotMappings() {
         ReflectionUtil.forEachAnnotatedMethod(applicationContext,
                 List.of("telegramBot"), BotMapping.class, (annotation, object, method) -> {
-                    commands.put(annotation.value(), args -> runMethod(object, method, args));
+                    commands.put(annotation.value(), (args, chatId) ->
+                            runMethod(object, method, args, chatId));
                 });
     }
 
@@ -170,7 +176,7 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         final List<String> args = Arrays.stream(text.substring(largestPrefix.length()).split(" "))
                 .filter(string -> !string.isBlank()).toList();
 
-        final Optional<Message> message = commands.get(largestPrefix).apply(args);
+        final Optional<Message> message = commands.get(largestPrefix).apply(args, chatId);
         if (message.isPresent()) {
             sendMessage(chatId, message.get());
         }
