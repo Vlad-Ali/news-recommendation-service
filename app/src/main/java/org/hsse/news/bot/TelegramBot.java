@@ -60,6 +60,30 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         super(environment.getProperty("bot-token"));
     }
 
+    private <T> Object parseArg(String arg, Class<T> type) {
+        if (type == String.class) {
+            return arg;
+        } else if (type == int.class) {
+            return Integer.parseInt(arg);
+        } else if (type == long.class) {
+            return Long.parseLong(arg);
+        } else {
+            try {
+                return type.getMethod("fromString", String.class)
+                        .invoke(null, arg);
+            } catch (ReflectiveOperationException ignored) {
+            }
+
+            try {
+                return type.getMethod("valueOf", String.class)
+                        .invoke(null, arg);
+            } catch (ReflectiveOperationException ignored) {
+            }
+
+            throw new IllegalArgumentException("Can't create a parameter of type " + type);
+        }
+    }
+
     @PostConstruct
     public void findBotMappings() {
         for (final String beanName : applicationContext.getBeanDefinitionNames()) {
@@ -75,25 +99,15 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
 
                 String mapping = annotation.value();
                 commands.put(mapping, (args) -> {
-                    int currentArg = 0;
+                    final List<String> mutableArgs = new ArrayList<>(args);
                     final List<Object> methodArgs = new ArrayList<>();
                     for (int i = 0; i < method.getParameterCount(); i++) {
                         MethodParameter param = new MethodParameter(method, i);
-                        if (param.getParameterType() == WebsiteId.class) {
-                            methodArgs.add(new WebsiteId(Long.parseLong(args.get(currentArg))));
-                            ++currentArg;
-                        } else if (param.getParameterType() == ArticleId.class) {
-                            methodArgs.add(new ArticleId(UUID.fromString(args.get(currentArg))));
-                            ++currentArg;
-                        } else if (param.getParameterType() == TopicId.class) {
-                            methodArgs.add(new TopicId(Long.parseLong(args.get(currentArg))));
-                            ++currentArg;
-                        } else if (param.getParameterType() == MessageId.class) {
-                            methodArgs.add(new MessageId(Integer.parseInt(args.get(currentArg))));
-                            ++currentArg;
-                        } else if (param.getParameterType() == TelegramBot.class) {
+                        if (param.getParameterType() == TelegramBot.class) {
                             methodArgs.add(this);
-                            ++currentArg;
+                        } else {
+                            methodArgs.add(parseArg(mutableArgs.remove(0),
+                                    param.getParameterType()));
                         }
                     }
 

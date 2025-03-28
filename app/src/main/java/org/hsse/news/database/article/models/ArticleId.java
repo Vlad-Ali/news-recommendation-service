@@ -12,4 +12,8 @@ public final class ArticleId extends AbstractId<UUID> {
     public ArticleId(final @ColumnName("article_id") @NotNull UUID value) {
         super(value);
     }
+
+    public ArticleId fromString(String string) {
+        return new ArticleId(UUID.fromString(string));
+    }
 }

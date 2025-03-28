@@ -7,4 +7,8 @@ public final class WebsiteId extends AbstractId<Long> {
     public WebsiteId(final @NotNull Long value) {
         super(value);
     }
+
+    public static WebsiteId fromString(String string) {
+        return new WebsiteId(Long.parseLong(string));
+    }
 }

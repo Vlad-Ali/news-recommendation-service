@@ -12,6 +12,12 @@ import java.util.function.Function;
 public record Message(String text, InlineKeyboardMarkup keyboard,
                       Function<String, Message> onNextMessage,
                       Optional<MessageId> replace) {
+    public Message {
+        if (replace == null) {
+            replace = Optional.empty();
+        }
+    }
+
     public static class MessageBuilder {
         public MessageBuilder verticalKeyboard(List<InlineKeyboardButton> buttons) {
             keyboard = new InlineKeyboardMarkup(buttons.stream().map(List::of).toList());
