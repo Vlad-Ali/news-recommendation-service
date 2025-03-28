@@ -1,5 +1,7 @@
 package org.hsse.news.bot;
 
+import org.hsse.news.database.article.models.Article;
+import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.topic.models.Topic;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.website.models.Website;
@@ -10,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class NewsBotHandlers {
@@ -72,9 +75,9 @@ public class NewsBotHandlers {
     }
 
     @BotMapping(SEND_TEST_ARTICLE_COMMAND)
-    public void testArticle() {
-//        bot.sendArticle((messageId) ->
-//                        articleMessage(new ArticleId(UUID.randomUUID()), ArticleOpinion.NEUTRAL, messageId))
+    public void testArticle(TelegramBot bot) {
+        bot.sendArticle((messageId) ->
+                articleMessage(new ArticleId(UUID.randomUUID()), ArticleOpinion.NEUTRAL, messageId));
     }
 
     private InlineKeyboardMarkup websiteMenuKeyboard() {
@@ -255,40 +258,53 @@ public class NewsBotHandlers {
                         .keyboard(topicsMenuKeyboard()).build()).build();
     }
 
-//    private void addLikesHandlers(final TelegramBot bot) {
-//        bot.commandArticle(LIKE_COMMAND, (id, messageId) ->
-//                articleMessage(id, ArticleOpinion.LIKED, messageId));
-//        bot.commandArticle(DISLIKE_COMMAND, (id, messageId) ->
-//                articleMessage(id, ArticleOpinion.DISLIKED, messageId));
-//        bot.commandArticle(UNLIKE_COMMAND, (id, messageId) ->
-//                articleMessage(id, ArticleOpinion.NEUTRAL, messageId));
-//        bot.commandArticle(UNDISLIKE_COMMAND, (id, messageId) ->
-//                articleMessage(id, ArticleOpinion.NEUTRAL, messageId));
-//    }
-//
-//    private InlineKeyboardMarkup articleMenu(
-//            final ArticleId id, final ArticleOpinion opinion, final int messageId) {
-//        return new InlineKeyboardMarkup(List.of(List.of(
-//                opinion == ArticleOpinion.LIKED
-//                        ? InlineKeyboardButton.builder()
-//                        .text("✅\uD83D\uDC4D")
-//                        .callbackData(UNLIKE_COMMAND + " " + id.value() + " " + messageId).build()
-//                        : InlineKeyboardButton.builder()
-//                        .text("\uD83D\uDC4D")
-//                        .callbackData(LIKE_COMMAND + " " + id.value() + " " + messageId).build(),
-//                opinion == ArticleOpinion.DISLIKED
-//                        ? InlineKeyboardButton.builder()
-//                        .text("✅\uD83D\uDC4E")
-//                        .callbackData(UNDISLIKE_COMMAND + " " + id.value() + " " + messageId).build()
-//                        : InlineKeyboardButton.builder()
-//                        .text("\uD83D\uDC4E")
-//                        .callbackData(DISLIKE_COMMAND + " " + id.value() + " " + messageId).build())));
-//    }
-//
-//    private TelegramBot.Message articleMessage(
-//            final ArticleId id, final ArticleOpinion opinion, final int messageId) {
-//        final Article article = dataProvider.getExampleArticle();
-//        return new TelegramBot.Message(article.title() + "\n" + article.url(),
-//                articleMenu(id, opinion, messageId));
-//    }
+    @BotMapping(LIKE_COMMAND)
+    Message like(ArticleId id, MessageId messageId) {
+        return articleMessage(id, ArticleOpinion.LIKED, messageId);
+    }
+
+    @BotMapping(DISLIKE_COMMAND)
+    Message dislike(ArticleId id, MessageId messageId) {
+        return articleMessage(id, ArticleOpinion.DISLIKED, messageId);
+    }
+
+    @BotMapping(UNLIKE_COMMAND)
+    Message unlike(ArticleId id, MessageId messageId) {
+        return articleMessage(id, ArticleOpinion.NEUTRAL, messageId);
+    }
+
+    @BotMapping(UNDISLIKE_COMMAND)
+    Message undislike(ArticleId id, MessageId messageId) {
+        return articleMessage(id, ArticleOpinion.NEUTRAL, messageId);
+    }
+
+    private InlineKeyboardMarkup articleMenu(
+            final ArticleId id, final ArticleOpinion opinion, final MessageId messageId) {
+        return new InlineKeyboardMarkup(List.of(List.of(
+                opinion == ArticleOpinion.LIKED
+                        ? InlineKeyboardButton.builder()
+                        .text("✅\uD83D\uDC4D")
+                        .callbackData(UNLIKE_COMMAND + " " + id.value()
+                                + " " + messageId.value()).build()
+                        : InlineKeyboardButton.builder()
+                        .text("\uD83D\uDC4D")
+                        .callbackData(LIKE_COMMAND + " " + id.value()
+                                + " " + messageId.value()).build(),
+                opinion == ArticleOpinion.DISLIKED
+                        ? InlineKeyboardButton.builder()
+                        .text("✅\uD83D\uDC4E")
+                        .callbackData(UNDISLIKE_COMMAND + " " + id.value()
+                                + " " + messageId.value()).build()
+                        : InlineKeyboardButton.builder()
+                        .text("\uD83D\uDC4E")
+                        .callbackData(DISLIKE_COMMAND + " " + id.value()
+                                + " " + messageId.value()).build())));
+    }
+
+    private Message articleMessage(
+            final ArticleId id, final ArticleOpinion opinion, final MessageId messageId) {
+        final Article article = dataProvider.getExampleArticle();
+        return Message.builder().text(article.title() + "\n" + article.url()).keyboard(
+                articleMenu(id, opinion, messageId)).replace(messageId).build();
+    }
 }

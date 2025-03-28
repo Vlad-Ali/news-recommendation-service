@@ -91,6 +91,9 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
                         } else if (param.getParameterType() == MessageId.class) {
                             methodArgs.add(new MessageId(Integer.parseInt(args.get(currentArg))));
                             ++currentArg;
+                        } else if (param.getParameterType() == TelegramBot.class) {
+                            methodArgs.add(this);
+                            ++currentArg;
                         }
                     }
 

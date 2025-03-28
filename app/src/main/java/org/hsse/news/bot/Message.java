@@ -22,5 +22,10 @@ public record Message(String text, InlineKeyboardMarkup keyboard,
             keyboard = new InlineKeyboardMarkup(List.of(List.of(button)));
             return this;
         }
+
+        public MessageBuilder replace(MessageId replaced) {
+            replace = Optional.of(replaced);
+            return this;
+        }
     }
 }
