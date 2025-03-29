@@ -22,7 +22,7 @@ jobs:
       - name: Prepare configuration
         run: |
           cd app/src/main/resources/
-          cp application.yml
+          cp application.properties.example
           cd -
 
       - name: Setup Gradle
