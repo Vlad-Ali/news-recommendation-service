@@ -25,4 +25,4 @@ logging:
     org.hsse.news.database: DEBUG
     org.hsse.news: DEBUG
 tg-bot:
-  token: 7838862242:AAE6mOjuLuuWAVzc46oMsZKVkJ1reTsjbzM
+  token: token
