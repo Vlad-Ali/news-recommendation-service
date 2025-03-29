@@ -4,7 +4,6 @@ import lombok.SneakyThrows;
 import org.glassfish.jersey.internal.util.Producer;
 import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.topic.models.TopicId;
-import org.hsse.news.database.website.models.WebsiteId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +31,7 @@ import java.util.function.Function;
 
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
-    private final Logger LOG = LoggerFactory.getLogger(TelegramBot.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TelegramBot.class);
     private final Set<Long> activeChats = new HashSet<>();
     private final Map<Long, Integer> latestMenuMessageId = new ConcurrentHashMap<>();
 
@@ -214,7 +213,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         final Optional<String> websiteArgCommand = websiteIdArg.keySet().stream()
                 .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix)).findFirst();
         if (websiteArgCommand.isPresent()) {
-            LOG.debug("" + parseWebsiteId(text.substring(websiteArgCommand.get().length())));
             sendMenuMessage(chatId, websiteIdArg.get(websiteArgCommand.get()).apply(new ChatAndWebsiteID(chatId,
                     parseWebsiteId(text.substring(websiteArgCommand.get().length())))));
             return;

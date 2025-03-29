@@ -34,27 +34,27 @@ public class StubDataProvider {
             new UserId(UUID.fromString("027e71c2-f90b-43b9-8dbf-5e7f2da771ae"));
     private final static Logger LOG = LoggerFactory.getLogger(StubDataProvider.class);
 
-    public StubDataProvider(UserService userService, WebsiteService websiteService) {
+    public StubDataProvider(final UserService userService, final WebsiteService websiteService) {
         this.userService = userService;
         this.websiteService = websiteService;
     }
 
     public void registerUser(final Long chatId){
-        Optional<UserDto> optionalUserDto = userService.findByChatId(chatId);
+        final Optional<UserDto> optionalUserDto = userService.findByChatId(chatId);
         if (optionalUserDto.isEmpty()){
             userService.register(new UserDto(String.valueOf(UUID.randomUUID()), String.valueOf(UUID.randomUUID()), String.valueOf(UUID.randomUUID()), chatId));
         }
     }
 
-    public List<WebsiteInfo> getSubbedWebsites(Long chatId) {
-        Optional<UserDto> userDto = userService.findByChatId(chatId);
+    public List<WebsiteInfo> getSubbedWebsites(final Long chatId) {
+        final Optional<UserDto> userDto = userService.findByChatId(chatId);
         return websiteService.getSubscribedWebsitesByUserId(userDto.get().id());
     }
 
-    public List<WebsiteInfo> getUnsubbedWebsites(Long chatId) {
+    public List<WebsiteInfo> getUnsubbedWebsites(final Long chatId) {
         /*return List.of(new WebsiteDto(new WebsiteId(1L), EXAMPLE_URI, "example2",
                 EXAMPLE_USER_ID));*/
-        Optional<UserDto> userDto = userService.findByChatId(chatId);
+        final Optional<UserDto> userDto = userService.findByChatId(chatId);
         return websiteService.getUnSubscribedWebsitesByUserId(userDto.get().id());
     }
 
@@ -69,10 +69,10 @@ public class StubDataProvider {
         };*/
     }
 
-    public boolean isSubbed(final Long chatId, final Long websiteId) {
-        Optional<UserDto> userDto = userService.findByChatId(chatId);
-        List<WebsiteInfo> websiteInfos  = websiteService.getSubscribedWebsitesByUserId(userDto.get().id());
-        for (WebsiteInfo websiteInfo : websiteInfos){
+    public boolean isSubbedWebsite(final Long chatId, final Long websiteId) {
+        final Optional<UserDto> userDto = userService.findByChatId(chatId);
+        final List<WebsiteInfo> websiteInfos  = websiteService.getSubscribedWebsitesByUserId(userDto.get().id());
+        for (final WebsiteInfo websiteInfo : websiteInfos){
             if (websiteInfo.websiteId().equals(websiteId)){
                 return true;
             }
@@ -81,17 +81,37 @@ public class StubDataProvider {
     }
 
     public void createCustomWebsite(final Long chatId, final String url, final String description) throws WebsiteRSSNotValidException, WebsiteAlreadyExistsException {
-        Optional<UserDto> userDto = userService.findByChatId(chatId);
+        final Optional<UserDto> userDto = userService.findByChatId(chatId);
         final UserId userId = userDto.get().id();
-        LOG.debug(url+" "+description+" "+userId);
         websiteService.create(new WebsiteDto(null,url, description, userId));
     }
 
+    public void deleteCustomWebsite(final Long chatId, final Long websiteId){
+        final Optional<UserDto> userDto = userService.findByChatId(chatId);
+        final UserId userId = userDto.get().id();
+        if (userId != null) {
+            websiteService.delete(new WebsiteId(websiteId), userId);
+        }
+    }
+
+    public boolean isCustomCreatedWebsiteByUser(final Long chatId, final Long websiteId){
+        final Optional<UserDto> userDto = userService.findByChatId(chatId);
+        if (userDto.isEmpty()){
+            throw new RuntimeException();
+        }
+        final UserId userId = userDto.get().id();
+        final Optional<WebsiteDto> optionalWebsiteDto = websiteService.getWebsiteDtoById(new WebsiteId(websiteId));
+        if (optionalWebsiteDto.isEmpty()){
+            throw new RuntimeException();
+        }
+        return userId.equals(optionalWebsiteDto.get().creatorId());
+    }
+
     public boolean subWebsite(final Long chatId, final Long websiteId){
-        Optional<UserDto> userDto = userService.findByChatId(chatId);
-        List<WebsiteInfo> websiteInfos  = websiteService.getSubscribedWebsitesByUserId(userDto.get().id());
-        List<WebsiteId> websiteIds = new ArrayList<>();
-        for (WebsiteInfo websiteInfo : websiteInfos){
+        final Optional<UserDto> userDto = userService.findByChatId(chatId);
+        final List<WebsiteInfo> websiteInfos  = websiteService.getSubscribedWebsitesByUserId(userDto.get().id());
+        final List<WebsiteId> websiteIds = new ArrayList<>();
+        for (final WebsiteInfo websiteInfo : websiteInfos){
             websiteIds.add(new WebsiteId(websiteInfo.websiteId()));
         }
         websiteIds.add(new WebsiteId(websiteId));
@@ -104,10 +124,10 @@ public class StubDataProvider {
     }
 
     public void unSubWebsite(final Long chatId, final Long websiteId){
-        Optional<UserDto> userDto = userService.findByChatId(chatId);
-        List<WebsiteInfo> websiteInfos = websiteService.getSubscribedWebsitesByUserId(userDto.get().id());
-        List<WebsiteId> websiteIds = new ArrayList<>();
-        for (WebsiteInfo websiteInfo : websiteInfos){
+        final Optional<UserDto> userDto = userService.findByChatId(chatId);
+        final List<WebsiteInfo> websiteInfos = websiteService.getSubscribedWebsitesByUserId(userDto.get().id());
+        final List<WebsiteId> websiteIds = new ArrayList<>();
+        for (final WebsiteInfo websiteInfo : websiteInfos){
             if (!websiteInfo.websiteId().equals(websiteId)) {
                 websiteIds.add(new WebsiteId(websiteInfo.websiteId()));
             }
@@ -131,7 +151,7 @@ public class StubDataProvider {
         };
     }
 
-    public boolean isSubbed(final TopicId id) {
+    public boolean isSubbedWebsite(final TopicId id) {
         return id.value() == 0;
     }
 

@@ -7,10 +7,7 @@ import org.hsse.news.database.topic.models.TopicDto;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
-import org.hsse.news.database.website.models.WebsiteDto;
-import org.hsse.news.database.website.models.WebsiteId;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -29,7 +26,7 @@ public class NewsBotHandlers {
     private final static String VIEW_WEBSITE_COMMAND = "/view-website";
     private final static String SUB_WEBSITE_COMMAND = "/sub";
     private final static String UNSUB_WEBSITE_COMMAND = "/unsub";
-    private final static String SUB_CUSTOM_WEBSITE_COMMAND = "/sub-custom";
+    private final static String SUB_CUSTOM_WEBSITE_COMMAND = "/sub-custom-website";
     private final static String TOPICS_MENU_COMMAND = "/topics";
     private final static String LIST_SUBBED_TOPICS_COMMAND = "/unblocked-topics";
     private final static String LIST_NOT_SUBBED_TOPICS_COMMAND = "/blocked-topics";
@@ -43,6 +40,7 @@ public class NewsBotHandlers {
     private final static String UNDISLIKE_COMMAND = "/undislike";
     private final static String SEND_TEST_ARTICLE_COMMAND = "/test-feed";
     private final static String REGISTER_COMMAND = "/register";
+    private final static String DELETE_CUSTOM_WEBSITE = "/delete-custom-website";
 
     private final static String BACK_TEXT = "Назад";
 
@@ -152,41 +150,68 @@ public class NewsBotHandlers {
         return new InlineKeyboardMarkup(buttons);
     }
 
-    private TelegramBot.Message viewWebsiteMessage(ChatAndWebsiteID chatAndWebsiteID) {
-        Long chatId = chatAndWebsiteID.chatId();
-        Long websiteId = chatAndWebsiteID.websiteId();
+    private TelegramBot.Message viewWebsiteMessage(final ChatAndWebsiteID chatAndWebsiteID) {
+        final Long chatId = chatAndWebsiteID.chatId();
+        final Long websiteId = chatAndWebsiteID.websiteId();
         final WebsiteInfo website = dataProvider.findWebsite(websiteId).orElseThrow();
         final String subCommand =
-                (dataProvider.isSubbed(chatId, websiteId) ? UNSUB_WEBSITE_COMMAND : SUB_WEBSITE_COMMAND)
+                (dataProvider.isSubbedWebsite(chatId, websiteId) ? UNSUB_WEBSITE_COMMAND : SUB_WEBSITE_COMMAND)
                         + " " + websiteId;
-
+        if (!dataProvider.isCustomCreatedWebsiteByUser(chatId, websiteId)){
         return new TelegramBot.Message(website.description() + "\n" + website.url(),
                 new InlineKeyboardMarkup(List.of(
                         List.of(InlineKeyboardButton.builder()
-                                .text(dataProvider.isSubbed(chatId, websiteId) ? "Отписаться" : "Подписаться")
+                                .text(dataProvider.isSubbedWebsite(chatId, websiteId) ? "Отписаться" : "Подписаться")
                                 .callbackData(subCommand).build()),
                         List.of(InlineKeyboardButton.builder()
                                 .text(BACK_TEXT)
-                                .callbackData(dataProvider.isSubbed(chatId, websiteId)
+                                .callbackData(dataProvider.isSubbedWebsite(chatId, websiteId)
+                                        ? LIST_SUBBED_WEBSITES_COMMAND
+                                        : LIST_NOT_SUBBED_WEBSITES_COMMAND)
+                                .build()))));
+        }
+        return new TelegramBot.Message(website.description() + "\n" + website.url(),
+                new InlineKeyboardMarkup(List.of(
+                        List.of(InlineKeyboardButton.builder()
+                                .text(dataProvider.isSubbedWebsite(chatId, websiteId) ? "Отписаться" : "Подписаться")
+                                .callbackData(subCommand).build()),
+                        List.of(InlineKeyboardButton.builder()
+                                .text("Удалить свой созданный сайт")
+                                .callbackData(DELETE_CUSTOM_WEBSITE +" "+websiteId).build()),
+                        List.of(InlineKeyboardButton.builder()
+                                .text(BACK_TEXT)
+                                .callbackData(dataProvider.isSubbedWebsite(chatId, websiteId)
                                         ? LIST_SUBBED_WEBSITES_COMMAND
                                         : LIST_NOT_SUBBED_WEBSITES_COMMAND)
                                 .build()))));
     }
 
-    private TelegramBot.Message viewUserSubWebsites(Long chatId){
+    private TelegramBot.Message viewUserSubWebsites(final Long chatId){
         return new TelegramBot.Message("Подписки:",
                 buildWebsitesListMenu(dataProvider.getSubbedWebsites(chatId)));
     }
 
-    private TelegramBot.Message viewUserUnSubWebsites(Long chatId){
+    private TelegramBot.Message viewUserUnSubWebsites(final Long chatId){
         return new TelegramBot.Message("Вы не подписаны на:",
                 buildWebsitesListMenu(dataProvider.getUnsubbedWebsites(chatId)));
     }
 
-    private TelegramBot.Message subOrUnSubWebsite(ChatAndWebsiteID chatAndWebsiteID){
-        Long chatId = chatAndWebsiteID.chatId();
-        Long websiteId = chatAndWebsiteID.websiteId();
-        if (dataProvider.isSubbed(chatId, websiteId)){
+    private TelegramBot.Message deleteCustomWebsite(final ChatAndWebsiteID chatAndWebsiteID){
+        final Long chatId = chatAndWebsiteID.chatId();
+        final Long websiteId = chatAndWebsiteID.websiteId();
+        if (dataProvider.isSubbedWebsite(chatId, websiteId)){
+            dataProvider.deleteCustomWebsite(chatId, websiteId);
+            return viewUserSubWebsites(chatId);
+        } else{
+            dataProvider.deleteCustomWebsite(chatId, websiteId);
+            return viewUserUnSubWebsites(chatId);
+        }
+    }
+
+    private TelegramBot.Message subOrUnSubWebsite(final ChatAndWebsiteID chatAndWebsiteID){
+        final Long chatId = chatAndWebsiteID.chatId();
+        final Long websiteId = chatAndWebsiteID.websiteId();
+        if (dataProvider.isSubbedWebsite(chatId, websiteId)){
             dataProvider.unSubWebsite(chatId, websiteId);
             return viewUserSubWebsites(chatId);
         } else {
@@ -202,10 +227,10 @@ public class NewsBotHandlers {
         }
     }
 
-    private TelegramBot.Message createCustomWebsite(ChatIdAndWebsiteInfo chatIdAndWebsiteInfo){
-        Long chatId = chatIdAndWebsiteInfo.chatId();
-        String url = chatIdAndWebsiteInfo.url();
-        String description = chatIdAndWebsiteInfo.url();
+    private TelegramBot.Message createCustomWebsite(final ChatIdAndWebsiteInfo chatIdAndWebsiteInfo){
+        final Long chatId = chatIdAndWebsiteInfo.chatId();
+        final String url = chatIdAndWebsiteInfo.url();
+        final String description = chatIdAndWebsiteInfo.url();
         try {
             dataProvider.createCustomWebsite(chatId, url, description);
             return new TelegramBot.Message("Источник " + description + " добавлен", getWebsitesMenu());
@@ -214,7 +239,7 @@ public class NewsBotHandlers {
         }
     }
 
-    private TelegramBot.Message viewCreateCustomWebsite(Long chatId){
+    private TelegramBot.Message viewCreateCustomWebsite(final Long chatId){
         return new TelegramBot.Message("Введите URI и описание через пробел:",
                 new InlineKeyboardMarkup(List.of(List.of(
                         InlineKeyboardButton.builder()
@@ -232,6 +257,7 @@ public class NewsBotHandlers {
         bot.command(LIST_NOT_SUBBED_WEBSITES_COMMAND, this::viewUserUnSubWebsites);
         bot.commandWebsite(SUB_WEBSITE_COMMAND, this::subOrUnSubWebsite);
         bot.commandWebsite(UNSUB_WEBSITE_COMMAND, this::subOrUnSubWebsite);
+        bot.commandWebsite(DELETE_CUSTOM_WEBSITE, this::deleteCustomWebsite);
         bot.command(SUB_CUSTOM_WEBSITE_COMMAND, this::viewCreateCustomWebsite);
         bot.commandWebsite(VIEW_WEBSITE_COMMAND, this::viewWebsiteMessage);
 
@@ -239,8 +265,8 @@ public class NewsBotHandlers {
 
     private TelegramBot.Message viewTopicMessage(final TopicId id) {
         final TopicDto topic = dataProvider.findTopic(id).orElseThrow();
-        final String subCommandName = dataProvider.isSubbed(id) ? "Отписаться" : "Подписаться";
-        final String subCommand = dataProvider.isSubbed(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND;
+        final String subCommandName = dataProvider.isSubbedWebsite(id) ? "Отписаться" : "Подписаться";
+        final String subCommand = dataProvider.isSubbedWebsite(id) ? UNSUB_TOPIC_COMMAND : SUB_TOPIC_COMMAND;
 
         return new TelegramBot.Message(topic.description(),
                 new InlineKeyboardMarkup(List.of(
@@ -249,7 +275,7 @@ public class NewsBotHandlers {
                                 .callbackData(subCommand + " " + id).build()),
                         List.of(InlineKeyboardButton.builder()
                                 .text(BACK_TEXT)
-                                .callbackData(dataProvider.isSubbed(id)
+                                .callbackData(dataProvider.isSubbedWebsite(id)
                                         ? LIST_SUBBED_TOPICS_COMMAND
                                         : LIST_NOT_SUBBED_TOPICS_COMMAND)
                                 .build()))));
