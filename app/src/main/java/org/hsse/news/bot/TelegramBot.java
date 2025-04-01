@@ -53,8 +53,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     @Autowired
-    public TelegramBot(final Environment environment) {
-        super(environment.getProperty("bot-token"));
+    public TelegramBot(final String token) {
+        super(token);
     }
 
     @Override

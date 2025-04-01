@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-public class NewsBotHandlers {
+public class NewsBotHandlers implements BotCustomizer {
     private final static String START_COMMAND = "/start";
     private final static String MENU_COMMAND = "/menu";
     private final static String WEBSITES_MENU_COMMAND = "/websites";
@@ -48,9 +48,12 @@ public class NewsBotHandlers {
         DISLIKED
     }
 
-    public NewsBotHandlers(final TelegramBot bot, final StubDataProvider dataProvider) {
+    public NewsBotHandlers(final StubDataProvider dataProvider) {
         this.dataProvider = dataProvider;
+    }
 
+    @Override
+    public void customize(TelegramBot bot) {
         bot.command(START_COMMAND, () ->
                 new TelegramBot.Message(
                         "Привет! Добавь источники и ты сможешь смотреть ленту новостей в этом боте! ",
