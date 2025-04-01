@@ -8,7 +8,7 @@ public final class TopicId extends AbstractId<Long> {
         super(value);
     }
 
-    public TopicId fromString(final String string) {
+    public static TopicId fromString(final String string) {
         return new TopicId(Long.parseLong(string));
     }
 }

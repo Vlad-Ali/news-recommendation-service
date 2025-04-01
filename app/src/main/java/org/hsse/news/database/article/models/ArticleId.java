@@ -13,7 +13,7 @@ public final class ArticleId extends AbstractId<UUID> {
         super(value);
     }
 
-    public ArticleId fromString(final String string) {
+    public static ArticleId fromString(final String string) {
         return new ArticleId(UUID.fromString(string));
     }
 }
