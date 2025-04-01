@@ -29,7 +29,7 @@ import java.util.function.Function;
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
     private final Set<Long> activeChats = new HashSet<>();
-    private final Map<Long, Integer> latestMenuMessageId = new ConcurrentHashMap<>();
+    private final Map<Long, SendMessageData> latestMenuMessage = new ConcurrentHashMap<>();
 
     private final Map<String, Runnable> noArgsNoMessage = new ConcurrentHashMap<>();
     private final Map<String, Producer<Message>> noArgs = new ConcurrentHashMap<>();
@@ -45,6 +45,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             this(text, keyboard, null);
         }
     }
+
+    private record SendMessageData(int id, String text, InlineKeyboardMarkup keyboard) {}
 
     @FunctionalInterface
     public interface ArticleCommand {
@@ -83,8 +85,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void sendMenuMessage(final long chatId, final Message message)
             throws TelegramApiException {
-        final Integer messageId = latestMenuMessageId.get(chatId);
-        if (messageId == null) {
+        if (!latestMenuMessage.containsKey(chatId)) {
             final SendMessage send = new SendMessage();
             send.setChatId(chatId);
 
@@ -92,15 +93,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             send.setReplyMarkup(message.keyboard());
 
             final int id = execute(send).getMessageId();
-            latestMenuMessageId.put(chatId, id);
+            latestMenuMessage.put(chatId, new SendMessageData(id, message.text(), message.keyboard()));
         } else {
-            final EditMessageText edit = new EditMessageText();
-            edit.setChatId(chatId);
-            edit.setMessageId(messageId);
-            edit.setText(message.text());
-            edit.setReplyMarkup(message.keyboard);
-
-            execute(edit);
+            editMessage(chatId, message, latestMenuMessage.get(chatId).id());
         }
 
         if (message.onNextMessage() != null) {
@@ -110,14 +105,52 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    private void editMessage(long chatId, final Message message, int replacedId)
+            throws TelegramApiException {
+        final EditMessageText edit = new EditMessageText();
+        edit.setChatId(chatId);
+        edit.setMessageId(replacedId);
+        edit.setText(message.text());
+        edit.setReplyMarkup(message.keyboard());
+
+        execute(edit);
+    }
+
+    @SneakyThrows
+    public void sendMessage(final long chatId, final Message message) {
+        if (latestMenuMessage.containsKey(chatId)) {
+            final SendMessageData old = latestMenuMessage.get(chatId);
+
+            editMessage(chatId, message, old.id());
+
+            final SendMessage send = new SendMessage();
+            send.setChatId(chatId);
+
+            send.setText(old.text());
+            send.setReplyMarkup(old.keyboard());
+
+            final int id = execute(send).getMessageId();
+            latestMenuMessage.put(chatId,
+                    new SendMessageData(id, old.text(), old.keyboard()));
+        } else {
+            final SendMessage send = new SendMessage();
+            send.setChatId(chatId);
+
+            send.setText(message.text());
+            send.setReplyMarkup(message.keyboard());
+
+            execute(send).getMessageId();
+        }
+    }
+
     @SneakyThrows
     public void sendArticle(final Function<Integer, Message> messageIdToMessage) {
         final SendMessage send = new SendMessage();
         final EditMessageText edit = new EditMessageText();
 
         for (final long chatId : activeChats) {
-            if (latestMenuMessageId.containsKey(chatId)) {
-                deleteMessage(chatId, latestMenuMessageId.get(chatId));
+            if (latestMenuMessage.containsKey(chatId)) {
+                deleteMessage(chatId, latestMenuMessage.get(chatId).id());
             }
 
             send.setChatId(chatId);
