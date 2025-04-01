@@ -6,7 +6,6 @@ import org.hsse.news.database.article.models.ArticleId;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;

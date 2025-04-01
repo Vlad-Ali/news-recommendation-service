@@ -53,7 +53,7 @@ public class NewsBotHandlers implements BotCustomizer {
     }
 
     @Override
-    public void customize(TelegramBot bot) {
+    public void customize(final TelegramBot bot) {
         bot.command(START_COMMAND, () ->
                 new TelegramBot.Message(
                         "Привет! Добавь источники и ты сможешь смотреть ленту новостей в этом боте! ",

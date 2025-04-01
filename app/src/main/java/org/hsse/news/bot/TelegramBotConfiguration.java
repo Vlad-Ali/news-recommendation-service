@@ -9,10 +9,10 @@ import java.util.List;
 @Configuration
 public class TelegramBotConfiguration {
     @Bean
-    TelegramBot telegramBot(final @Value("${tg-bot.token}") String token,
-                            List<BotCustomizer> customizers) throws Exception {
+    public TelegramBot telegramBot(final @Value("${tg-bot.token}") String token,
+                                   final List<BotCustomizer> customizers) {
         final var telegramBot = new TelegramBot(token);
-        for (BotCustomizer customizer : customizers) {
+        for (final BotCustomizer customizer : customizers) {
             customizer.customize(telegramBot);
         }
         return telegramBot;
