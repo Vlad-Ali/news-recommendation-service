@@ -36,7 +36,6 @@ public class NewsBotHandlers {
     private final static String UNLIKE_COMMAND = "/unlike";
     private final static String DISLIKE_COMMAND = "/dislike";
     private final static String UNDISLIKE_COMMAND = "/undislike";
-    private final static String SEND_TEST_ARTICLE_COMMAND = "/test-feed";
 
     private final static String BACK_TEXT = "Назад";
 
@@ -74,10 +73,15 @@ public class NewsBotHandlers {
         return Message.builder().text("Меню").keyboard(mainMenuKeyboard()).build();
     }
 
-    @BotMapping(SEND_TEST_ARTICLE_COMMAND)
+    @BotMapping("/test-feed")
     public void testArticle(final TelegramBot bot) {
         bot.sendArticle((messageId) ->
                 articleMessage(new ArticleId(UUID.randomUUID()), ArticleOpinion.NEUTRAL, messageId));
+    }
+
+    @BotMapping("/test-send")
+    public void testSend(final TelegramBot bot, final ChatId chatId) {
+        bot.sendMessage(chatId, Message.builder().text("test").build());
     }
 
     private InlineKeyboardMarkup websiteMenuKeyboard() {
