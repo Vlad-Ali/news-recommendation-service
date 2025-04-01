@@ -85,7 +85,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void sendMenuMessage(final long chatId, final Message message)
             throws TelegramApiException {
-        if (!latestMenuMessage.containsKey(chatId)) {
+        if (latestMenuMessage.containsKey(chatId)) {
+            editMessage(chatId, message, latestMenuMessage.get(chatId).id());
+        } else {
             final SendMessage send = new SendMessage();
             send.setChatId(chatId);
 
@@ -94,8 +96,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             final int id = execute(send).getMessageId();
             latestMenuMessage.put(chatId, new SendMessageData(id, message.text(), message.keyboard()));
-        } else {
-            editMessage(chatId, message, latestMenuMessage.get(chatId).id());
         }
 
         if (message.onNextMessage() != null) {
@@ -105,7 +105,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void editMessage(long chatId, final Message message, int replacedId)
+    private void editMessage(final long chatId, final Message message, final int replacedId)
             throws TelegramApiException {
         final EditMessageText edit = new EditMessageText();
         edit.setChatId(chatId);
