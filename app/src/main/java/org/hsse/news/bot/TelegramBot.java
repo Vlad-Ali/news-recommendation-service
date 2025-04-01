@@ -1,14 +1,7 @@
 package org.hsse.news.bot;
 
-import jakarta.annotation.PostConstruct;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.hsse.news.util.ReflectionUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -18,8 +11,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -34,10 +25,7 @@ import java.util.function.Function;
 
 @Slf4j
 @Component
-public class TelegramBot extends TelegramLongPollingBot implements ApplicationContextAware {
-    @Setter
-    private ApplicationContext applicationContext;
-
+public class TelegramBot extends TelegramLongPollingBot {
     private final Set<ChatId> activeChats = new HashSet<>();
     private final Map<ChatId, SendMessageData> latestMenuMessage = new ConcurrentHashMap<>();
 
@@ -49,46 +37,14 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
     private record SendMessageData(MessageId id, String text, InlineKeyboardMarkup keyboard) {
     }
 
-    @Autowired
-    public TelegramBot(final @Value("${bot-token}") String token) {
+    public TelegramBot(final String token) {
         super(token);
     }
 
-    @SneakyThrows
-    private Optional<Message> runMethod(
-            final Object object, final Method method,
-            final List<String> args, final ChatId chatId) {
-        final List<String> mutableArgs = new ArrayList<>(args);
-        final List<Object> methodArgs = new ArrayList<>();
-        for (int i = 0; i < method.getParameterCount(); i++) {
-            final Class<?> parameterType = ReflectionUtil.parameterType(method, i);
-            if (parameterType == TelegramBot.class) {
-                methodArgs.add(this);
-            } else if (parameterType == ChatId.class) {
-                methodArgs.add(chatId);
-            } else {
-                methodArgs.add(ReflectionUtil.parseArg(mutableArgs.remove(0),
-                        parameterType));
-            }
-        }
-
-        Object result;
-        result = method.invoke(object, methodArgs.toArray());
-
-        if (result instanceof Message) {
-            return Optional.of((Message) result);
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    @PostConstruct
-    public void findBotMappings() {
-        ReflectionUtil.forEachAnnotatedMethod(applicationContext,
-                List.of("telegramBot"), BotMapping.class, (annotation, object, method) -> {
-                    commands.put(annotation.value(), (args, chatId) ->
-                            runMethod(object, method, args, chatId));
-                });
+    public void addCommand(
+            final String command,
+            final BiFunction<List<String>, ChatId, Optional<Message>> toRun) {
+        commands.put(command, toRun);
     }
 
     @Override
@@ -138,7 +94,7 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         }
 
         if (latestMenuMessage.containsKey(chatId)) {
-            SendMessageData old = latestMenuMessage.get(chatId);
+            final SendMessageData old = latestMenuMessage.get(chatId);
 
             editMessage(chatId, message, old.id());
 
@@ -162,7 +118,8 @@ public class TelegramBot extends TelegramLongPollingBot implements ApplicationCo
         }
     }
 
-    private void sendArticleTo(final ChatId chatId, final Function<MessageId, Message> messageIdToMessage)
+    private void sendArticleTo(final ChatId chatId,
+                               final Function<MessageId, Message> messageIdToMessage)
             throws TelegramApiException {
         if (latestMenuMessage.containsKey(chatId)) {
             deleteMessage(chatId, latestMenuMessage.get(chatId).id());
