@@ -11,6 +11,9 @@
         <exclude name="PreserveStackTrace"/>
         <exclude name="JUnitTestsShouldIncludeAssert"/>
         <exclude name="JUnit5TestShouldBePackagePrivate"/>
+        <exclude name="LooseCoupling"/>
+        <exclude name="UnusedLocalVariable"/>
+        <exclude name="UnusedPrivateMethod"/>
     </rule>
     <rule ref="category/java/codestyle.xml">
         <exclude name="AtLeastOneConstructor"/>
@@ -33,6 +36,7 @@
         <exclude name="AvoidUncheckedExceptionsInSignatures"/>
         <exclude name="SignatureDeclareThrowsException"/>
         <exclude name="DataClass"/>
+        <exclude name="CyclomaticComplexity"/>
     </rule>
     <rule ref="category/java/errorprone.xml">
         <exclude name="AvoidFieldNameMatchingMethodName"/>

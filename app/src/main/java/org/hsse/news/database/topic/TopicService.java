@@ -132,4 +132,15 @@ public class TopicService {
         topicsRepository.deleteById(topicId.value());
     }
 
+    public List<TopicInfo> getAllTopics(){
+        LOG.debug("Method getAllTopics called");
+        final List<TopicEntity> topicEntities = topicsRepository.findAll();
+        final List<TopicInfo> topicInfos = new ArrayList<>();
+        for (final TopicEntity topicEntity : topicEntities){
+            final TopicInfo topicInfo = new TopicInfo(topicEntity.getTopicId(), topicEntity.getName());
+            topicInfos.add(topicInfo);
+        }
+        return topicInfos;
+    }
+
 }

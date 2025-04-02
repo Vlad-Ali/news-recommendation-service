@@ -151,4 +151,15 @@ public class WebsiteService {
         }
         return websiteInfos;
     }
+
+    public List<WebsiteInfo> getAllWebsites(){
+        LOG.debug("Method getAllWebsites called");
+        final List<WebsiteInfo> websiteInfos = new ArrayList<>();
+        final List<WebsiteEntity> websiteEntities = websitesRepository.findAll();
+        for (final WebsiteEntity websiteEntity : websiteEntities){
+            final WebsiteInfo websiteInfo = new WebsiteInfo(websiteEntity.getWebsiteId(),websiteEntity.getUrl(), websiteEntity.getDescription());
+            websiteInfos.add(websiteInfo);
+        }
+        return websiteInfos;
+    }
 }

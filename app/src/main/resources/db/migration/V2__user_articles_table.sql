@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS user_articles
 (
     user_id  uuid   NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
     article_id uuid NOT NULL REFERENCES articles (article_id) ON DELETE CASCADE,
+    grade int NOT NULL,
     PRIMARY KEY (user_id, article_id)
 );
 

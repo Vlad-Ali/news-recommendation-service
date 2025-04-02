@@ -25,7 +25,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = {"email"}), @UniqueConstraint(columnNames = {"chat_id"})})
-public class UserEntity {
+public class UserEntity{
     @Id
     @Column(name = "user_id", updatable = false, nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,6 +65,9 @@ public class UserEntity {
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TopicEntity> createdTopics = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserArticlesEntity> userArticles = new HashSet<>();
+
     @ManyToMany
     @JoinTable(
             name = "user_topics",
@@ -80,6 +83,10 @@ public class UserEntity {
         this.password = password;
         this.username = username;
         this.chatId = chatId;
+    }
+
+    public void assignArticle(final ArticleEntity articleEntity,final Integer grade){
+        userArticles.add(new UserArticlesEntity(this, articleEntity, grade));
     }
 
     public void addWebsite(final WebsiteEntity website) {
@@ -193,5 +200,9 @@ public class UserEntity {
     @Override
     public int hashCode() {
         return UserEntity.class.hashCode();
+    }
+
+    public Set<UserArticlesEntity> getUserArticles() {
+        return userArticles;
     }
 }
