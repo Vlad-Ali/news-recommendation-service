@@ -10,7 +10,6 @@ import java.util.UUID;
 
 @Getter
 @Builder(toBuilder = true)
-//@AllArgsConstructor
 @EqualsAndHashCode
 public class ResponseWebsiteDto {
 

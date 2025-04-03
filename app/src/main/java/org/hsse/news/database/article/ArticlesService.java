@@ -1,6 +1,5 @@
 package org.hsse.news.database.article;
 
-import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -8,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.hsse.news.database.article.repositories.JpaArticleRepository;
-import org.hsse.news.database.article.repositories.JpaUserArticlesRepository;
 import org.hsse.news.database.entity.*;
 import org.hsse.news.database.article.exceptions.ArticleNotFoundException;
 import org.hsse.news.database.topic.exceptions.TopicNotFoundException;
@@ -32,24 +30,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Slf4j
-//@AllArgsConstructor
 public class ArticlesService {
 
     private final JpaArticleRepository articleRepository;
     private final JpaTopicsRepository topicRepository;
     private final JpaWebsitesRepository websiteRepository;
     private final JpaUsersRepository userRepository;
-    private final JpaUserArticlesRepository userArticleRepository;
 
     private static final Logger LOG = LoggerFactory.getLogger(ArticlesService.class);
 
-    public ArticlesService(final JpaArticleRepository articleRepository,final JpaTopicsRepository topicRepository,final JpaWebsitesRepository websiteRepository,final JpaUsersRepository userRepository,final JpaUserArticlesRepository userArticleRepository) {
+    public ArticlesService(final JpaArticleRepository articleRepository,final JpaTopicsRepository topicRepository,final JpaWebsitesRepository websiteRepository,final JpaUsersRepository userRepository) {
         this.articleRepository = articleRepository;
         this.topicRepository = topicRepository;
         this.websiteRepository = websiteRepository;
         this.userRepository = userRepository;
-        this.userArticleRepository = userArticleRepository;
     }
 
     @Transactional(readOnly = true)
@@ -87,19 +81,17 @@ public class ArticlesService {
         final List<ArticleDto> articleDtoList = new ArrayList<>();
 
         for (final ArticleEntity article : articles){
-            final List<TopicEntity> topicEntities = article.getTopics().stream().toList();
+            final List<TopicEntity> topicEntities = articleRepository.getArticleTopicsForUser(article.getArticleId(),userId).stream().toList();
             articleDtoList.add(ArticleDto.fromArticle(article, TopicDto.getTopicDtoList(topicEntities)));
         }
 
         for (final ArticleEntity article : articles) {
             article.assignArticle(user, Grade.NONE);
-            userArticleRepository.save(
-                    new UserArticlesEntity(user, article, Grade.NONE)
-            );
         }
         return articleDtoList;
     }
 
+    @Transactional
     public List<ArticleDto> getAllUnknownByLikes(final UUID userId){
         final UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(new UserId(userId)));
@@ -109,19 +101,17 @@ public class ArticlesService {
         final List<ArticleDto> articleDtoList = new ArrayList<>();
 
         for (final ArticleEntity article : articles){
-            final List<TopicEntity> topicEntities = article.getTopics().stream().toList();
+            final List<TopicEntity> topicEntities = articleRepository.getArticleTopicsForUser(article.getArticleId(), userId).stream().toList();
             articleDtoList.add(ArticleDto.fromArticle(article, TopicDto.getTopicDtoList(topicEntities)));
         }
 
         for (final ArticleEntity article : articles) {
             article.assignArticle(user, Grade.NONE);
-            userArticleRepository.save(
-                    new UserArticlesEntity(user, article, Grade.NONE)
-            );
         }
         return articleDtoList;
     }
 
+    @Transactional(readOnly = true)
     public List<TopicDto> getArticleTopicsForUser(final ArticleId articleId, final UserId userId){
         final UserEntity user = userRepository.findById(userId.value())
                 .orElseThrow(() -> new UserNotFoundException(new UserId(userId.value())));

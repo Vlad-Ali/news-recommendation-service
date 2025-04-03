@@ -11,7 +11,6 @@ import java.util.UUID;
 @Builder(toBuilder = true)
 @Data
 @NoArgsConstructor
-//@AllArgsConstructor
 public class ResponseUserDto {
 
     private @NotNull UUID id;

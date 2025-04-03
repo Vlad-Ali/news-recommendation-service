@@ -1,6 +1,5 @@
 package org.hsse.news.database.article;
 
-import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.database.entity.ArticleEntity;
 import org.hsse.news.database.entity.UserArticlesEntity;
 import org.hsse.news.database.entity.UserEntity;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
-@Slf4j
 public class UserArticlesService {
     private final JpaUserArticlesRepository userArticlesRepository;
     private final JpaUsersRepository userRepository;
@@ -78,10 +76,9 @@ public class UserArticlesService {
         final ArticleEntity articleEntity = articleRepository.findById(requestUserArticleDto.articleId()).orElseThrow(() -> new ArticleNotFoundException(new ArticleId(requestUserArticleDto.articleId())));
         final UserEntity userEntity = userRepository.findById(requestUserArticleDto.userId()).orElseThrow(() -> new UserNotFoundException(new UserId(requestUserArticleDto.userId())));
         final UserArticlesEntity userArticlesEntity = userArticlesRepository.findById(new UserArticlesEntity.Id(userEntity, articleEntity)).orElseThrow(() -> new ArticleNotFoundException(new ArticleId(requestUserArticleDto.articleId())));
-        if (userArticlesEntity.getGrade().equals(0)){
-            userArticlesRepository.likeUserArticle(requestUserArticleDto.userId(), requestUserArticleDto.articleId());
-            LOG.debug("Liking user article {}", requestUserArticleDto.articleId());
-        }
+        userArticlesRepository.likeUserArticle(requestUserArticleDto.userId(), requestUserArticleDto.articleId());
+        LOG.debug("Liking user article {}", requestUserArticleDto.articleId());
+
     }
 
     @Transactional()
@@ -89,10 +86,9 @@ public class UserArticlesService {
         final ArticleEntity articleEntity = articleRepository.findById(requestUserArticleDto.articleId()).orElseThrow(() -> new ArticleNotFoundException(new ArticleId(requestUserArticleDto.articleId())));
         final UserEntity userEntity = userRepository.findById(requestUserArticleDto.userId()).orElseThrow(() -> new UserNotFoundException(new UserId(requestUserArticleDto.userId())));
         final UserArticlesEntity userArticlesEntity = userArticlesRepository.findById(new UserArticlesEntity.Id(userEntity, articleEntity)).orElseThrow(() -> new ArticleNotFoundException(new ArticleId(requestUserArticleDto.articleId())));
-        if (userArticlesEntity.getGrade().equals(0)) {
-            userArticlesRepository.dislikeUserArticle(requestUserArticleDto.userId(), requestUserArticleDto.articleId());
-            LOG.debug("Disliking user article {}", requestUserArticleDto.articleId());
-        }
+        userArticlesRepository.dislikeUserArticle(requestUserArticleDto.userId(), requestUserArticleDto.articleId());
+        LOG.debug("Disliking user article {}", requestUserArticleDto.articleId());
+
     }
 
     @Transactional()
@@ -102,6 +98,7 @@ public class UserArticlesService {
         LOG.debug("Removing mark from user article {}", requestUserArticleDto.articleId());
     }
 
+    @Transactional(readOnly = true)
     public boolean isLikedArticle(final @NotNull ArticleId articleId,final @NotNull UserId userId){
         final ArticleEntity articleEntity = articleRepository.findById(articleId.value()).orElseThrow(() -> new ArticleNotFoundException(articleId));
         final UserEntity userEntity = userRepository.findById(userId.value()).orElseThrow(() -> new UserNotFoundException(userId));
@@ -109,6 +106,7 @@ public class UserArticlesService {
         return userArticlesEntity.getGrade().equals(1);
     }
 
+    @Transactional(readOnly = true)
     public boolean isDislikedArticle(final @NotNull ArticleId articleId,final @NotNull UserId userId){
         final ArticleEntity articleEntity = articleRepository.findById(articleId.value()).orElseThrow(() -> new ArticleNotFoundException(articleId));
         final UserEntity userEntity = userRepository.findById(userId.value()).orElseThrow(() -> new UserNotFoundException(userId));

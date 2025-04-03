@@ -34,6 +34,11 @@ public interface ArticleOperations {
             @Parameter(description = "ID пользователя") @RequestParam UUID userId
     );
 
+    @GetMapping("/users/likes")
+    @Operation(summary = "Получение статей по увеличению разницы лайков и дизлайков")
+    @ApiResponse(responseCode = "200", description = "Статьи получены")
+    ResponseEntity<ArticleListResponse> getAllUnknownByLikes(@Parameter(description = "ID пользователя") @RequestParam UUID userId);
+
     @GetMapping("/")
     @Operation(summary = "Получение статьи по ее ID")
     @ApiResponse(responseCode = "200", description = "Статья найдена")

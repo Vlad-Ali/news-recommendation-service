@@ -1,5 +1,6 @@
 package org.hsse.news.database.article;
 
+import lombok.experimental.UtilityClass;
 import org.hsse.news.api.schemas.response.article.ArticleListResponse;
 import org.hsse.news.api.schemas.response.article.ArticleResponse;
 import org.hsse.news.database.topic.models.TopicDto;
@@ -10,9 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@UtilityClass
 public final class ArticleResponseMapper {
-
-    private ArticleResponseMapper(){}
 
     public static ArticleListResponse getArticleListResponse(final List<ArticleDto> articleDtoList){
         final Map<String, ArticleResponse> articleResponseMap = new ConcurrentHashMap<>();

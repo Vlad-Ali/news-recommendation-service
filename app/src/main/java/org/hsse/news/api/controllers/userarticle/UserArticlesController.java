@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-//@AllArgsConstructor
 @Tag(name = "User articles API", description = "Управление связями пользователь-статья")
 public class UserArticlesController implements UserArticlesOperations {
     private final UserArticlesService userArticlesService;

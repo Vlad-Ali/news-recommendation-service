@@ -19,7 +19,6 @@ import java.util.UUID;
 @Schema(name = "Article", description = "Сущность статьи")
 @Getter
 @Setter
-//@NoArgsConstructor
 public class ArticleEntity implements Serializable {
 
     @Id
@@ -114,7 +113,7 @@ public class ArticleEntity implements Serializable {
     }
 
     @Override
-    public final boolean equals(final Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -131,7 +130,7 @@ public class ArticleEntity implements Serializable {
     }
 
     @Override
-    public final int hashCode() {
+    public int hashCode() {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
 

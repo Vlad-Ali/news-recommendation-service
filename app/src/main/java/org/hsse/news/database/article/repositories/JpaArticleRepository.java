@@ -33,7 +33,7 @@ public interface JpaArticleRepository extends JpaRepository<ArticleEntity, UUID>
     List<ArticleEntity> getAllUnknown(@NotNull UUID userId);
 
     @Query(value = """
-            select articles.article_id, article.title, article.url, article.created_at, article.website_id from articles inner join user_articles ua on articles.article_id = ua.article_id
+            select articles.article_id, articles.title, articles.url, articles.created_at, articles.website_id from articles inner join user_articles ua on articles.article_id = ua.article_id
             where articles.article_id in (select at.article_id from article_topics at where at.topic_id in (select topic_id from user_topics where user_id = :userId)) AND 
             (select count(*) from user_articles where user_id = :userId and article_id = articles.article_id) = 0 AND
             website_id in (select website_id from user_websites where user_id = :userId) 
@@ -43,15 +43,14 @@ public interface JpaArticleRepository extends JpaRepository<ArticleEntity, UUID>
             """, nativeQuery = true)
     List<ArticleEntity> getAllUnknownByLikes(@NotNull UUID userId);
 
-    @Query(value = "select * from topics t where topic_id in (select at.topic_id from article_topics at where at.article_id = :articleId) and" +
+    @Query(value = "select * from topics t where topic_id in (select at.topic_id from article_topics at where at.article_id = :articleId) and " +
             "t.topic_id in (select ut.topic_id from user_topics ut where ut.user_id = :userId)", nativeQuery = true)
     List<TopicEntity> getArticleTopicsForUser(@Param("articleId") UUID articleId, @Param("userId") UUID userId);
 
     @Query(value = "select * from user_articles ua where ua.user_id = :userId", nativeQuery = true)
     List<UserArticlesEntity> getUserArticles(@NotNull UUID userId);
 
-    @Modifying
-    @Query("update ArticleEntity a set a.title = :title, a.url = :url")
+    @Query(value = "update articles a set a.title = :title, a.url = :url where a.article_id = :id", nativeQuery = true)
     void update(@NotNull UUID id, @NotNull String title, @NotNull String url);
 
     @Modifying

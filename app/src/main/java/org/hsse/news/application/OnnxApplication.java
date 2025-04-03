@@ -2,7 +2,8 @@ package org.hsse.news.application;
 
 import ai.onnxruntime.OrtException;
 import org.hsse.news.model.OnnxModelRunner;
-import org.hsse.news.util.ResourceUtil;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -12,13 +13,11 @@ import java.util.Map;
 
 @Component
 public class OnnxApplication {
-  public static final String MODEL_PATH = ResourceUtil.getResource("/onnx_model/trfs-model.onnx");
-  public static final String TOKENIZER_PATH = ResourceUtil.getResource("/onnx_model/tokenizer/tokenizer.json");
   private final OnnxModelRunner modelRunner;
 
 
-  public OnnxApplication() throws IOException, OrtException {
-    this.modelRunner = new OnnxModelRunner(MODEL_PATH, TOKENIZER_PATH);
+  public OnnxApplication(@Value("classpath:onnx_model/trfs-model.onnx") final Resource modelPath, @Value("classpath:onnx_model/tokenizer/tokenizer.json") final Resource tokenizerPath) throws IOException, OrtException {
+    this.modelRunner = new OnnxModelRunner(modelPath.getURI().getPath().substring(1), tokenizerPath.getURI().getPath().substring(1));
   }
 
   private Map<String, Float> getResult(final String text, final List<String> labels) throws OrtException {

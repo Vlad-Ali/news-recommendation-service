@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.io.IOException;
@@ -80,17 +81,26 @@ public class RssTracker {
     }
 
     @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000*100)
-    private void addNewArticles() throws FeedException, IOException, OrtException {
+    @Transactional
+    public void addNewArticles(){
         final List<WebsiteInfo> websites = websiteService.getAllWebsites();
         final List<TopicInfo> topics = topicService.getAllTopics();
         for (final WebsiteInfo website : websites){
             LOG.debug("{} is being parsed", website.url());
-            final List<ParsedArticle> parsedArticles = getWebsiteArticles(website.url());
-            for (final ParsedArticle parsedArticle : parsedArticles){
-                if (articlesService.isArticleWithUrlAdd(parsedArticle.link())){
-                    continue;
+            try{
+                final List<ParsedArticle> parsedArticles = getWebsiteArticles(website.url());
+                for (final ParsedArticle parsedArticle : parsedArticles){
+                    if (articlesService.isArticleWithUrlAdd(parsedArticle.link())){
+                        continue;
+                    }
+                    try {
+                        matchTopics(parsedArticle, topics, new WebsiteId(website.websiteId()));
+                    } catch (Exception e){
+                        LOG.debug("Got exception on matching topics: {}",e.getMessage());
+                    }
                 }
-                matchTopics(parsedArticle, topics, new WebsiteId(website.websiteId()));
+            } catch (Exception e){
+                LOG.debug("Got exception on connection to website: {}", e.getMessage());
             }
 
         }

@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/v1/articles")
-//@RequiredArgsConstructor
 @Tag(name = "Article API", description = "Управление статьями")
 public class ArticlesController implements ArticleOperations {
     private final ArticlesService articleService;
@@ -50,6 +49,13 @@ public class ArticlesController implements ArticleOperations {
     @Override
     public ResponseEntity<ArticleListResponse> getAllUnknown(final UUID userId) {
         final List<ArticleDto> articles = articleService.getAllUnknown(userId);
+        final ArticleListResponse articleListResponse = ArticleResponseMapper.getArticleListResponse(articles);
+        return new ResponseEntity<>(articleListResponse, HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<ArticleListResponse> getAllUnknownByLikes(final UUID userId) {
+        final List<ArticleDto> articles = articleService.getAllUnknownByLikes(userId);
         final ArticleListResponse articleListResponse = ArticleResponseMapper.getArticleListResponse(articles);
         return new ResponseEntity<>(articleListResponse, HttpStatus.OK);
     }
