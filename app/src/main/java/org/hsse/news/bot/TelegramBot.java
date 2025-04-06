@@ -2,6 +2,8 @@ package org.hsse.news.bot;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -37,7 +39,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private record SendMessageData(MessageId id, String text, InlineKeyboardMarkup keyboard) {
     }
 
-    public TelegramBot(final String token) {
+    public TelegramBot(final @Value("${bot-token}") String token) {
         super(token);
     }
 
@@ -103,6 +105,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             send.setText(old.text());
             send.setReplyMarkup(old.keyboard());
+            send.enableHtml(true);
 
             final MessageId id = new MessageId(execute(send).getMessageId());
             latestMenuMessage.put(chatId,
@@ -121,6 +124,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void sendArticleTo(final ChatId chatId,
                                final Function<MessageId, Message> messageIdToMessage)
             throws TelegramApiException {
+
         if (latestMenuMessage.containsKey(chatId)) {
             deleteMessage(chatId, latestMenuMessage.get(chatId).id());
         }

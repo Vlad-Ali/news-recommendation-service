@@ -24,3 +24,4 @@ logging:
     org.hsse.news.api: DEBUG
     org.hsse.news.database: DEBUG
     org.hsse.news.tracker: DEBUG
+bot-token: 8101953229:AAHY8BZ9p4JrjIAR85lMJufQo5vJL4iVvoE
