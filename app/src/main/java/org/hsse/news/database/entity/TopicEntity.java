@@ -45,6 +45,9 @@ public class TopicEntity {
     @ManyToMany(mappedBy = "subscribedTopics")
     private Set<UserEntity> subscribers = new HashSet<>();
 
+    @ManyToMany(mappedBy = "topics")
+    private Set<ArticleEntity> articles = new HashSet<>();
+
     protected TopicEntity(){}
 
     public TopicEntity(final String name, final UserEntity creator){
@@ -107,4 +110,7 @@ public class TopicEntity {
         return subscribers;
     }
 
+    public Set<ArticleEntity> getArticles() {
+        return articles;
+    }
 }

@@ -23,6 +23,7 @@ logging:
   level:
     org.hsse.news.api: DEBUG
     org.hsse.news.database: DEBUG
+    org.hsse.news.tracker: DEBUG
     org.hsse.news: DEBUG
 tg-bot:
   token: token

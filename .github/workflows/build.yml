@@ -19,12 +19,6 @@ jobs:
           distribution: corretto
           java-version: 17
 
-      - name: Prepare configuration
-        run: |
-          cd app/src/main/resources/
-          cp application.yml
-          cd -
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 

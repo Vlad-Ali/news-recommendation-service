@@ -4,17 +4,16 @@ import org.hsse.news.database.entity.TopicEntity;
 import org.hsse.news.database.entity.UserEntity;
 import org.hsse.news.database.user.exceptions.UserInitializationException;
 import org.hsse.news.database.user.models.UserId;
-import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public record TopicDto(
         @Nullable TopicId id, @NotNull String description, @Nullable UserId creatorId
         ) {
-    @JdbiConstructor
-    public TopicDto {}
 
     public TopicDto(final @NotNull String description, final @Nullable UserId creatorId){
         this(null, description, creatorId);
@@ -57,5 +56,13 @@ public record TopicDto(
     public TopicEntity toTopicEntity(final UserEntity user){
         final String name = this.description();
         return new TopicEntity(name, user);
+    }
+
+    public static List<TopicDto> getTopicDtoList(final List<TopicEntity> topicEntities){
+        final List<TopicDto> topicDtoList = new ArrayList<>();
+        for (final TopicEntity topicEntity : topicEntities){
+            topicDtoList.add(new TopicDto(new TopicId(topicEntity.getTopicId()), topicEntity.getName(), new UserId(topicEntity.getCreatorId())));
+        }
+        return topicDtoList;
     }
 }

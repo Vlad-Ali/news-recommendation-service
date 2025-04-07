@@ -10,6 +10,7 @@ import org.hsse.news.database.topic.exceptions.TopicNotFoundException;
 import org.hsse.news.database.topic.models.TopicDto;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.topic.repositories.JpaTopicsRepository;
+import org.hsse.news.database.user.exceptions.UserNotFoundException;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.user.repositories.JpaUsersRepository;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ public class TopicService {
         this.usersRepository = usersRepository;
     }
 
+    @Transactional(readOnly = true)
     public Optional<TopicInfo> findById(final TopicId topicId){
         LOG.debug("Method findById called");
         final Optional<TopicEntity> optionalTopic = topicsRepository.findById(topicId.value());
@@ -45,6 +47,7 @@ public class TopicService {
         return Optional.of(new TopicInfo(topicEntity.getTopicId(), topicDto.description()));
     }
 
+    @Transactional(readOnly = true)
     public List<TopicInfo> getSubscribedTopicsByUserId(final UserId userId){
         LOG.debug("Method getSubscribedTopicsByUserId called");
         final ArrayList<TopicEntity> topicEntityArrayList = new ArrayList<>(topicsRepository.findSubscribedTopicsByUserId(userId.value()));
@@ -56,6 +59,7 @@ public class TopicService {
         return topics.stream().toList();
     }
 
+    @Transactional(readOnly = true)
     public List<TopicInfo> getUnSubscribedTopicsByUserId(final UserId userId){
         LOG.debug("Method getUnSubscribedTopicsByUserId called");
         final ArrayList<TopicEntity> topicEntityArrayList = new ArrayList<>(topicsRepository.findUnSubscribedTopicsByUserId(userId.value()));
@@ -67,6 +71,7 @@ public class TopicService {
         return topics.stream().toList();
     }
 
+    @Transactional(readOnly = true)
     public TopicsResponse getSubAndUnSubTopics(final UserId userId){
         LOG.debug("Method getSubAndUnSubTopics called");
         return new TopicsResponse(getSubscribedTopicsByUserId(userId), getUnSubscribedTopicsByUserId(userId));
@@ -81,7 +86,7 @@ public class TopicService {
         }
 
         final Optional<UserEntity> optionalUser = usersRepository.findById(topicDto.creatorId().value());
-        final UserEntity userEntity = optionalUser.get();
+        final UserEntity userEntity = optionalUser.orElseThrow(() -> new UserNotFoundException(topicDto.creatorId()));
         final TopicEntity topicEntity = topicDto.toTopicEntity(userEntity);
         userEntity.addTopic(topicEntity);
         final UserEntity savedUser = usersRepository.save(userEntity);
@@ -106,7 +111,7 @@ public class TopicService {
             }
             topicEntityArrayList.add(optionalTopic.get());
         }
-        final UserEntity userEntity = usersRepository.findById(userId.value()).get();
+        final UserEntity userEntity = usersRepository.findById(userId.value()).orElseThrow(() -> new UserNotFoundException(userId));
         userEntity.getSubscribedTopics().clear();
         for (final TopicEntity topicEntity : topicEntityArrayList){
             userEntity.subscribeToTopic(topicEntity);
@@ -118,7 +123,7 @@ public class TopicService {
     public void delete(final TopicId topicId, final UserId creatorId){
         LOG.debug("Method delete called");
         final Optional<UserEntity> optionalUser = usersRepository.findById(creatorId.value());
-        final UserEntity userEntity = optionalUser.get();
+        final UserEntity userEntity = optionalUser.orElseThrow(() -> new UserNotFoundException(creatorId));
         final Optional<TopicEntity> optionalTopic = topicsRepository.findById(topicId.value());
         if (optionalTopic.isEmpty()){
             throw new TopicNotFoundException("Topic is not found with id = "+topicId.value());
@@ -130,6 +135,18 @@ public class TopicService {
         userEntity.removeTopic(topicEntity);
         usersRepository.save(userEntity);
         topicsRepository.deleteById(topicId.value());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TopicInfo> getAllTopics(){
+        LOG.debug("Method getAllTopics called");
+        final List<TopicEntity> topicEntities = topicsRepository.findAll();
+        final List<TopicInfo> topicInfos = new ArrayList<>();
+        for (final TopicEntity topicEntity : topicEntities){
+            final TopicInfo topicInfo = new TopicInfo(topicEntity.getTopicId(), topicEntity.getName());
+            topicInfos.add(topicInfo);
+        }
+        return topicInfos;
     }
 
 }

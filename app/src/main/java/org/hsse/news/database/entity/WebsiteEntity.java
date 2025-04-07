@@ -1,5 +1,6 @@
 package org.hsse.news.database.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
@@ -44,12 +46,25 @@ public class WebsiteEntity {
     @ManyToMany(mappedBy = "subscribedWebsites")
     private Set<UserEntity> subscribers = new HashSet<>();
 
+    @OneToMany(mappedBy = "website", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ArticleEntity> articles = new HashSet<>();
+
     protected WebsiteEntity(){}
 
     public WebsiteEntity(final String url,final String description,final UserEntity creator){
         this.creator = creator;
         this.url = url;
         this.description = description;
+    }
+
+    public void addArticle(final ArticleEntity article){
+        articles.add(article);
+        article.setWebsite(this);
+    }
+
+    public void removeArticle(final ArticleEntity article){
+        articles.remove(article);
+        article.setWebsite(null);
     }
 
     public @NotNull String getUrl() {
@@ -87,7 +102,7 @@ public class WebsiteEntity {
         if (!(o instanceof WebsiteEntity website)) {
             return false;
         }
-        return websiteId!= null && websiteId.equals(website.websiteId);
+        return websiteId!=null && websiteId.equals(website.websiteId);
     }
 
     @Override
@@ -113,5 +128,9 @@ public class WebsiteEntity {
         final String description = this.getDescription();
         final UUID userId = this.getCreatorId();
         return new WebsiteDto(new WebsiteId(websiteId), url, description, new UserId(userId));
+    }
+
+    public Set<ArticleEntity> getArticles() {
+        return articles;
     }
 }

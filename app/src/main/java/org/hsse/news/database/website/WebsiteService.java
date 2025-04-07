@@ -5,6 +5,7 @@ import org.hsse.news.api.schemas.shared.WebsiteInfo;
 import org.hsse.news.database.entity.UserEntity;
 import org.hsse.news.database.entity.WebsiteEntity;
 import org.hsse.news.database.topic.models.TopicId;
+import org.hsse.news.database.user.exceptions.UserNotFoundException;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.user.repositories.JpaUsersRepository;
 import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPerUserException;
@@ -37,6 +38,7 @@ public class WebsiteService {
         this.usersRepository = usersRepository;
     }
 
+    @Transactional(readOnly = true)
     public Optional<WebsiteInfo> findById(final WebsiteId websiteId) {
         LOG.debug("Method findById called");
         final Optional<WebsiteEntity> optionalWebsite = websitesRepository.findById(websiteId.value());
@@ -61,6 +63,7 @@ public class WebsiteService {
     }
 
 
+    @Transactional(readOnly = true)
     public List<WebsiteInfo> getSubscribedWebsitesByUserId(final UserId userId) {
         LOG.debug("Method getSubscribedWebsitesByUserId called");
         final ArrayList<WebsiteEntity> websiteEntityArrayList = new ArrayList<>(websitesRepository.findSubscribedWebsitesByUserId(userId.value()));
@@ -72,6 +75,7 @@ public class WebsiteService {
         return websites.stream().toList();
     }
 
+    @Transactional(readOnly = true)
     public List<WebsiteInfo> getUnSubscribedWebsitesByUserId(final UserId userId) {
         LOG.debug("Method getUnSubscribedWebsitesByUserId called");
         final ArrayList<WebsiteEntity> websiteEntityArrayList = new ArrayList<>(websitesRepository.findUnSubscribedWebsitesByUserId(userId.value()));
@@ -83,6 +87,7 @@ public class WebsiteService {
         return websites.stream().toList();
     }
 
+    @Transactional(readOnly = true)
     public WebsitesResponse getSubAndUnSubWebsites(final UserId userId){
         LOG.debug("Method getSubAndUnSubWebsites called");
         return new WebsitesResponse(getSubscribedWebsitesByUserId(userId), getUnSubscribedWebsitesByUserId(userId));
@@ -99,7 +104,7 @@ public class WebsiteService {
             throw new WebsiteAlreadyExistsException("Website already exists with url = " + websiteDto.url());
         }
         final Optional<UserEntity> optionalUser = usersRepository.findById(websiteDto.creatorId().value());
-        final UserEntity userEntity = optionalUser.get();
+        final UserEntity userEntity = optionalUser.orElseThrow(() -> new UserNotFoundException(websiteDto.creatorId()));
         final WebsiteEntity websiteEntity = websiteDto.toWebsiteEntity(userEntity);
         userEntity.addWebsite(websiteEntity);
         final UserEntity savedUser = usersRepository.save(userEntity);
@@ -124,7 +129,7 @@ public class WebsiteService {
             }
             websiteEntityArrayList.add(optionalWebsite.get());
         }
-        final UserEntity userEntity = usersRepository.findById(userId.value()).get();
+        final UserEntity userEntity = usersRepository.findById(userId.value()).orElseThrow(() -> new UserNotFoundException(userId));
         userEntity.getSubscribedWebsites().clear();
         for (final WebsiteEntity websiteEntity : websiteEntityArrayList){
             userEntity.subscribeToWebsite(websiteEntity);
@@ -139,7 +144,7 @@ public class WebsiteService {
     public void delete(final WebsiteId websiteId, final UserId creatorId) {
         LOG.debug("Method delete called");
         final Optional<UserEntity> optionalUser = usersRepository.findById(creatorId.value());
-        final UserEntity userEntity = optionalUser.get();
+        final UserEntity userEntity = optionalUser.orElseThrow(() -> new UserNotFoundException(creatorId));
         final Optional<WebsiteEntity> optionalWebsite = websitesRepository.findById(websiteId.value());
         if(optionalWebsite.isEmpty()){
             throw new WebsiteNotFoundException("Website is not found with id = " + websiteId.value());
@@ -153,12 +158,25 @@ public class WebsiteService {
         websitesRepository.deleteById(websiteId.value());
     }
 
+    @Transactional(readOnly = true)
     public List<WebsiteInfo> getWebsitesByUserTopic(final TopicId topicId, final UserId userId){
         LOG.debug("Method getWebsitesByUserTopic called");
         final List<WebsiteInfo> websiteInfos = new ArrayList<>();
         final List<WebsiteEntity> recommendedWebsites = websitesRepository.getWebsitesByUserTopic(topicId.value(), userId.value());
         for (final WebsiteEntity websiteEntity : recommendedWebsites){
             final WebsiteInfo websiteInfo = new WebsiteInfo(websiteEntity.getWebsiteId(), websiteEntity.getUrl(), websiteEntity.getDescription());
+            websiteInfos.add(websiteInfo);
+        }
+        return websiteInfos;
+    }
+
+    @Transactional(readOnly = true)
+    public List<WebsiteInfo> getAllWebsites(){
+        LOG.debug("Method getAllWebsites called");
+        final List<WebsiteInfo> websiteInfos = new ArrayList<>();
+        final List<WebsiteEntity> websiteEntities = websitesRepository.findAll();
+        for (final WebsiteEntity websiteEntity : websiteEntities){
+            final WebsiteInfo websiteInfo = new WebsiteInfo(websiteEntity.getWebsiteId(),websiteEntity.getUrl(), websiteEntity.getDescription());
             websiteInfos.add(websiteInfo);
         }
         return websiteInfos;
