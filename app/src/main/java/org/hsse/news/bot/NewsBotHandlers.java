@@ -66,26 +66,7 @@ public class NewsBotHandlers {
 
     private final StubDataProvider dataProvider;
 
-    @Autowired
-    private ArticlesService articlesService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private WebsiteService websiteService;
-
-    @Autowired
-    private TopicService topicService;
-
-    @Autowired
-    private UserArticlesService userArticlesService;
-
     private final ConcurrentHashMap<ChatId, UserState> tempUserStates = new ConcurrentHashMap<>();
-//    private final ConcurrentHashMap<ChatId, List<ArticleDto>> tempUnknownArticles = new ConcurrentHashMap<>();
-//    private final ConcurrentHashMap<ChatId, List<ResponseUserArticleDto>> tempKnownArticles = new ConcurrentHashMap<>();
-//    private final ConcurrentHashMap<ChatId, Integer> userIndex = new ConcurrentHashMap<>();
-//    private final ConcurrentHashMap<ChatId, UserDto> users = new ConcurrentHashMap<>();
 
     private enum ArticleOpinion {
         LIKED,
@@ -111,22 +92,6 @@ public class NewsBotHandlers {
         ));
     }
 
-    private static InlineKeyboardMarkup articleMenuKeyboard(int knownCount, int unknownCount) {
-        log.debug("Article menu method called");
-
-        return new InlineKeyboardMarkup(List.of(
-            List.of(InlineKeyboardButton.builder()
-                .text(String.format("Просмотренные статьи (%d)", knownCount))
-                .callbackData(VIEW_WATCHED_ARTICLES_COMMAND).build()),
-            List.of(InlineKeyboardButton.builder()
-                .text(String.format("Непросмотренные статьи (%d)", unknownCount))
-                .callbackData(VIEW_UNWATCHED_ARTICLES_COMMAND).build()),
-            List.of(InlineKeyboardButton.builder()
-                .text(BACK_TEXT)
-                .callbackData(MENU_COMMAND).build())
-        ));
-    }
-
     @BotMapping(START_COMMAND)
     public Message start() {
         return Message.builder()
@@ -140,98 +105,6 @@ public class NewsBotHandlers {
 
         tempUserStates.put(chatId, new UserState());
         return Message.builder().text("Меню").keyboard(mainMenuKeyboard()).build();
-    }
-
-    @BotMapping(VIEW_UNWATCHED_ARTICLES_COMMAND)
-    public Message viewUnwatchedArticles(final ChatId chatId) {
-        UserDto user = userService.findByChatId(chatId.value())
-            .orElseThrow(() -> new UserNotFoundException("User with chat id " + chatId.value() + " not found"));
-
-        if (user.id() == null) {
-            throw new RuntimeException();
-        }
-
-        List<ArticleDto> articles = tempUserStates.get(chatId).getUnknownArticles();;
-
-        if (articles.isEmpty()) {
-            return Message.builder()
-                .text("У вас нет новых статей")
-                .verticalKeyboard(
-                    List.of(
-                    InlineKeyboardButton.builder()
-                        .text(BACK_TEXT)
-                        .callbackData(ARTICLES_MENU_COMMAND)
-                        .build()
-                ))
-                .build();
-        }
-
-        ArticleDto article = articles.remove(0);
-        Integer likes = userArticlesService.getArticleLikeCount(article.articleId());
-        Integer dislikes = userArticlesService.getArticleDislikeCount(article.articleId());
-        tempUserStates.get(chatId).setArticle(article);
-
-        articlesService.addToKnown(user.id().value(), article.articleId());
-
-        return Message.builder()
-            .text(getArticleMessage(article, likes, dislikes))
-            .verticalKeyboard(getArticleButtons(articles.size()))
-            .build();
-    }
-
-    @BotMapping(VIEW_WATCHED_ARTICLES_COMMAND)
-    public Message viewWatchedArticles(final ChatId chatId) {
-        List<ResponseUserArticleDto> userArticles = tempUserStates.get(chatId).getKnownArticles();
-        Integer userIndex = tempUserStates.get(chatId).getCurrentIndex();
-
-        if (userArticles.isEmpty()) {
-            return Message.builder()
-                .text("У вас нет статей")
-                .verticalKeyboard(
-                    List.of(
-                        InlineKeyboardButton.builder()
-                            .text(BACK_TEXT)
-                            .callbackData(ARTICLES_MENU_COMMAND)
-                            .build()
-                    ))
-                .build();
-        }
-
-        List<ArticleDto> articles = userArticles.stream().map(ResponseUserArticleDto::article).toList();
-
-        if (userIndex == null) {
-            tempUserStates.get(chatId).setCurrentIndex(0);
-            userIndex = 0;
-        }
-
-        ArticleDto article = articles.get(userIndex);
-        tempUserStates.get(chatId).setArticle(article);
-
-        Integer likes = userArticlesService.getArticleLikeCount(article.articleId());
-        Integer dislikes = userArticlesService.getArticleDislikeCount(article.articleId());
-
-        return Message.builder()
-            .text(getArticleMessage(article, likes, dislikes))
-            .verticalKeyboard(getArticleButtons(articles.size(), userIndex, article, tempUserStates.get(chatId).getUser()))
-            .build();
-    }
-
-    @BotMapping(INCREASE_VIEW_WATCHED_ARTICLES_COMMAND)
-    public Message increaseViewWatchedArticles(final ChatId chatId) {
-        tempUserStates.get(chatId).setCurrentIndex(tempUserStates.get(chatId).getCurrentIndex() + 1);
-        return viewWatchedArticles(chatId);
-    }
-
-    @BotMapping(DECREASE_VIEW_WATCHED_ARTICLES_COMMAND)
-    public Message decreaseViewWatchedArticles(final ChatId chatId) {
-        tempUserStates.get(chatId).setCurrentIndex(tempUserStates.get(chatId).getCurrentIndex() - 1);
-        return viewWatchedArticles(chatId);
-    }
-
-    @BotMapping("/test-feed")
-    public void testArticle(final TelegramBot bot) {
-        bot.sendArticle((messageId) ->
-                articleMessage(new ArticleId(UUID.randomUUID()), ArticleOpinion.NEUTRAL, messageId));
     }
 
     @BotMapping("/test-send")
@@ -253,114 +126,6 @@ public class NewsBotHandlers {
                 List.of(InlineKeyboardButton.builder()
                         .text(BACK_TEXT)
                         .callbackData("/menu").build())));
-    }
-
-    @BotMapping(ARTICLES_MENU_COMMAND)
-    public Message articlesMenu(final ChatId chatId) {
-        UserDto user = userService.findByChatId(chatId.value())
-            .orElseThrow(() -> new UserNotFoundException(String.valueOf(chatId.value())));
-
-        if (user.id() == null) {
-            throw new RuntimeException("UserId is null");
-        }
-
-        tempUserStates.get(chatId).setKnownArticles(articlesService.getUserArticles(user.id().value()));
-        tempUserStates.get(chatId).setUnknownArticles(articlesService.getAllUnknown(user.id().value()));
-        tempUserStates.get(chatId).setUser(user);
-
-        return Message.builder().text("Статьи").keyboard(
-            articleMenuKeyboard(
-                tempUserStates.get(chatId).getKnownArticles().size(),
-                tempUserStates.get(chatId).getUnknownArticles().size()
-            )
-        ).build();
-    }
-
-    private List<InlineKeyboardButton> getArticleButtons(int size) {
-        final List<InlineKeyboardButton> buttons = new ArrayList<>(List.of(
-            InlineKeyboardButton.builder()
-                .text("Поставить лайк")
-                .callbackData(LIKE_COMMAND)
-                .build(),
-            InlineKeyboardButton.builder()
-                .text("Поставить дизлайк")
-                .callbackData(DISLIKE_COMMAND)
-                .build(),
-            InlineKeyboardButton.builder()
-                .text("Убрать оценку")
-                .callbackData(UNLIKE_COMMAND)
-                .build()
-        ));
-
-        if (size > 0) {
-            buttons.add(
-                InlineKeyboardButton.builder()
-                    .text("Далее (%d)".formatted(size))
-                    .callbackData(VIEW_UNWATCHED_ARTICLES_COMMAND)
-                    .build()
-            );
-        }
-
-        buttons.add(
-            InlineKeyboardButton.builder()
-                .text(BACK_TEXT)
-                .callbackData(ARTICLES_MENU_COMMAND)
-                .build()
-        );
-
-        return buttons;
-    }
-
-    private List<InlineKeyboardButton> getArticleButtons(int size, int index, ArticleDto articleDto, UserDto userDto) {
-        final List<InlineKeyboardButton> buttons = new ArrayList<>(List.of(
-            InlineKeyboardButton.builder()
-                .text("Поставить лайк")
-                .callbackData(LIKE_COMMAND)
-                .build(),
-            InlineKeyboardButton.builder()
-                .text("Поставить дизлайк")
-                .callbackData(DISLIKE_COMMAND)
-                .build(),
-            InlineKeyboardButton.builder()
-                .text("Убрать оценку")
-                .callbackData(UNLIKE_COMMAND)
-                .build()
-        ));
-
-        if (size - 1 > index) {
-            buttons.add(
-                InlineKeyboardButton.builder()
-                    .text("Следующая (%d)".formatted(size - index - 1))
-                    .callbackData(INCREASE_VIEW_WATCHED_ARTICLES_COMMAND)
-                    .build()
-            );
-        }
-
-        if (index > 0) {
-            buttons.add(
-                InlineKeyboardButton.builder()
-                    .text("Предыдущая (%d)".formatted(index))
-                    .callbackData(DECREASE_VIEW_WATCHED_ARTICLES_COMMAND)
-                    .build()
-            );
-        }
-
-        buttons.add(
-            InlineKeyboardButton.builder()
-                .text(BACK_TEXT)
-                .callbackData(ARTICLES_MENU_COMMAND)
-                .build()
-        );
-
-        return buttons;
-    }
-
-    private String getArticleMessage(ArticleDto article, Integer likes, Integer dislikes) {
-        String articleTitle = article.title().toUpperCase(Locale.ROOT) + "\n\n";
-        List<String> topics = article.topics().stream().map(TopicDto::description).toList();
-        String articleUrl = article.url();
-        String grades = "Лайки \uD83D\uDC4D:    %d\nДизы \uD83D\uDCA9:   %d".formatted(likes, dislikes);
-        return articleTitle + String.join("   ", topics) + "\n\n" + articleUrl + "\n\n" + grades;
     }
 
     @BotMapping(WEBSITES_MENU_COMMAND)
@@ -523,67 +288,5 @@ public class NewsBotHandlers {
                 .onNextMessage(text -> Message.builder()
                         .text("Тема " + text + " добавлена")
                         .keyboard(topicsMenuKeyboard()).build()).build();
-    }
-
-    @BotMapping(LIKE_COMMAND)
-    public void like(final ChatId chatId) {
-        UUID userId = tempUserStates.get(chatId).getUser().id().value();
-        UUID articleId = tempUserStates.get(chatId).getArticle().articleId();
-        userArticlesService.likeUserArticle(
-            new RequestUserArticleDto(articleId, userId, Grade.LIKE)
-        );
-    }
-
-    @BotMapping(DISLIKE_COMMAND)
-    public void dislike(final ChatId chatId) {
-        UUID userId = tempUserStates.get(chatId).getUser().id().value();
-        UUID articleId = tempUserStates.get(chatId).getArticle().articleId();
-        userArticlesService.dislikeUserArticle(
-            new RequestUserArticleDto(articleId, userId, Grade.DISLIKE)
-        );
-    }
-
-    @BotMapping(UNLIKE_COMMAND)
-    public void removeGrade(final ChatId chatId) {
-        UUID userId = tempUserStates.get(chatId).getUser().id().value();
-        UUID articleId = tempUserStates.get(chatId).getArticle().articleId();
-        userArticlesService.removeMarkFromUserArticle(
-            new RequestUserArticleDto(articleId, userId, Grade.NONE)
-        );
-    }
-//
-//    @BotMapping(UNDISLIKE_COMMAND)
-//    public Message undislike(final ArticleId id, final MessageId messageId) {
-//        return articleMessage(id, ArticleOpinion.NEUTRAL, messageId);
-//    }
-
-    private InlineKeyboardMarkup articleMenu(
-            final ArticleId id, final ArticleOpinion opinion, final MessageId messageId) {
-        return new InlineKeyboardMarkup(List.of(List.of(
-                opinion == ArticleOpinion.LIKED
-                        ? InlineKeyboardButton.builder()
-                        .text("✅\uD83D\uDC4D")
-                        .callbackData(UNLIKE_COMMAND + " " + id.value()
-                                + " " + messageId.value()).build()
-                        : InlineKeyboardButton.builder()
-                        .text("\uD83D\uDC4D")
-                        .callbackData(LIKE_COMMAND + " " + id.value()
-                                + " " + messageId.value()).build(),
-                opinion == ArticleOpinion.DISLIKED
-                        ? InlineKeyboardButton.builder()
-                        .text("✅\uD83D\uDC4E")
-                        .callbackData(UNDISLIKE_COMMAND + " " + id.value()
-                                + " " + messageId.value()).build()
-                        : InlineKeyboardButton.builder()
-                        .text("\uD83D\uDC4E")
-                        .callbackData(DISLIKE_COMMAND + " " + id.value()
-                                + " " + messageId.value()).build())));
-    }
-
-    private Message articleMessage(
-            final ArticleId id, final ArticleOpinion opinion, final MessageId messageId) {
-        final Article article = dataProvider.getExampleArticle();
-        return Message.builder().text(article.title() + "\n" + article.url()).keyboard(
-                articleMenu(id, opinion, messageId)).replace(messageId).build();
     }
 }
