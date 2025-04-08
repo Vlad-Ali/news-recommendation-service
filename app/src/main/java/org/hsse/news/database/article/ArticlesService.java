@@ -71,13 +71,12 @@ public class ArticlesService {
         return articles.stream().map(UserArticlesEntity::toDto).toList();
     }
 
-    @Transactional()
+    @Transactional(readOnly = true)
     public List<ArticleDto> getAllUnknown(final UUID userId) {
         final UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(new UserId(userId)));
 
         final List<ArticleEntity> articles = articleRepository.getAllUnknown(userId);
-
         final List<ArticleDto> articleDtoList = new ArrayList<>();
 
         for (final ArticleEntity article : articles){
@@ -85,10 +84,21 @@ public class ArticlesService {
             articleDtoList.add(ArticleDto.fromArticle(article, TopicDto.getTopicDtoList(topicEntities)));
         }
 
-        for (final ArticleEntity article : articles) {
-            article.assignArticle(user, Grade.NONE);
-        }
+//        for (final ArticleEntity article : articles) {
+//            article.assignArticle(user, Grade.NONE);
+//        }
         return articleDtoList;
+    }
+
+    @Transactional
+    public void addToKnown(final UUID userId, final UUID articleId) {
+        final UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(new UserId(userId)));
+
+        final ArticleEntity article = articleRepository.findById(articleId)
+                .orElseThrow(() -> new ArticleNotFoundException(new ArticleId(articleId)));
+
+        article.assignArticle(user, Grade.NONE);
     }
 
     @Transactional
