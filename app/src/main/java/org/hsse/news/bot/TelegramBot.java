@@ -1,9 +1,9 @@
 package org.hsse.news.bot;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -28,7 +28,9 @@ import java.util.function.Function;
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
+    @Getter
     private final Set<ChatId> activeChats = new HashSet<>();
+
     private final Map<ChatId, SendMessageData> latestMenuMessage = new ConcurrentHashMap<>();
 
     private final Map<String, BiFunction<List<String>, ChatId, Optional<Message>>> commands
@@ -121,9 +123,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendArticleTo(final ChatId chatId,
-                               final Function<MessageId, Message> messageIdToMessage)
-            throws TelegramApiException {
+    @SneakyThrows
+    public void sendArticleTo(final ChatId chatId,
+                               final Function<MessageId, Message> messageIdToMessage) {
 
         if (latestMenuMessage.containsKey(chatId)) {
             deleteMessage(chatId, latestMenuMessage.get(chatId).id());
@@ -137,13 +139,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         final Message message = messageIdToMessage.apply(messageId);
 
         editMessage(chatId, message, messageId);
-    }
-
-    @SneakyThrows
-    public void sendArticle(final Function<MessageId, Message> messageIdToMessage) {
-        for (final ChatId chatId : activeChats) {
-            sendArticleTo(chatId, messageIdToMessage);
-        }
     }
 
     private void deleteMessage(final ChatId chatId, final MessageId messageId)

@@ -20,7 +20,6 @@ import org.hsse.news.dto.ResponseUserArticleDto;
 import org.hsse.news.util.Grade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -229,8 +228,8 @@ public class NewsBotHandlers {
     }
 
     @BotMapping("/test-feed")
-    public void testArticle(final TelegramBot bot) {
-        bot.sendArticle((messageId) ->
+    public void testArticle(final ChatId chatId, final TelegramBot bot) {
+        bot.sendArticleTo(chatId, (messageId) ->
                 articleMessage(new ArticleId(UUID.randomUUID()), ArticleOpinion.NEUTRAL, messageId));
     }
 
@@ -355,7 +354,7 @@ public class NewsBotHandlers {
         return buttons;
     }
 
-    private String getArticleMessage(ArticleDto article, Integer likes, Integer dislikes) {
+    public String getArticleMessage(ArticleDto article, Integer likes, Integer dislikes) {
         String articleTitle = article.title().toUpperCase(Locale.ROOT) + "\n\n";
         List<String> topics = article.topics().stream().map(TopicDto::description).toList();
         String articleUrl = article.url();
