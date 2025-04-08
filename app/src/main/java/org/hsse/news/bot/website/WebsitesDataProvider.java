@@ -1,11 +1,12 @@
-package org.hsse.news;
+package org.hsse.news.bot.website;
 
+import lombok.extern.slf4j.Slf4j;
+import org.hsse.news.api.schemas.shared.TopicInfo;
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
-import org.hsse.news.database.article.models.Article;
-import org.hsse.news.database.article.models.ArticleId;
-import org.hsse.news.database.topic.models.TopicDto;
+import org.hsse.news.database.topic.TopicService;
 import org.hsse.news.database.topic.models.TopicId;
 import org.hsse.news.database.user.UserService;
+import org.hsse.news.database.user.exceptions.UserNotFoundException;
 import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.website.WebsiteService;
@@ -14,36 +15,23 @@ import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
 import org.hsse.news.database.website.models.WebsiteDto;
 import org.hsse.news.database.website.models.WebsiteId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Component
-public class StubDataProvider {
+@Slf4j
+public class WebsitesDataProvider {
     private final UserService userService;
     private final WebsiteService websiteService;
-    private final static String EXAMPLE_URI = "example.com";
-    private final static UserId EXAMPLE_USER_ID =
-            new UserId(UUID.fromString("027e71c2-f90b-43b9-8dbf-5e7f2da771ae"));
-    private final static Logger LOG = LoggerFactory.getLogger(StubDataProvider.class);
+    private final TopicService topicService;
 
-    public StubDataProvider(final UserService userService, final WebsiteService websiteService) {
+    public WebsitesDataProvider(final UserService userService,final WebsiteService websiteService,final TopicService topicService) {
         this.userService = userService;
         this.websiteService = websiteService;
-    }
-
-    public void registerUser(final Long chatId){
-        final Optional<UserDto> optionalUserDto = userService.findByChatId(chatId);
-        if (optionalUserDto.isEmpty()){
-            userService.register(new UserDto(String.valueOf(UUID.randomUUID()), String.valueOf(UUID.randomUUID()), String.valueOf(UUID.randomUUID()), chatId));
-        }
+        this.topicService = topicService;
     }
 
     public List<WebsiteInfo> getSubbedWebsites(final Long chatId) {
@@ -52,21 +40,12 @@ public class StubDataProvider {
     }
 
     public List<WebsiteInfo> getUnsubbedWebsites(final Long chatId) {
-        /*return List.of(new WebsiteDto(new WebsiteId(1L), EXAMPLE_URI, "example2",
-                EXAMPLE_USER_ID));*/
         final Optional<UserDto> userDto = userService.findByChatId(chatId);
         return websiteService.getUnSubscribedWebsitesByUserId(userDto.get().id());
     }
 
     public Optional<WebsiteInfo> findWebsite(final Long websiteId) {
         return websiteService.findById(new WebsiteId(websiteId));
-        /*return switch (id.value().intValue()) {
-            case 0 -> Optional.of(new WebsiteDto(new WebsiteId(0L),
-                    EXAMPLE_URI, "example", EXAMPLE_USER_ID));
-            case 1 -> Optional.of(new WebsiteDto(new WebsiteId(1L),
-                    EXAMPLE_URI, "example2", EXAMPLE_USER_ID));
-            default -> Optional.empty();
-        };*/
     }
 
     public boolean isSubbedWebsite(final Long chatId, final Long websiteId) {
@@ -82,8 +61,22 @@ public class StubDataProvider {
 
     public void createCustomWebsite(final Long chatId, final String url, final String description) throws WebsiteRSSNotValidException, WebsiteAlreadyExistsException {
         final Optional<UserDto> userDto = userService.findByChatId(chatId);
+        if (userDto.isEmpty()){
+            throw new UserNotFoundException("user not found by chatId = "+ chatId);
+        }
         final UserId userId = userDto.get().id();
-        websiteService.create(new WebsiteDto(null,url, description, userId));
+        final WebsiteDto createdWebsite = websiteService.create(new WebsiteDto(null,url, description, userId));
+        final List<WebsiteInfo> websiteInfos = websiteService.getSubscribedWebsitesByUserId(userId);
+        final List<WebsiteId> websiteIds = new ArrayList<>();
+        for (final WebsiteInfo websiteInfo : websiteInfos){
+            websiteIds.add(new WebsiteId(websiteInfo.websiteId()));
+        }
+        websiteIds.add(createdWebsite.id());
+        try {
+            websiteService.tryUpdateSubscribedWebsites(websiteIds, userId);
+        } catch (QuantityLimitExceededWebsitesPerUserException e) {
+            log.debug("Limit of subWebsites for user {},{}", userId.value(), e.getMessage());
+        }
     }
 
     public void deleteCustomWebsite(final Long chatId, final Long websiteId){
@@ -135,29 +128,16 @@ public class StubDataProvider {
         websiteService.tryUpdateSubscribedWebsites(websiteIds, userDto.get().id());
     }
 
-    public List<TopicDto> getSubbedTopics() {
-        return List.of(new TopicDto(new TopicId(0L), "test", null));
+    public List<WebsiteInfo> recommendWebsitesByTopic(final Long chatId,final Long topicId){
+        final Optional<UserDto> optionalUserDto = userService.findByChatId(chatId);
+        final UserDto userDto = optionalUserDto.orElseThrow(() -> new UserNotFoundException("User not found by chatId = "+chatId));
+        return websiteService.getWebsitesByUserTopic(new TopicId(topicId), userDto.id());
     }
 
-    public List<TopicDto> getUnsubbedTopics() {
-        return List.of(new TopicDto(new TopicId(1L), "test2", null));
+    public List<TopicInfo> getUserSubTopics(final Long chatId){
+        final Optional<UserDto> optionalUserDto = userService.findByChatId(chatId);
+        final UserDto userDto = optionalUserDto.orElseThrow(() -> new UserNotFoundException("User not found by chatId = "+chatId));
+        return topicService.getSubscribedTopicsByUserId(userDto.id());
     }
 
-    public Optional<TopicDto> findTopic(final TopicId id) {
-        return switch (id.value().intValue()) {
-            case 0 -> Optional.of(new TopicDto(new TopicId(0L), "test", null));
-            case 1 -> Optional.of(new TopicDto(new TopicId(1L), "test2", null));
-            default -> Optional.empty();
-        };
-    }
-
-    public boolean isSubbedWebsite(final TopicId id) {
-        return id.value() == 0;
-    }
-
-    public Article getExampleArticle() {
-        return new Article(
-                new ArticleId(UUID.randomUUID()), "test", EXAMPLE_URI,
-                Timestamp.from(Instant.now()), new TopicId(0L), new WebsiteId(0L));
-    }
 }

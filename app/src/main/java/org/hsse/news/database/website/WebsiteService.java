@@ -97,6 +97,7 @@ public class WebsiteService {
     public WebsiteDto create(final WebsiteDto websiteDto) {
         LOG.debug("Method create called");
         if (!RSSValidator.isRSSFeedValid(websiteDto.url())){
+            LOG.debug("url not valid");
             throw new WebsiteRSSNotValidException("Not valid rss for website");
         }
         final Optional<WebsiteEntity> optionalWebsite = websitesRepository.findByUrl(websiteDto.url());
