@@ -46,7 +46,8 @@ public class NewsBotHandlers {
     }
 
     @BotMapping(START_COMMAND)
-    public Message start() {
+    public Message start(final ChatId chatId) {
+        dataProvider.registerUser(chatId.value());
         return Message.builder()
                 .text("Привет! Добавь источники и ты сможешь смотреть ленту новостей в этом боте! ")
                 .keyboard(mainMenuKeyboard()).build();
