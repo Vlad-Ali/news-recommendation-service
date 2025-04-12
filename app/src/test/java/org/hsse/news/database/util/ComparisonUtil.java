@@ -1,6 +1,6 @@
 package org.hsse.news.database.util;
 
-import org.hsse.news.database.user.models.User;
+import org.hsse.news.database.user.models.UserDto;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.Iterator;
@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class ComparisonUtil {
-    public static void assertDeepEquals(final User expected, final User actual) {
+    public static void assertDeepEquals(final UserDto expected, final UserDto actual) {
         if (expected == actual) { // NOPMD - suppressed CompareObjectsWithEquals - intentional comparison
             return;
         }
@@ -25,7 +25,7 @@ public final class ComparisonUtil {
         assertEquals(expected.username(), actual.username(), "usernames should be equal");
     }
 
-    public static void assertDeepNotEquals(final User expected, final User actual) {
+    public static void assertDeepNotEquals(final UserDto expected, final UserDto actual) {
         assertThrows(
                 AssertionFailedError.class,
                 () -> assertDeepEquals(expected, actual)
@@ -33,7 +33,7 @@ public final class ComparisonUtil {
     }
 
     public static void assertDeepEqualsMany(
-            final Iterable<User> expectedIterable, final Iterable<User> actualIterable
+            final Iterable<UserDto> expectedIterable, final Iterable<UserDto> actualIterable
     ) {
         if (expectedIterable == actualIterable) { // NOPMD - suppressed CompareObjectsWithEquals - intentional comparison
             return;
@@ -42,8 +42,8 @@ public final class ComparisonUtil {
         assertNotNull(expectedIterable, "expectedIterable should not be null");
         assertNotNull(actualIterable, "actualIterable should not be null");
 
-        final Iterator<User> expectedIterator = expectedIterable.iterator();
-        final Iterator<User> actualIterator = actualIterable.iterator();
+        final Iterator<UserDto> expectedIterator = expectedIterable.iterator();
+        final Iterator<UserDto> actualIterator = actualIterable.iterator();
 
         while (expectedIterator.hasNext() && actualIterator.hasNext()) {
             assertDeepEquals(expectedIterator.next(), actualIterator.next());

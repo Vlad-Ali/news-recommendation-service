@@ -8,4 +8,6 @@ public final class UserNotFoundException extends RuntimeException {
     public UserNotFoundException(final UserId userId) {
         super(String.format(DEFAULT_MESSAGE, userId));
     }
+
+    public UserNotFoundException(final String message){ super(message); }
 }

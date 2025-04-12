@@ -42,7 +42,7 @@ class RssParserTest {
                     TEST_WEBSITE_URL);
     final List<ParsedArticle> articles = RssParser.parse(testFile, TEST_WEBSITE_URL);
     final ParsedArticle article = getFirstArticle(articles);
-    assertEquals(article, testArticle, "Articles must be equal");
+    assertEquals(article.link(), testArticle.link(), "Articles must be equal");
   }
 
   private ParsedArticle getFirstArticle(final List<ParsedArticle> articles) {

@@ -1,65 +1,87 @@
 package org.hsse.news.database.user;
 
+import org.hsse.news.database.entity.UserEntity;
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.InvalidCurrentPasswordException;
 import org.hsse.news.database.user.exceptions.SameNewPasswordException;
 import org.hsse.news.database.user.exceptions.UserNotFoundException;
 import org.hsse.news.database.user.models.AuthenticationCredentials;
-import org.hsse.news.database.user.models.User;
+import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
-import org.hsse.news.database.user.repositories.JdbiUserRepository;
-import org.hsse.news.database.user.repositories.UserRepository;
-import org.hsse.news.database.util.JdbiTransactionManager;
-import org.hsse.news.database.util.TransactionManager;
+import org.hsse.news.database.user.repositories.JpaUsersRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-public final class UserService {
-    private final UserRepository userRepository;
-    private final TransactionManager transactionManager;
+@Service
+public class UserService {
+    private final JpaUsersRepository usersRepository;
+    private static final Logger LOG = LoggerFactory.getLogger(UserService.class);
 
-    public UserService(
-            final UserRepository userRepository, final TransactionManager transactionManager
-    ) {
-        this.userRepository = userRepository;
-        this.transactionManager = transactionManager;
+    public UserService(final JpaUsersRepository usersRepository) {
+        this.usersRepository = usersRepository;
     }
 
-    public UserService() {
-        this(new JdbiUserRepository(), new JdbiTransactionManager());
+    public Optional<UserDto> findById(final UserId userId) {
+        LOG.debug("Method findById called");
+        final Optional<UserEntity> optionalUser = usersRepository.findById(userId.value());
+        if (optionalUser.isEmpty()){
+            throw new UserNotFoundException(userId);
+        }
+        return Optional.of(optionalUser.get().toUserDto());
     }
 
-    public Optional<User> findById(final UserId userId) {
-        return userRepository.findById(userId);
+    public Optional<UserDto> findByChatId(final Long chatId){
+        LOG.debug("Method findByChatId called");
+        final Optional<UserEntity> optionalUser = usersRepository.findByChatId(chatId);
+        if (optionalUser.isEmpty()){
+            return Optional.empty();
+        }
+        return Optional.of(optionalUser.get().toUserDto());
     }
 
     public Optional<UserId> authenticate(final AuthenticationCredentials credentials) {
-        return userRepository.authenticate(credentials);
+        LOG.debug("Method authenticate called");
+        final Optional<UserEntity> optionalUser = usersRepository.findByEmailAndPassword(credentials.email(), credentials.password());
+        return optionalUser.map(userEntity -> new UserId(userEntity.getId()));
     }
 
     /**
      * @throws EmailConflictException if an email conflict occurs
      */
-    public User register(final User user) {
-        return userRepository.create(user);
+    public UserDto register(final UserDto userDto) {
+        LOG.debug("Method register called");
+        final Optional<UserEntity> optionalUser = usersRepository.findByEmail(userDto.email());
+        if (optionalUser.isPresent()){
+            throw new EmailConflictException("Email is already used");
+        }
+        final UserEntity userEntity = userDto.toUserEntity();
+        final UserEntity savedUser = usersRepository.save(userEntity);
+        return savedUser.toUserDto();
     }
 
     /**
      * @throws UserNotFoundException if the user does not exist
      * @throws EmailConflictException if an email conflict occurs
      */
+    @Transactional
     public void update(final UserId userId, final String email, final String username) {
-        transactionManager.useTransaction(() -> {
-            final User userToUpdate =
-                    userRepository.findById(userId)
-                            .orElseThrow(() -> new UserNotFoundException(userId));
-
-            userRepository.update(
-                    userToUpdate
-                            .withEmail(email)
-                            .withUsername(username)
-            );
-        });
+        LOG.debug("Method update called");
+        final Optional<UserEntity> optionalUser = usersRepository.findById(userId.value());
+        if (optionalUser.isEmpty()) {
+            throw new UserNotFoundException(userId);
+        }
+        final Optional<UserEntity> optionalUserEntity = usersRepository.findByEmailAndNotId(userId.value(), email);
+        if (optionalUserEntity.isPresent()){
+            throw new EmailConflictException("Email " + email + " is already taken");
+        }
+        final UserEntity userEntity = optionalUser.get();
+        userEntity.setEmail(email);
+        userEntity.setUsername(username);
+        usersRepository.save(userEntity);
     }
 
     /**
@@ -67,15 +89,15 @@ public final class UserService {
      * @throws InvalidCurrentPasswordException if current password is invalid
      * @throws SameNewPasswordException if current password matches new password
      */
+    @Transactional
     public void updatePassword(
             final UserId userId, final String currentPassword, final String newPassword
     )  {
-        transactionManager.useTransaction(() -> {
-            final User userToUpdate =
-                    userRepository.findById(userId)
+        final UserEntity userToUpdate =
+                usersRepository.findById(userId.value())
                             .orElseThrow(() -> new UserNotFoundException(userId));
 
-            if (!userToUpdate.password().equals(currentPassword)) {
+            if (!userToUpdate.getPassword().equals(currentPassword)) {
                 throw new InvalidCurrentPasswordException();
             }
 
@@ -83,17 +105,20 @@ public final class UserService {
                 throw new SameNewPasswordException();
             }
 
-            userRepository.update(
-                    userToUpdate
-                            .withPassword(newPassword)
-            );
-        });
+            userToUpdate.setPassword(newPassword);
+            usersRepository.save(userToUpdate);
     }
 
     /**
      * @throws UserNotFoundException if the user does not exist
      */
+    @Transactional
     public void delete(final UserId userId) {
-        userRepository.delete(userId);
+        LOG.debug("Method delete called");
+        final Optional<UserEntity> optionalUser = usersRepository.findById(userId.value());
+        if (optionalUser.isEmpty()){
+            throw new UserNotFoundException(userId);
+        }
+        usersRepository.deleteById(userId.value());
     }
 }
