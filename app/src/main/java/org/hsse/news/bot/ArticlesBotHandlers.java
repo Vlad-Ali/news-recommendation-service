@@ -253,10 +253,10 @@ public class ArticlesBotHandlers {
 
     return new InlineKeyboardMarkup(List.of(
         List.of(InlineKeyboardButton.builder()
-            .text(String.format("Просмотренные статьи (%d)", knownCount))
+            .text(java.lang.String.format("Просмотренные статьи (%d)", knownCount))
             .callbackData(VIEW_WATCHED_ARTICLES_COMMAND).build()),
         List.of(InlineKeyboardButton.builder()
-            .text(String.format("Непросмотренные статьи (%d)", unknownCount))
+            .text(java.lang.String.format("Непросмотренные статьи (%d)", unknownCount))
             .callbackData(VIEW_UNWATCHED_ARTICLES_COMMAND).build()),
         List.of(InlineKeyboardButton.builder()
             .text(BACK_TEXT)
@@ -264,7 +264,7 @@ public class ArticlesBotHandlers {
     ));
   }
 
-  private String getArticleMessage(ArticleDto article, Integer likes, Integer dislikes) {
+  public String getArticleMessage(ArticleDto article, Integer likes, Integer dislikes) {
     String articleTitle = article.title().toUpperCase(Locale.ROOT) + "\n\n";
     List<String> topics = article.topics().stream().map(TopicDto::description).toList();
     String articleUrl = article.url();
