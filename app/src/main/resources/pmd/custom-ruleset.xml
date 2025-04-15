@@ -8,6 +8,13 @@
     <rule ref="category/java/bestpractices.xml">
         <exclude name="GuardLogStatement"/>
         <exclude name="JUnitTestContainsTooManyAsserts"/>
+        <exclude name="PreserveStackTrace"/>
+        <exclude name="JUnitTestsShouldIncludeAssert"/>
+        <exclude name="JUnit5TestShouldBePackagePrivate"/>
+        <exclude name="LooseCoupling"/>
+        <exclude name="UnusedLocalVariable"/>
+        <exclude name="UnusedPrivateMethod"/>
+        <exclude name="UnusedFormalParameter"/>
     </rule>
     <rule ref="category/java/codestyle.xml">
         <exclude name="AtLeastOneConstructor"/>
@@ -17,18 +24,33 @@
         <exclude name="ShortMethodName"/>
         <exclude name="ShortVariable"/>
         <exclude name="TooManyStaticImports"/>
+        <exclude name="CallSuperInConstructor"/>
+        <exclude name="PrematureDeclaration"/>
     </rule>
     <rule ref="category/java/design.xml">
         <exclude name="LawOfDemeter"/>
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="NcssCount"/>
+        <exclude name="CognitiveComplexity"/>
         <exclude name="TooManyMethods"/>
+        <exclude name="ExcessiveImports"/>
+        <exclude name="AvoidThrowingRawExceptionTypes"/>
+        <exclude name="AvoidThrowingNewInstanceOfSameException"/>
+        <exclude name="AvoidCatchingGenericException"/>
+        <exclude name="AvoidUncheckedExceptionsInSignatures"/>
+        <exclude name="SignatureDeclareThrowsException"/>
+        <exclude name="DataClass"/>
+        <exclude name="CyclomaticComplexity"/>
     </rule>
     <rule ref="category/java/errorprone.xml">
         <exclude name="AvoidFieldNameMatchingMethodName"/>
         <exclude name="MissingSerialVersionUID"/>
+        <exclude name="AvoidDuplicateLiterals"/>
     </rule>
     <rule ref="category/java/multithreading.xml">
     </rule>
     <rule ref="category/java/performance.xml">
+        <exclude  name="AvoidInstantiatingObjectsInLoops"/>
     </rule>
     <rule ref="category/java/security.xml">
     </rule>

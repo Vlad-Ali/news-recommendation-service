@@ -1,5 +1,8 @@
 package org.hsse.news.util;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -8,10 +11,12 @@ import java.util.Objects;
 public class AbstractId<T> {
     private final @NotNull T value;
 
-    public AbstractId(final @NotNull T value) {
+    @JsonCreator
+    public AbstractId(final @NotNull @JsonProperty("value") T value) {
         this.value = value;
     }
 
+    @JsonValue
     public @NotNull T value() {
         return value;
     }
