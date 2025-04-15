@@ -179,20 +179,23 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     @Override
-    @SneakyThrows
     public void onUpdateReceived(final Update update) {
-        if (update.hasMessage()) {
-            final ChatId chatId = new ChatId(update.getMessage().getChatId());
-            final MessageId messageId = new MessageId(update.getMessage().getMessageId());
+        try {
+            if (update.hasMessage()) {
+                final ChatId chatId = new ChatId(update.getMessage().getChatId());
+                final MessageId messageId = new MessageId(update.getMessage().getMessageId());
 
-            activeChats.add(chatId);
-            handleInput(chatId, update.getMessage().getText(), messageId);
-            deleteMessage(chatId, messageId);
-        } else if (update.hasCallbackQuery()) {
-            final ChatId chatId = new ChatId(update.getCallbackQuery().getMessage().getChatId());
+                activeChats.add(chatId);
+                handleInput(chatId, update.getMessage().getText(), messageId);
+                deleteMessage(chatId, messageId);
+            } else if (update.hasCallbackQuery()) {
+                final ChatId chatId = new ChatId(update.getCallbackQuery().getMessage().getChatId());
 
-            activeChats.add(chatId);
-            handleCommand(chatId, update.getCallbackQuery().getData());
+                activeChats.add(chatId);
+                handleCommand(chatId, update.getCallbackQuery().getData());
+            }
+        } catch (Exception e) {
+            log.error("Exception while handling a command: ", e);
         }
     }
 }

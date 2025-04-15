@@ -1,13 +1,14 @@
 package org.hsse.news.database.article;
 
+import org.hsse.news.database.article.exceptions.ArticleNotFoundException;
+import org.hsse.news.database.article.models.ArticleId;
+import org.hsse.news.database.article.models.ArticleTopRecord;
+import org.hsse.news.database.article.repositories.JpaArticleRepository;
+import org.hsse.news.database.article.repositories.JpaUserArticlesRepository;
 import org.hsse.news.database.entity.ArticleEntity;
 import org.hsse.news.database.entity.UserArticlesEntity;
 import org.hsse.news.database.entity.UserEntity;
-import org.hsse.news.database.article.exceptions.ArticleNotFoundException;
 import org.hsse.news.database.user.exceptions.UserNotFoundException;
-import org.hsse.news.database.article.models.ArticleId;
-import org.hsse.news.database.article.repositories.JpaArticleRepository;
-import org.hsse.news.database.article.repositories.JpaUserArticlesRepository;
 import org.hsse.news.database.user.models.UserId;
 import org.hsse.news.database.user.repositories.JpaUsersRepository;
 import org.hsse.news.dto.RequestUserArticleDto;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -114,4 +116,8 @@ public class UserArticlesService {
         return userArticlesEntity.getGrade().equals(-1);
     }
 
+    @Transactional(readOnly = true)
+    public List<ArticleTopRecord> findTopKArticles(final int limit) {
+        return userArticlesRepository.findTopKArticle(limit);
+    }
 }
