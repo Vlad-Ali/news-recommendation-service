@@ -16,6 +16,7 @@ import java.util.Set;
 import static java.util.Collections.reverse;
 
 @Slf4j
+@SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class TestContainersBlogParser implements Parser {
     private static final String HOST_NAME = "www.atomicjar.com";
     private static final String BASE_LINK = "https://" + HOST_NAME;
@@ -23,7 +24,7 @@ public class TestContainersBlogParser implements Parser {
 
     @Override
     public Optional<List<ParsedArticle>> parse(final URL url) {
-        if (url.getHost().equals(HOST_NAME)) {
+        if (HOST_NAME.equals(url.getHost())) {
             try {
                 return Optional.of(doParse());
             } catch (IOException e) {
@@ -35,8 +36,10 @@ public class TestContainersBlogParser implements Parser {
 
     private List<ParsedArticle> doParse() throws IOException {
         final List<ParsedArticle> result = new ArrayList<>();
+
         final Document doc = Jsoup.connect(BLOG_LINK).get();
         final var posts = doc.select("article.masonry-blog-item");
+
         for (final Element post : posts) {
             final var linkElement = post.selectFirst("a.entire-meta-link");
             final var link = BASE_LINK + linkElement.attr("href");

@@ -22,7 +22,7 @@ public class VladMihalceaBlogParser implements Parser {
 
     @Override
     public Optional<List<ParsedArticle>> parse(final URL url) {
-        if (url.getHost().equals(HOST_NAME)) {
+        if (HOST_NAME.equals(url.getHost())) {
             try {
                 return Optional.of(doParse());
             } catch (Exception e) {
@@ -37,6 +37,7 @@ public class VladMihalceaBlogParser implements Parser {
 
         final Document doc = Jsoup.connect(BLOG_LINK).get();
         final var posts = doc.select("div.blog-holder");
+
         for (final Element post : posts) {
             final var linkElement = post.selectFirst("h2.headline a");
             final var link = linkElement.attr("href");

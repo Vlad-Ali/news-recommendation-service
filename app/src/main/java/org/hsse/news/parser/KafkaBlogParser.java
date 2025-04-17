@@ -17,12 +17,12 @@ import static java.util.Collections.reverse;
 
 @Slf4j
 public class KafkaBlogParser implements Parser {
-    private static final String HOST_NAME = "kafka.apache.org"
+    private static final String HOST_NAME = "kafka.apache.org";
     private static final String BLOG_LINK = "https://" + HOST_NAME + "/blog";
 
     @Override
     public Optional<List<ParsedArticle>> parse(final URL url) {
-        if (url.getHost().equals(HOST_NAME)) {
+        if (HOST_NAME.equals(url.getHost())) {
             try {
                 return Optional.of(doParse());
             } catch (Exception e) {
@@ -34,9 +34,11 @@ public class KafkaBlogParser implements Parser {
 
     private List<ParsedArticle> doParse() throws IOException {
         final List<ParsedArticle> result = new ArrayList<>();
+
         final Document doc = Jsoup.connect(BLOG_LINK).get();
         final var posts = doc.select("article");
-        for (Element post : posts) {
+
+        for (final Element post : posts) {
             final var linkElement = post.selectFirst("h2.bullet a[href]");
             final var link = BLOG_LINK + linkElement.attr("href");
             final var title = linkElement.text();

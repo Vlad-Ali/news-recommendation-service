@@ -28,6 +28,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
 public final class RssParser implements Parser {
+  @Override
   public Optional<List<ParsedArticle>> parse(final URL url) {
     try {
       return Optional.of(parse(url, url.toExternalForm()));

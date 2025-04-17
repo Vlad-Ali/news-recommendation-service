@@ -1,6 +1,6 @@
 package org.hsse.news.tracker;
+
 import ai.onnxruntime.OrtException;
-import com.rometools.rome.io.FeedException;
 import lombok.extern.slf4j.Slf4j;
 import org.hsse.news.api.schemas.shared.TopicInfo;
 import org.hsse.news.api.schemas.shared.WebsiteInfo;
@@ -25,14 +25,10 @@ import org.hsse.news.parser.RssParser;
 import org.hsse.news.parser.TestContainersBlogParser;
 import org.hsse.news.parser.VladMihalceaBlogParser;
 import org.hsse.news.parser.WebkitBlogParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
 
 import java.io.IOException;
 import java.net.URL;
@@ -55,7 +51,7 @@ public class RssTracker {
 
     private static final Float MINIMUM_PERCENT = 0.1F;
 
-    public RssTracker(final OnnxApplication onnxApplication,final TopicService topicService,final ArticlesService articlesService,final WebsiteService websiteService) {
+    public RssTracker(final OnnxApplication onnxApplication, final TopicService topicService, final ArticlesService articlesService, final WebsiteService websiteService) {
         this.onnxApplication = onnxApplication;
         this.topicService = topicService;
         this.articlesService = articlesService;
@@ -74,17 +70,17 @@ public class RssTracker {
                 new RssParser());
     }
 
-    private List<WebsiteInfo> getAllWebsites(){
+    private List<WebsiteInfo> getAllWebsites() {
         return websiteService.getAllWebsites();
     }
 
-    private List<TopicInfo> getAllTopics(){
+    private List<TopicInfo> getAllTopics() {
         return topicService.getAllTopics();
-     }
+    }
 
     private List<ParsedArticle> getWebsiteArticles(final String url) throws IOException {
         for (final Parser parser : parsers) {
-            Optional<List<ParsedArticle>> parsed = parser.parse(new URL(url));
+            final Optional<List<ParsedArticle>> parsed = parser.parse(new URL(url));
             if (parsed.isPresent()) {
                 return parsed.get();
             }
@@ -94,16 +90,16 @@ public class RssTracker {
 
     private void matchTopics(final ParsedArticle parsedArticle, final List<TopicInfo> topicList, final WebsiteId websiteId) throws OrtException {
         final List<String> nameOfTopics = new ArrayList<>();
-        for (final TopicInfo topic : topicList){
+        for (final TopicInfo topic : topicList) {
             nameOfTopics.add(topic.description());
         }
-        final Map<String,Float> mapOfTopics = onnxApplication.predict(parsedArticle.description(), nameOfTopics);
-        for (final TopicInfo topic : topicList){
+        final Map<String, Float> mapOfTopics = onnxApplication.predict(parsedArticle.description(), nameOfTopics);
+        for (final TopicInfo topic : topicList) {
             log.debug("{}: {}", topic.description(), mapOfTopics.get(topic.description()));
-            if (mapOfTopics.get(topic.description()).compareTo(MINIMUM_PERCENT) > 0){
-                if (articlesService.isArticleWithUrlAdd(parsedArticle.link())){
+            if (mapOfTopics.get(topic.description()).compareTo(MINIMUM_PERCENT) > 0) {
+                if (articlesService.isArticleWithUrlAdd(parsedArticle.link())) {
                     articlesService.addTopic(articlesService.findArticleIdByUrl(parsedArticle.link()).get(), new TopicId(topic.topicID()));
-                } else{
+                } else {
                     final ResponseArticleDto responseArticleDto = articlesService.create(new RequestArticleDto(parsedArticle.name(), parsedArticle.link(), Timestamp.from(parsedArticle.date()), websiteId.value()));
                     articlesService.addTopic(new ArticleId(responseArticleDto.articleId()), new TopicId(topic.topicID()));
                 }
@@ -112,26 +108,26 @@ public class RssTracker {
         log.debug("{} is add with topics", parsedArticle.name());
     }
 
-    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000*100)
+    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000 * 100)
     @Transactional
-    public void addNewArticles(){
+    public void addNewArticles() {
         final List<WebsiteInfo> websites = websiteService.getAllWebsites();
         final List<TopicInfo> topics = topicService.getAllTopics();
-        for (final WebsiteInfo website : websites){
+        for (final WebsiteInfo website : websites) {
             log.debug("{} is being parsed", website.url());
-            try{
+            try {
                 final List<ParsedArticle> parsedArticles = getWebsiteArticles(website.url());
-                for (final ParsedArticle parsedArticle : parsedArticles){
-                    if (articlesService.isArticleWithUrlAdd(parsedArticle.link())){
+                for (final ParsedArticle parsedArticle : parsedArticles) {
+                    if (articlesService.isArticleWithUrlAdd(parsedArticle.link())) {
                         continue;
                     }
                     try {
                         matchTopics(parsedArticle, topics, new WebsiteId(website.websiteId()));
-                    } catch (Exception e){
-                        log.debug("Got exception on matching topics: {}",e.getMessage());
+                    } catch (Exception e) {
+                        log.debug("Got exception on matching topics: {}", e.getMessage());
                     }
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 log.debug("Got exception on connection to website: {}", e.getMessage());
             }
         }

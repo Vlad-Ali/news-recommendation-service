@@ -23,7 +23,7 @@ public class DecodableBlogParser implements Parser {
 
     @Override
     public Optional<List<ParsedArticle>> parse(final URL url) {
-        if (url.getHost().equals(HOST_NAME) || url.getHost().equals("www." + HOST_NAME)) {
+        if (HOST_NAME.equals(url.getHost()) || url.getHost().equals("www." + HOST_NAME)) {
             try {
                 return Optional.of(doParse());
             } catch (Exception e) {
@@ -37,7 +37,7 @@ public class DecodableBlogParser implements Parser {
         final List<ParsedArticle> result = new ArrayList<>();
         final Document doc = Jsoup.connect(BLOG_LINK).get();
         final var posts = doc.select(".blog-post-related_content");
-        for (Element post : posts) {
+        for (final Element post : posts) {
             final var link = BASE_LINK + post.parent().attr("href");
             final var title = post.select("h3.heading-style-h5").text();
             final var description = post.select(".margin-bottom.margin-small .text-size-small").text();

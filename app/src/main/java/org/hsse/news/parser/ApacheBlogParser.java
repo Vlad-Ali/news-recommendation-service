@@ -1,6 +1,6 @@
 package org.hsse.news.parser;
 
-import org.hsse.news.database.article.models.Article;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import lombok.extern.slf4j.Slf4j;
-
 import static java.util.Collections.reverse;
 
 @Slf4j
@@ -23,7 +21,7 @@ public class ApacheBlogParser implements Parser {
 
     @Override
     public Optional<List<ParsedArticle>> parse(final URL url) {
-        if (url.getHost().equals(HOST_NAME) && url.getPath().isEmpty()) {
+        if (HOST_NAME.equals(url.getHost()) && url.getPath().isEmpty()) {
             try {
                 return Optional.of(doParse(url.toExternalForm()));
             } catch (Exception e) {

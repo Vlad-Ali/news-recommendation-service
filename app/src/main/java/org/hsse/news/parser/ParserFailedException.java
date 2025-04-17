@@ -1,7 +1,7 @@
 package org.hsse.news.parser;
 
 public class ParserFailedException extends RuntimeException {
-    public ParserFailedException(Throwable cause) {
+    public ParserFailedException(final Throwable cause) {
         super(cause);
     }
 }

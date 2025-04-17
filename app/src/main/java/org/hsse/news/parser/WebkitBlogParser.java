@@ -22,7 +22,7 @@ public class WebkitBlogParser implements Parser {
 
     @Override
     public Optional<List<ParsedArticle>> parse(final URL url) throws ParserFailedException {
-        if (url.getHost().equals(HOST_NAME)) {
+        if (HOST_NAME.equals(url.getHost())) {
             try {
                 return Optional.of(doParse(
                         url.getFile().isEmpty() ? DEFAULT_BLOG_LINK : url.toExternalForm()));
@@ -35,8 +35,10 @@ public class WebkitBlogParser implements Parser {
 
     private List<ParsedArticle> doParse(final String url) throws IOException {
         final List<ParsedArticle> result = new ArrayList<>();
+
         final Document doc = Jsoup.connect(url).get();
         final var posts = doc.select("div.tile");
+
         for (final Element post : posts) {
             final var title = post.select("h1").text();
             final var link = post.select(".tile-link").attr("href");

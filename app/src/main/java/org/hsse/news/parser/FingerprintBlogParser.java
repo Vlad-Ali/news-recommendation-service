@@ -23,7 +23,7 @@ public class FingerprintBlogParser implements Parser {
 
     @Override
     public Optional<List<ParsedArticle>> parse(final URL url) {
-        if (url.getHost().equals(HOST_NAME)) {
+        if (HOST_NAME.equals(url.getHost())) {
             try {
                 return Optional.of(doParse());
             } catch (Exception e) {

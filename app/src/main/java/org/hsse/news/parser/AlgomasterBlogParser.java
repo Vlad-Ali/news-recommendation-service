@@ -22,7 +22,7 @@ public class AlgomasterBlogParser implements Parser {
 
     @Override
     public Optional<List<ParsedArticle>> parse(final URL url) {
-        if (url.getHost().equals(HOST_NAME)) {
+        if (HOST_NAME.equals(url.getHost())) {
             try {
                 return Optional.of(doParse(
                         url.getPath().isEmpty() ? DEFAULT_BLOG_LINK : url.toExternalForm()));
@@ -33,7 +33,7 @@ public class AlgomasterBlogParser implements Parser {
         return Optional.empty();
     }
 
-    private List<ParsedArticle> doParse(String url) throws IOException {
+    private List<ParsedArticle> doParse(final String url) throws IOException {
         final List<ParsedArticle> result = new ArrayList<>();
 
         final Document doc = Jsoup.connect(url).get();
