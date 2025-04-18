@@ -65,7 +65,6 @@ public final class RssParser implements Parser {
       final String description = getDescription(entry);
       final Instant date = toInstantDate(entry.getPublishedDate());
       final String link = entry.getLink();
-      final Set<String> topics = getTopics(entry.getCategories());
       final String author = entry.getAuthor();
       articles.add(
               new ParsedArticle(
@@ -73,7 +72,6 @@ public final class RssParser implements Parser {
                       description,
                       date,
                       link,
-                      topics,
                       author,
                       websiteUrl));
     }

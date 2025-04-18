@@ -7,11 +7,13 @@ import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.net.URL;
-import java.time.Instant;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 
 import static java.util.Collections.reverse;
 
@@ -32,7 +34,7 @@ public class VladMihalceaBlogParser implements Parser {
         return Optional.empty();
     }
 
-    private List<ParsedArticle> doParse() throws IOException {
+    private List<ParsedArticle> doParse() throws IOException, ParseException {
         final List<ParsedArticle> result = new ArrayList<>();
 
         final Document doc = Jsoup.connect(BLOG_LINK).get();
@@ -40,13 +42,15 @@ public class VladMihalceaBlogParser implements Parser {
 
         for (final Element post : posts) {
             final var linkElement = post.selectFirst("h2.headline a");
-            final var link = linkElement.attr("href");
-            final var title = linkElement.attr("title");
-            final var description = post.selectFirst("div.article > p").text();
-//            final var date = post.selectFirst("span.post-date-entry").text()
-//                    .replace("Posted on ", "");
+            final String link = linkElement.attr("href");
+            final String title = linkElement.attr("title");
+            final String description = post.selectFirst("div.article > p").text();
+            final Date date = new SimpleDateFormat("MMMM dd, yyyy", Locale.US).parse(
+                    post.selectFirst("span.post-date-entry").text()
+                            .replace("Posted on ", ""));
+
             result.add(new ParsedArticle(
-                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
+                    title, description, date.toInstant(), link, "Vlad Mihalcea", BLOG_LINK));
         }
 
         // очередность: от старого к свежему

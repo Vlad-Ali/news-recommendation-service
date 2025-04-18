@@ -8,11 +8,12 @@ import org.jsoup.nodes.Element;
 import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
-import java.time.Instant;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 
 import static java.util.Collections.reverse;
 
@@ -40,13 +41,15 @@ public class ApacheBlogParser implements Parser {
 
         for (final Element post : posts) {
             final var linkElement = post.selectFirst("h2.entry-title a");
-            final var link = linkElement.attr("href");
-            final var title = linkElement.text();
-            final var description = post.selectFirst("div.entry-content p").text();
-            // final var date = post.selectFirst("time.entry-date.published").text();
+            final String link = linkElement.attr("href");
+            final String title = linkElement.text();
+            final String description = post.selectFirst("div.entry-content p").text();
+            final Date date = new SimpleDateFormat("MMMM dd, yyyy", Locale.US).parse(
+                    post.selectFirst("time.entry-date.published").text());
+            final String author = post.selectFirst("span.author").text();
+
             result.add(new ParsedArticle(
-                    title, description, Instant.now(),
-                    link, Set.of(), "", url));
+                    title, description, date.toInstant(), link, author, url));
         }
 
         // очередность: от старого к свежему

@@ -7,11 +7,13 @@ import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.net.URL;
-import java.time.Instant;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 
 import static java.util.Collections.reverse;
 
@@ -27,14 +29,14 @@ public class TestContainersBlogParser implements Parser {
         if (HOST_NAME.equals(url.getHost())) {
             try {
                 return Optional.of(doParse());
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error("Error while parsing articles on page url {}", BLOG_LINK, e);
             }
         }
         return Optional.empty();
     }
 
-    private List<ParsedArticle> doParse() throws IOException {
+    private List<ParsedArticle> doParse() throws IOException, ParseException {
         final List<ParsedArticle> result = new ArrayList<>();
 
         final Document doc = Jsoup.connect(BLOG_LINK).get();
@@ -42,12 +44,15 @@ public class TestContainersBlogParser implements Parser {
 
         for (final Element post : posts) {
             final var linkElement = post.selectFirst("a.entire-meta-link");
-            final var link = BASE_LINK + linkElement.attr("href");
-            final var title = linkElement.attr("aria-label");
-            final var description = post.selectFirst("div.excerpt").text();
-            // final var date = post.selectFirst("div.grav-wrap span").text();
+            final String link = BASE_LINK + linkElement.attr("href");
+            final String title = linkElement.attr("aria-label");
+            final String description = post.selectFirst("div.excerpt").text();
+            final Date date = new SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+                    .parse(post.selectFirst("div.grav-wrap span").text());
+            final String author = post.select("div.grav-wrap a").get(1).text();
+
             result.add(new ParsedArticle(
-                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
+                    title, description, date.toInstant(), link, author, BLOG_LINK));
         }
 
         // очередность: от старого к свежему

@@ -7,11 +7,13 @@ import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.net.URL;
-import java.time.Instant;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 
 import static java.util.Collections.reverse;
 
@@ -32,7 +34,7 @@ public class KafkaBlogParser implements Parser {
         return Optional.empty();
     }
 
-    private List<ParsedArticle> doParse() throws IOException {
+    private List<ParsedArticle> doParse() throws IOException, ParseException {
         final List<ParsedArticle> result = new ArrayList<>();
 
         final Document doc = Jsoup.connect(BLOG_LINK).get();
@@ -40,15 +42,20 @@ public class KafkaBlogParser implements Parser {
 
         for (final Element post : posts) {
             final var linkElement = post.selectFirst("h2.bullet a[href]");
-            final var link = BLOG_LINK + linkElement.attr("href");
-            final var title = linkElement.text();
-//            final var dateAndAuthor = post.select("h2.bullet").first().nextSibling().toString().trim();
+            final String link = BLOG_LINK + linkElement.attr("href");
+            final String title = linkElement.text();
 
-//            final var date = dateAndAuthor.split(" - ")[0];
+            final String[] dateAndAuthor = post.select("h2.bullet").first()
+                    .nextSibling().toString().trim().split(" - ");
+            final Date date = new SimpleDateFormat("dd MMMM yyyy", Locale.US).parse(
+                    dateAndAuthor[0]);
+            final String author = dateAndAuthor[1];
+
             final var paragraphs = post.select("p");
-            final var description = paragraphs.get(0).text();
+            final String description = paragraphs.get(0).text();
+
             result.add(new ParsedArticle(
-                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
+                    title, description, date.toInstant(), link, author, BLOG_LINK));
         }
 
         // очередность: от старого к свежему

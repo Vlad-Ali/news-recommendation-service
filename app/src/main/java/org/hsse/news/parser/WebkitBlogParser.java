@@ -11,7 +11,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static java.util.Collections.reverse;
 
@@ -43,9 +42,10 @@ public class WebkitBlogParser implements Parser {
             final var title = post.select("h1").text();
             final var link = post.select(".tile-link").attr("href");
             final var description = post.select(".summary p").text();
-            // final var date = "no_date";
+
             result.add(new ParsedArticle(
-                    title, description, Instant.now(), link, Set.of(), "", url));
+                    title, description, Instant.now(), // no date is available
+                    link, "Webkit", url));
         }
 
         // очередность: от старого к свежему

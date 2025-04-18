@@ -7,11 +7,13 @@ import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.net.URL;
-import java.time.Instant;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 
 import static java.util.Collections.reverse;
 
@@ -33,7 +35,7 @@ public class FingerprintBlogParser implements Parser {
         return Optional.empty();
     }
 
-    private List<ParsedArticle> doParse() throws IOException {
+    private List<ParsedArticle> doParse() throws IOException, ParseException {
         final List<ParsedArticle> result = new ArrayList<>();
 
         final Document doc = Jsoup.connect(BLOG_LINK).get();
@@ -44,12 +46,14 @@ public class FingerprintBlogParser implements Parser {
 
         final var posts = gridContainer.select("div[class^=Post-module--post]");
         for (final Element post : posts) {
-            final var title = post.select("h1[class^=Post-module--title]").text();
-            final var link = BASE_LINK + post.select("a").attr("href");
-            final var description = post.select("p[class^=Post-module--description]").text();
-            // final var date = post.select("span[class^=Post-module--publishDate]").text();
+            final String title = post.select("h1[class^=Post-module--title]").text();
+            final String link = BASE_LINK + post.select("a").attr("href");
+            final String description = post.select("p[class^=Post-module--description]").text();
+            final Date date = new SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+                    .parse(post.select("span[class^=Post-module--publishDate]").text());
+
             result.add(new ParsedArticle(
-                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
+                    title, description, date.toInstant(), link, "Fingerprint", BLOG_LINK));
         }
 
         // очередность: от старого к свежему
