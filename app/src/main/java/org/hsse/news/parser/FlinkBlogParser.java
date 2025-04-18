@@ -56,10 +56,10 @@ public class FlinkBlogParser implements Parser {
             final var titleElement = post.selectFirst("h3 > a");
             final var title = titleElement.text();
             final var link = BASE_LINK + titleElement.attr("href");
-            final var date = post.ownText().split(" - ")[0];
+            // final var date = post.ownText().split(" - ")[0];
             final var description = post.selectFirst("p").text();
             result.add(new ParsedArticle(
-                    title, description, Instant.parse(date), link, Set.of(), "", BLOG_LINK));
+                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
         }
 
         return result;

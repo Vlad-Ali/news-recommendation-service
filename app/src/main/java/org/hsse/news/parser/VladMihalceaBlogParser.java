@@ -18,7 +18,7 @@ import static java.util.Collections.reverse;
 @Slf4j
 public class VladMihalceaBlogParser implements Parser {
     private static final String HOST_NAME = "vladmihalcea.com";
-    private static final String BLOG_LINK = "https://vladmihalcea.com/blog/";
+    private static final String BLOG_LINK = "https://" + HOST_NAME + "/blog/";
 
     @Override
     public Optional<List<ParsedArticle>> parse(final URL url) {
@@ -43,10 +43,10 @@ public class VladMihalceaBlogParser implements Parser {
             final var link = linkElement.attr("href");
             final var title = linkElement.attr("title");
             final var description = post.selectFirst("div.article > p").text();
-            final var date = post.selectFirst("span.post-date-entry").text()
-                    .replace("Posted on ", "");
+//            final var date = post.selectFirst("span.post-date-entry").text()
+//                    .replace("Posted on ", "");
             result.add(new ParsedArticle(
-                    title, description, Instant.parse(date), link, Set.of(), "", date));
+                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
         }
 
         // очередность: от старого к свежему

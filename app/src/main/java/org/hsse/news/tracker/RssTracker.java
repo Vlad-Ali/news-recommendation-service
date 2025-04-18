@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 
 @Component
@@ -108,9 +109,10 @@ public class RssTracker {
         log.debug("{} is add with topics", parsedArticle.name());
     }
 
-    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000 * 100)
+    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.SECONDS)
     @Transactional
     public void addNewArticles() {
+        log.debug("Searching for new articles");
         final List<WebsiteInfo> websites = websiteService.getAllWebsites();
         final List<TopicInfo> topics = topicService.getAllTopics();
         for (final WebsiteInfo website : websites) {

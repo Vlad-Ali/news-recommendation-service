@@ -42,13 +42,13 @@ public class KafkaBlogParser implements Parser {
             final var linkElement = post.selectFirst("h2.bullet a[href]");
             final var link = BLOG_LINK + linkElement.attr("href");
             final var title = linkElement.text();
-            final var dateAndAuthor = post.select("h2.bullet").first().nextSibling().toString().trim();
+//            final var dateAndAuthor = post.select("h2.bullet").first().nextSibling().toString().trim();
 
-            final var date = dateAndAuthor.split(" - ")[0];
+//            final var date = dateAndAuthor.split(" - ")[0];
             final var paragraphs = post.select("p");
             final var description = paragraphs.get(0).text();
             result.add(new ParsedArticle(
-                    title, description, Instant.parse(date), link, Set.of(), "", BLOG_LINK));
+                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
         }
 
         // очередность: от старого к свежему

@@ -17,8 +17,8 @@ public class OnnxApplication {
 
   public OnnxApplication(@Value("classpath:onnx_model/trfs-model.onnx") final Resource modelPath, @Value("classpath:onnx_model/tokenizer/tokenizer.json") final Resource tokenizerPath) throws IOException, OrtException {
     this.modelRunner = new OnnxModelRunner(
-            modelPath.getURI().getPath(),
-            tokenizerPath.getURI().getPath()
+            modelPath.getURI().getPath().substring(1),
+            tokenizerPath.getURI().getPath().substring(1)
     );
   }
 

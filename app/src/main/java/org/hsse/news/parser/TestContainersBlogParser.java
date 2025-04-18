@@ -45,9 +45,9 @@ public class TestContainersBlogParser implements Parser {
             final var link = BASE_LINK + linkElement.attr("href");
             final var title = linkElement.attr("aria-label");
             final var description = post.selectFirst("div.excerpt").text();
-            final var date = post.selectFirst("div.grav-wrap span").text();
+            // final var date = post.selectFirst("div.grav-wrap span").text();
             result.add(new ParsedArticle(
-                    title, description, Instant.parse(date), link, Set.of(), "", BLOG_LINK));
+                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
         }
 
         // очередность: от старого к свежему

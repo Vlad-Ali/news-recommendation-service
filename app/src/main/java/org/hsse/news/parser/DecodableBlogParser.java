@@ -43,7 +43,7 @@ public class DecodableBlogParser implements Parser {
             final var description = post.select(".margin-bottom.margin-small .text-size-small").text();
             final var date = post.select(".blog-grid_meta-wrapper div").first().text();
             result.add(new ParsedArticle(
-                    title, description, Instant.parse(date), link, Set.of(), "", BLOG_LINK));
+                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
         }
 
         // очередность: от старого к свежему

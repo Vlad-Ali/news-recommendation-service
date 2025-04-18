@@ -35,20 +35,21 @@ public class FingerprintBlogParser implements Parser {
 
     private List<ParsedArticle> doParse() throws IOException {
         final List<ParsedArticle> result = new ArrayList<>();
+
         final Document doc = Jsoup.connect(BLOG_LINK).get();
         final var gridContainer = doc.selectFirst("div[class^=Grid-module--grid]");
-        if (gridContainer != null) {
-            final var posts = gridContainer.select("div[class^=Post-module--post]");
-            for (final Element post : posts) {
-                final var title = post.select("h1[class^=Post-module--title]").text();
-                final var link = BASE_LINK + post.select("a").attr("href");
-                final var description = post.select("p[class^=Post-module--description]").text();
-                final var date = post.select("span[class^=Post-module--publishDate]").text();
-                result.add(new ParsedArticle(
-                        title, description, Instant.parse(date), link, Set.of(), "", BLOG_LINK));
-            }
-        } else {
+        if (gridContainer == null) {
             throw new RuntimeException("Grid div is null");
+        }
+
+        final var posts = gridContainer.select("div[class^=Post-module--post]");
+        for (final Element post : posts) {
+            final var title = post.select("h1[class^=Post-module--title]").text();
+            final var link = BASE_LINK + post.select("a").attr("href");
+            final var description = post.select("p[class^=Post-module--description]").text();
+            // final var date = post.select("span[class^=Post-module--publishDate]").text();
+            result.add(new ParsedArticle(
+                    title, description, Instant.now(), link, Set.of(), "", BLOG_LINK));
         }
 
         // очередность: от старого к свежему

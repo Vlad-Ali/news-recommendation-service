@@ -7,6 +7,7 @@ import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ public class ApacheBlogParser implements Parser {
         return Optional.empty();
     }
 
-    private List<ParsedArticle> doParse(final String url) throws IOException {
+    private List<ParsedArticle> doParse(final String url) throws IOException, ParseException {
         final List<ParsedArticle> result = new ArrayList<>();
 
         final Document doc = Jsoup.connect(url).get();
@@ -42,9 +43,10 @@ public class ApacheBlogParser implements Parser {
             final var link = linkElement.attr("href");
             final var title = linkElement.text();
             final var description = post.selectFirst("div.entry-content p").text();
-            final var date = post.selectFirst("time.entry-date.published").text();
+            // final var date = post.selectFirst("time.entry-date.published").text();
             result.add(new ParsedArticle(
-                    title, description, Instant.parse(date), link, Set.of(), "", url));
+                    title, description, Instant.now(),
+                    link, Set.of(), "", url));
         }
 
         // очередность: от старого к свежему

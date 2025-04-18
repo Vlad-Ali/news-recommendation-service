@@ -42,7 +42,7 @@ public class AlgomasterBlogParser implements Parser {
             throw new RuntimeException("Grid container should exist");
         }
 
-        final var posts = gridContainer.select("div._container_6i6j0_1");
+        final var posts = gridContainer.select("div.container-Qnseki");
         for (final Element post : posts) {
             final var title = post.selectFirst("a[data-testid=post-preview-title]").text();
             final var description = post.selectFirst("div:nth-of-type(2) a").text();
