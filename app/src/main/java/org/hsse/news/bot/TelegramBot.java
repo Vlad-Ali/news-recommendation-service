@@ -50,7 +50,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "HsseNewsTeam3Bot";
+        return "HsseNewsTeam2Bot";
     }
 
     private void editMessage(final ChatId chatId, final Message message, final MessageId replaced)
