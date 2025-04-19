@@ -76,6 +76,10 @@ public class UserEntity{
     )
     private Set<TopicEntity> subscribedTopics = new HashSet<>();
 
+    @Getter
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserRequestEntity> userRequests = new HashSet<>();
+
     protected UserEntity() {}
 
     public UserEntity(final String email,final String password,final String username, final Long chatId) {
@@ -83,6 +87,11 @@ public class UserEntity{
         this.password = password;
         this.username = username;
         this.chatId = chatId;
+    }
+
+    public void assignRequest(final UserRequestEntity userRequest){
+        userRequests.add(userRequest);
+        userRequest.setUser(this);
     }
 
     public void assignArticle(final ArticleEntity articleEntity,final Integer grade){

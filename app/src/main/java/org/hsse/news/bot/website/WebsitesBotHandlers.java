@@ -8,6 +8,9 @@ import org.hsse.news.bot.BotMapping;
 import org.hsse.news.bot.ChatId;
 import org.hsse.news.bot.Message;
 import org.hsse.news.bot.TelegramBot;
+import org.hsse.news.database.userrequest.exception.IncorrectURLException;
+import org.hsse.news.database.userrequest.exception.RequestAlreadyExistsException;
+import org.hsse.news.database.userrequest.exception.TimeLimitException;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
 import org.hsse.news.database.website.exceptions.WebsiteRSSNotValidException;
 import org.hsse.news.util.ParserMainPartUrl;
@@ -37,6 +40,7 @@ public class WebsitesBotHandlers {
     private final static String UNSUB_WEBSITE_COMMAND = "/unsub-website";
     private final static String SUB_CUSTOM_WEBSITE_COMMAND = "/sub-custom-website";
     private final static String DELETE_CUSTOM_WEBSITE = "/delete-custom-website";
+    private final static String REQUEST_WEBSITE_PARSER = "/request-website";
 
     private final static String BACK_TEXT = "Назад";
 
@@ -71,6 +75,9 @@ public class WebsitesBotHandlers {
                 List.of(InlineKeyboardButton.builder()
                         .text("Рекомендация по сайтам")
                         .callbackData(RECOMMENDED_WEBSITES).build()),
+                List.of(InlineKeyboardButton.builder()
+                        .text("Запрос на добавление сайта")
+                        .callbackData(REQUEST_WEBSITE_PARSER).build()),
                 List.of(InlineKeyboardButton.builder()
                         .text(BACK_TEXT)
                         .callbackData(MENU_COMMAND).build())));
@@ -209,6 +216,32 @@ public class WebsitesBotHandlers {
         return viewRecommendedWebsites(String.valueOf(topicId), new ChatId(chatId));
     }
 
+    private Message createWebsiteRequest(final String text){
+        final List<String> args = Arrays.stream(text.split(" ")).toList();
+        final long chatId = Long.parseLong(args.get(1));
+        final String url = args.get(0);
+        try{
+            websitesDataProvider.createUserRequest(url, chatId);
+            return Message.builder().text("Запрос на "+url+" добавлен").keyboard(websiteMenuKeyboard()).build();
+        } catch (TimeLimitException ex){
+            log.debug("Limit of sending requests for user = {}", chatId);
+            sendMessage(new ChatId(chatId), "Превышен лимит по отправке запроса");
+            return Message.builder().text("Запрос не был отправлен").keyboard(websiteMenuKeyboard()).build();
+        } catch (WebsiteAlreadyExistsException ex){
+            log.debug("Website already exists {}", ex.getMessage());
+            sendMessage(new ChatId(chatId), ex.getMessage());
+            return Message.builder().text("Запрос не был отправлен").keyboard(websiteMenuKeyboard()).build();
+        } catch (RequestAlreadyExistsException ex) {
+            log.debug("Request already exists {}", ex.getMessage());
+            sendMessage(new ChatId(chatId), ex.getMessage());
+            return Message.builder().text("Запрос не был отправлен").keyboard(websiteMenuKeyboard()).build();
+        } catch (IncorrectURLException ex){
+            log.debug("Incorrect URL {}", ex.getMessage());
+            sendMessage(new ChatId(chatId), ex.getMessage());
+            return Message.builder().text("Запрос не был отправлен").keyboard(websiteMenuKeyboard()).build();
+        }
+    }
+
     @BotMapping(LIST_SUBBED_WEBSITES_COMMAND)
     public Message viewUserSubWebsites(final ChatId chatId) {
         return buildWebsitesListMenu("Подписки:", websitesDataProvider.getSubbedWebsites(chatId.value()));
@@ -274,5 +307,16 @@ public class WebsitesBotHandlers {
         final Long websiteId = Long.parseLong(stringList.get(1));
         return subRecommendedWebsite(topicId, websiteId, chatId.value());
     }
+
+    @BotMapping(REQUEST_WEBSITE_PARSER)
+    public Message createRequestForWebsite(final ChatId chatId){
+        return Message.builder().text("Введите корректный URI для отправки запроса на добавление:").singleButton(
+                InlineKeyboardButton.builder()
+                        .text("Отмена")
+                        .callbackData(WEBSITES_MENU_COMMAND).build()
+        ).onNextMessage(text -> createWebsiteRequest(
+                text.concat(" " + chatId.value()))).build();
+    }
+
 }
 

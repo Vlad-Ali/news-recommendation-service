@@ -9,6 +9,8 @@ import org.hsse.news.database.user.UserService;
 import org.hsse.news.database.user.exceptions.UserNotFoundException;
 import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
+import org.hsse.news.database.userrequest.UserRequestService;
+import org.hsse.news.database.userrequest.exception.TimeLimitException;
 import org.hsse.news.database.website.WebsiteService;
 import org.hsse.news.database.website.exceptions.QuantityLimitExceededWebsitesPerUserException;
 import org.hsse.news.database.website.exceptions.WebsiteAlreadyExistsException;
@@ -17,6 +19,8 @@ import org.hsse.news.database.website.models.WebsiteDto;
 import org.hsse.news.database.website.models.WebsiteId;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,11 +31,13 @@ public class WebsitesDataProvider {
     private final UserService userService;
     private final WebsiteService websiteService;
     private final TopicService topicService;
+    private final UserRequestService userRequestService;
 
-    public WebsitesDataProvider(final UserService userService,final WebsiteService websiteService,final TopicService topicService) {
+    public WebsitesDataProvider(final UserService userService, final WebsiteService websiteService, final TopicService topicService, final UserRequestService userRequestService) {
         this.userService = userService;
         this.websiteService = websiteService;
         this.topicService = topicService;
+        this.userRequestService = userRequestService;
     }
 
     public List<WebsiteInfo> getSubbedWebsites(final Long chatId) {
@@ -138,6 +144,18 @@ public class WebsitesDataProvider {
         final Optional<UserDto> optionalUserDto = userService.findByChatId(chatId);
         final UserDto userDto = optionalUserDto.orElseThrow(() -> new UserNotFoundException("User not found by chatId = "+chatId));
         return topicService.getSubscribedTopicsByUserId(userDto.id());
+    }
+
+    public void createUserRequest(final String url, final Long chatId){
+        final Optional<UserDto> optionalUserDto = userService.findByChatId(chatId);
+        final UserDto userDto = optionalUserDto.orElseThrow(() -> new UserNotFoundException("User not found by chatId = "+chatId));
+        final UserId userId = userDto.id();
+        final Instant lastTime = userRequestService.getLastRequestByUserId(userId);
+        final long days = Duration.between(lastTime, Instant.now()).toDays();
+        if (days < 2){
+            throw new TimeLimitException("Ваше последнее сообщение было отправлено "+lastTime+". 2 дня с этого момента не прошло");
+        }
+        userRequestService.addUserRequest(userId, url);
     }
 
 }
