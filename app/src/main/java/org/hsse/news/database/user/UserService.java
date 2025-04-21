@@ -1,6 +1,10 @@
 package org.hsse.news.database.user;
 
+import org.hsse.news.database.entity.RoleEntity;
 import org.hsse.news.database.entity.UserEntity;
+import org.hsse.news.database.role.exception.RoleNotFoundException;
+import org.hsse.news.database.role.model.Role;
+import org.hsse.news.database.role.repository.JpaRolesRepository;
 import org.hsse.news.database.user.exceptions.EmailConflictException;
 import org.hsse.news.database.user.exceptions.InvalidCurrentPasswordException;
 import org.hsse.news.database.user.exceptions.SameNewPasswordException;
@@ -19,10 +23,12 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final JpaUsersRepository usersRepository;
+    private final JpaRolesRepository rolesRepository;
     private static final Logger LOG = LoggerFactory.getLogger(UserService.class);
 
-    public UserService(final JpaUsersRepository usersRepository) {
+    public UserService(final JpaUsersRepository usersRepository, JpaRolesRepository rolesRepository) {
         this.usersRepository = usersRepository;
+        this.rolesRepository = rolesRepository;
     }
 
     public Optional<UserDto> findById(final UserId userId) {
@@ -59,6 +65,8 @@ public class UserService {
             throw new EmailConflictException("Email is already used");
         }
         final UserEntity userEntity = userDto.toUserEntity();
+        final RoleEntity roleEntity = rolesRepository.findByRole(Role.ROLE_USER.name()).orElseThrow(() -> new RoleNotFoundException("Role not found"));
+        userEntity.assignRole(roleEntity);
         final UserEntity savedUser = usersRepository.save(userEntity);
         return savedUser.toUserDto();
     }

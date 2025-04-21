@@ -15,6 +15,7 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hsse.news.database.role.model.Role;
 import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
 
@@ -80,6 +81,14 @@ public class UserEntity{
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRequestEntity> userRequests = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<RoleEntity> userRoles = new HashSet<>();
+
     protected UserEntity() {}
 
     public UserEntity(final String email,final String password,final String username, final Long chatId) {
@@ -87,6 +96,24 @@ public class UserEntity{
         this.password = password;
         this.username = username;
         this.chatId = chatId;
+    }
+
+    public Set<Role> getRoles(){
+        Set<Role> roles = new HashSet<>();
+        for (RoleEntity roleEntity : userRoles){
+            roles.add(Role.valueOf(roleEntity.getRole()));
+        }
+        return roles;
+    }
+
+    public void assignRole(final RoleEntity roleEntity){
+        userRoles.add(roleEntity);
+        roleEntity.getUsers().add(this);
+    }
+
+    public void removeRole(final RoleEntity roleEntity){
+        userRoles.remove(roleEntity);
+        roleEntity.getUsers().remove(this);
     }
 
     public void assignRequest(final UserRequestEntity userRequest){
