@@ -2,6 +2,7 @@ package org.hsse.news.database.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,13 +29,29 @@ public class RoleEntity {
     @NotNull
     private String role;
 
-    @ManyToMany(mappedBy = "userRoles")
+    @ManyToMany(mappedBy = "userRoles", fetch = FetchType.EAGER)
     private Set<UserEntity> users = new HashSet<>();
 
     protected RoleEntity(){}
 
     public RoleEntity(final Role role){
         this.role = role.name();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof RoleEntity roleEntity)) {
+            return false;
+        }
+        return roleId != null && roleId.equals(roleEntity.roleId);
+    }
+
+    @Override
+    public int hashCode() {
+        return RoleEntity.class.hashCode();
     }
 
 

@@ -71,7 +71,7 @@ public class UserRequestController {
 
     @ExceptionHandler(TimeLimitException.class)
     public ErrorResponse handleTimeLimit(final TimeLimitException ex){
-        LOG.debug("Timelimit of sending requests for user: {}", ex.getMessage());
+        LOG.debug("Time limit of sending requests for user: {}", ex.getMessage());
         return ErrorResponse.create(ex, HttpStatus.REQUEST_TIMEOUT, "Time limit");
     }
 

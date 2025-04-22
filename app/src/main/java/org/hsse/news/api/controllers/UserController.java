@@ -121,6 +121,12 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @ExceptionHandler(ResponseStatusException.class)
+    public ErrorResponse handleResponseStatus(final ResponseStatusException ex){
+        LOG.debug("Response status: {}", ex.getMessage());
+        return ErrorResponse.create(ex, ex.getStatusCode(), ex.getMessage());
+    }
+
     @ExceptionHandler(EmailConflictException.class)
     public ErrorResponse handleEmailConflict(final EmailConflictException e) {
         LOG.debug("Email conflict: {}", e.getMessage());

@@ -3,6 +3,7 @@ package org.hsse.news.database.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -81,7 +82,7 @@ public class UserEntity{
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRequestEntity> userRequests = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -100,7 +101,7 @@ public class UserEntity{
 
     public Set<Role> getRoles(){
         Set<Role> roles = new HashSet<>();
-        for (RoleEntity roleEntity : userRoles){
+        for (RoleEntity roleEntity : getUserRoles()){
             roles.add(Role.valueOf(roleEntity.getRole()));
         }
         return roles;
@@ -199,6 +200,10 @@ public class UserEntity{
 
     public Set<WebsiteEntity> getSubscribedWebsites() {
         return subscribedWebsites;
+    }
+
+    public Set<RoleEntity> getUserRoles(){
+        return userRoles;
     }
 
     public @NotNull Long getChatId() {
