@@ -100,8 +100,8 @@ public class UserEntity{
     }
 
     public Set<Role> getRoles(){
-        Set<Role> roles = new HashSet<>();
-        for (RoleEntity roleEntity : getUserRoles()){
+        final Set<Role> roles = new HashSet<>();
+        for (final RoleEntity roleEntity : getUserRoles()){
             roles.add(Role.valueOf(roleEntity.getRole()));
         }
         return roles;

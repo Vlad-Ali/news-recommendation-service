@@ -1,6 +1,5 @@
 package org.hsse.news.api.filters;
 
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,7 +44,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             try {
                 final UserId userId = jwtService.getUserId(token);
                 final Set<Role> roles = rolesService.getUserRoles(userId);
-                List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                final List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                 for (final Role role : roles){
                     authorities.add(new SimpleGrantedAuthority(role.name()));
                 }

@@ -32,13 +32,13 @@ public class RolesController {
     private final UserService userService;
     private final static Logger LOG = LoggerFactory.getLogger(RolesController.class);
 
-    public RolesController(final RolesService rolesService, UserService userService) {
+    public RolesController(final RolesService rolesService,final UserService userService) {
         this.rolesService = rolesService;
         this.userService = userService;
     }
 
     @PostMapping
-    public ResponseEntity<UserRoleDto> updateRoles(@RequestBody RolesDto rolesDto){
+    public ResponseEntity<UserRoleDto> updateRoles(@RequestBody final RolesDto rolesDto){
         final UserId userId = getCurrentUserId();
         final UserRoleDto userRoleDto = rolesService.updateRoles(userId, rolesDto.roles());
         LOG.debug("Successfully update roles for {}", userId);
@@ -54,7 +54,7 @@ public class RolesController {
     }
 
     @ExceptionHandler(RoleNotFoundException.class)
-    public ErrorResponse handleRoleNotFound(RoleNotFoundException ex){
+    public ErrorResponse handleRoleNotFound(final RoleNotFoundException ex){
         LOG.error("Role not found: {}", ex.getMessage());
         return ErrorResponse.create(ex, HttpStatus.NOT_FOUND, "Role not found");
     }

@@ -26,7 +26,7 @@ public class UserService {
     private final JpaRolesRepository rolesRepository;
     private static final Logger LOG = LoggerFactory.getLogger(UserService.class);
 
-    public UserService(final JpaUsersRepository usersRepository, JpaRolesRepository rolesRepository) {
+    public UserService(final JpaUsersRepository usersRepository,final JpaRolesRepository rolesRepository) {
         this.usersRepository = usersRepository;
         this.rolesRepository = rolesRepository;
     }
