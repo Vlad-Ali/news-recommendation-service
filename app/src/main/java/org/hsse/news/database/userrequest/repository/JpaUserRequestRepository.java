@@ -38,7 +38,7 @@ public interface JpaUserRequestRepository extends JpaRepository<UserRequestEntit
             SELECT count(*) FROM user_requests
             WHERE url = :url
             """, nativeQuery = true)
-    Optional<Integer> getCountOfRequest(@Param("url") String url);
+    Integer getCountOfRequest(@Param("url") String url);
 
     @Modifying
     @Query(value = """

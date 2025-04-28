@@ -92,7 +92,7 @@ public class UserRequestService {
         final List<UserRequestStat> userRequestStatList = new ArrayList<>();
         final List<String> requestUrls = userRequestRepository.getTopOfRequests();
         for (final String url : requestUrls){
-            final UserRequestStat userRequestStat = new UserRequestStat(url, userRequestRepository.getCountOfRequest(url).orElse(0));
+            final UserRequestStat userRequestStat = new UserRequestStat(url, userRequestRepository.getCountOfRequest(url));
             userRequestStatList.add(userRequestStat);
         }
         return new TopUserRequests(userRequestStatList);

@@ -12,6 +12,7 @@ import org.hsse.news.database.user.repositories.JpaUsersRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
@@ -26,6 +27,7 @@ public class RolesService {
         this.usersRepository = usersRepository;
     }
 
+    @Transactional
     public UserRoleDto updateRoles(final UserId userId,final Set<Role> roles){
         LOG.debug("Method updateRoles called");
         final UserEntity userEntity = usersRepository.findById(userId.value()).orElseThrow(() -> new UserNotFoundException(userId));
@@ -38,6 +40,7 @@ public class RolesService {
         return new UserRoleDto(userEntity.toUserDto(), roles);
     }
 
+    @Transactional(readOnly = true)
     public Set<Role> getUserRoles(final UserId userId){
         final UserEntity userEntity = usersRepository.findById(userId.value()).orElseThrow(() -> new UserNotFoundException(userId));
         return userEntity.getRoles();
