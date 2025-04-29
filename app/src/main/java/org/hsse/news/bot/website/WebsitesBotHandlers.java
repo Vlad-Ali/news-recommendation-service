@@ -41,6 +41,14 @@ public class WebsitesBotHandlers {
     private final static String SUB_CUSTOM_WEBSITE_COMMAND = "/sub-custom-website";
     private final static String DELETE_CUSTOM_WEBSITE = "/delete-custom-website";
     private final static String REQUEST_WEBSITE_PARSER = "/request-website";
+    private final static String WEBSITES_INFO = "/websites-info";
+    private final String websitesInfo = "🌐 Меню источников\n\n" +
+            "Здесь ты можешь настроить список сайтов, из которых бот будет присылать новости:\n\n" +
+            "➕ Добавить свой RSS-сайт - просто пришли мне ссылку на RSS-ленту\n\n" +
+            "📋 Выбрать из популярных сайтов - база проверенных источников по разным темам\n\n" +
+            "✨ Рекомендации - подборка сайтов на основе твоих интересов\n\n" +
+            "🛎 Запросить добавление сайта - нет нужного источника? Отправь нам заявку!\n\n" +
+            "⚙️ Мои подписки - управление текущими источниками";
 
     private final static String BACK_TEXT = "Назад";
 
@@ -79,6 +87,9 @@ public class WebsitesBotHandlers {
                         .text("Запрос на добавление сайта")
                         .callbackData(REQUEST_WEBSITE_PARSER).build()),
                 List.of(InlineKeyboardButton.builder()
+                        .text("Информация")
+                        .callbackData(WEBSITES_INFO).build()),
+                List.of(InlineKeyboardButton.builder()
                         .text(BACK_TEXT)
                         .callbackData(MENU_COMMAND).build())));
     }
@@ -86,6 +97,11 @@ public class WebsitesBotHandlers {
     @BotMapping(WEBSITES_MENU_COMMAND)
     public Message websitesMenu() {
         return Message.builder().text("Источники").keyboard(websiteMenuKeyboard()).build();
+    }
+
+    @BotMapping(WEBSITES_INFO)
+    public Message sendWebsitesInfo() {
+        return Message.builder().text(websitesInfo).keyboard(websiteMenuKeyboard()).build();
     }
 
     private Message buildWebsitesListMenu(final String text, final List<WebsiteInfo> websites) {

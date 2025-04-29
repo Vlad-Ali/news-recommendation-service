@@ -37,7 +37,7 @@ public class RssTracker {
     private final TopicService topicService;
     private final ArticlesService articlesService;
     private final WebsiteService websiteService;
-    private static final Float MINIMUM_PERCENT = 0.1F;
+    private static final Float MINIMUM_PERCENT = 0.25F;
     private static final Logger LOG = LoggerFactory.getLogger(RssTracker.class);
 
     public RssTracker(final OnnxApplication onnxApplication,final TopicService topicService,final ArticlesService articlesService,final WebsiteService websiteService) {
