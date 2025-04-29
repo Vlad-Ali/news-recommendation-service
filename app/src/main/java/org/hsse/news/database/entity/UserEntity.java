@@ -3,6 +3,7 @@ package org.hsse.news.database.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,6 +16,7 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hsse.news.database.role.model.Role;
 import org.hsse.news.database.user.models.UserDto;
 import org.hsse.news.database.user.models.UserId;
 
@@ -76,6 +78,18 @@ public class UserEntity{
     )
     private Set<TopicEntity> subscribedTopics = new HashSet<>();
 
+    @Getter
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserRequestEntity> userRequests = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<RoleEntity> userRoles = new HashSet<>();
+
     protected UserEntity() {}
 
     public UserEntity(final String email,final String password,final String username, final Long chatId) {
@@ -83,6 +97,29 @@ public class UserEntity{
         this.password = password;
         this.username = username;
         this.chatId = chatId;
+    }
+
+    public Set<Role> getRoles(){
+        final Set<Role> roles = new HashSet<>();
+        for (final RoleEntity roleEntity : getUserRoles()){
+            roles.add(Role.valueOf(roleEntity.getRole()));
+        }
+        return roles;
+    }
+
+    public void assignRole(final RoleEntity roleEntity){
+        userRoles.add(roleEntity);
+        roleEntity.getUsers().add(this);
+    }
+
+    public void removeRole(final RoleEntity roleEntity){
+        userRoles.remove(roleEntity);
+        roleEntity.getUsers().remove(this);
+    }
+
+    public void assignRequest(final UserRequestEntity userRequest){
+        userRequests.add(userRequest);
+        userRequest.setUser(this);
     }
 
     public void assignArticle(final ArticleEntity articleEntity,final Integer grade){
@@ -163,6 +200,10 @@ public class UserEntity{
 
     public Set<WebsiteEntity> getSubscribedWebsites() {
         return subscribedWebsites;
+    }
+
+    public Set<RoleEntity> getUserRoles(){
+        return userRoles;
     }
 
     public @NotNull Long getChatId() {

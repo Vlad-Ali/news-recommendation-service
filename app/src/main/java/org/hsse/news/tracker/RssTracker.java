@@ -37,7 +37,7 @@ public class RssTracker {
     private final TopicService topicService;
     private final ArticlesService articlesService;
     private final WebsiteService websiteService;
-    private static final Float MINIMUM_PERCENT = 0.1F;
+    private static final Float MINIMUM_PERCENT = 0.25F;
     private static final Logger LOG = LoggerFactory.getLogger(RssTracker.class);
 
     public RssTracker(final OnnxApplication onnxApplication,final TopicService topicService,final ArticlesService articlesService,final WebsiteService websiteService) {
@@ -79,8 +79,7 @@ public class RssTracker {
         }
         LOG.debug("{} is add with topics", parsedArticle.name());
     }
-
-    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000)
+    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000 * 1000)
     @Transactional
     public void addNewArticles(){
         final List<WebsiteInfo> websites = websiteService.getAllWebsites();
