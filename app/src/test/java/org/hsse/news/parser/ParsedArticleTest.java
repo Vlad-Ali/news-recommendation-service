@@ -15,7 +15,6 @@ class ParsedArticleTest {
                   toInstant("2024-11-15T08:40:00Z")
                   ,
                   "https://stackoverflow.blog/2024/11/15/meet-the-guy-responsible-for-building-the-call-of-duty-game-engine/",
-                  Set.of("gaming"),
                   "Eira May",
                   "https://stackoverflow.blog");
 
@@ -32,7 +31,6 @@ class ParsedArticleTest {
                     "Chris Fowler, Director of Engine for Call of Duty.",
                     toInstant("2024-11-15T08:40:00Z"),
                     "https://stackoverflow.blog/2024/11/15/meet-the-guy-responsible-for-building-the-call-of-duty-game-engine/",
-                    Set.of("gaming"),
                     "Eira May",
                     "https://stackoverflow.blog"),
             "Articles must be equal");
