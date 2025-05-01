@@ -1,5 +1,6 @@
 package org.hsse.news.bot;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +28,9 @@ import java.util.function.Function;
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
+    @Getter
     private final Set<ChatId> activeChats = new HashSet<>();
+
     private final Map<ChatId, SendMessageData> latestMenuMessage = new ConcurrentHashMap<>();
 
     private final Map<String, BiFunction<List<String>, ChatId, Optional<Message>>> commands
@@ -104,6 +107,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             send.setText(old.text());
             send.setReplyMarkup(old.keyboard());
+            send.enableHtml(true);
 
             final MessageId id = new MessageId(execute(send).getMessageId());
             latestMenuMessage.put(chatId,
@@ -119,9 +123,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendArticleTo(final ChatId chatId,
-                               final Function<MessageId, Message> messageIdToMessage)
-            throws TelegramApiException {
+    @SneakyThrows
+    public void sendArticleTo(final ChatId chatId,
+                               final Function<MessageId, Message> messageIdToMessage) {
+
         if (latestMenuMessage.containsKey(chatId)) {
             deleteMessage(chatId, latestMenuMessage.get(chatId).id());
         }
@@ -161,7 +166,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         final List<String> args = Arrays.stream(text.substring(largestPrefix.length()).split(" "))
                 .filter(string -> !string.isBlank()).toList();
-        log.debug("args: {}", args);
         final Optional<Message> message = commands.get(largestPrefix).apply(args, chatId);
         if (message.isPresent()) {
             sendMenuMessage(chatId, message.get());
@@ -181,11 +185,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     @Override
-    @SneakyThrows
     public void onUpdateReceived(final Update update) {
-        if (update.hasMessage()) {
-            final ChatId chatId = new ChatId(update.getMessage().getChatId());
-            final MessageId messageId = new MessageId(update.getMessage().getMessageId());
+        try {
+            if (update.hasMessage()) {
+                final ChatId chatId = new ChatId(update.getMessage().getChatId());
+                final MessageId messageId = new MessageId(update.getMessage().getMessageId());
 
             activeChats.add(chatId);
             handleInput(chatId, update.getMessage().getText(), messageId);
@@ -193,9 +197,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (update.hasCallbackQuery()) {
             final ChatId chatId = new ChatId(update.getCallbackQuery().getMessage().getChatId());
 
-            log.debug("Callback data: {}",update.getCallbackQuery().getData());
-            activeChats.add(chatId);
-            handleCommand(chatId, update.getCallbackQuery().getData());
+                activeChats.add(chatId);
+                handleCommand(chatId, update.getCallbackQuery().getData());
+            }
+        } catch (Exception e) {
+            log.error("Exception while handling a command: ", e);
         }
     }
 }

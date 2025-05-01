@@ -286,7 +286,7 @@ public class ArticlesBotHandlers {
         ));
     }
 
-    private String getArticleMessage(final ArticleDto article,final Integer likes,final Integer dislikes) {
+    public String getArticleMessage(final ArticleDto article,final Integer likes,final Integer dislikes) {
         final String articleTitle = article.title().toUpperCase(Locale.ROOT) + "\n\n";
         final List<String> topics = article.topics().stream().map(TopicDto::description).toList();
         final String articleUrl = article.url();

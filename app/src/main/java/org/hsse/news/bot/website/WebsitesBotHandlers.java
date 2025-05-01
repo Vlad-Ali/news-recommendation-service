@@ -289,7 +289,7 @@ public class WebsitesBotHandlers {
 
     @BotMapping(SUB_CUSTOM_WEBSITE_COMMAND)
     public Message subCustomWebsite(final ChatId chatId) {
-        return Message.builder().text("Введите URI:").singleButton(
+        return Message.builder().text("Введите URI на корректный RSS сайта:").singleButton(
                 InlineKeyboardButton.builder()
                         .text("Отмена")
                         .callbackData(WEBSITES_MENU_COMMAND).build()

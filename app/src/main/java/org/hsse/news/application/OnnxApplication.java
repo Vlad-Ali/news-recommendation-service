@@ -15,9 +15,11 @@ import java.util.Map;
 public class OnnxApplication {
   private final OnnxModelRunner modelRunner;
 
-
   public OnnxApplication(@Value("classpath:onnx_model/trfs-model.onnx") final Resource modelPath, @Value("classpath:onnx_model/tokenizer/tokenizer.json") final Resource tokenizerPath) throws IOException, OrtException {
-    this.modelRunner = new OnnxModelRunner(modelPath.getURI().getPath().substring(1), tokenizerPath.getURI().getPath().substring(1));
+    this.modelRunner = new OnnxModelRunner(
+            modelPath.getURI().getPath().substring(1),
+            tokenizerPath.getURI().getPath().substring(1)
+    );
   }
 
   private Map<String, Float> getResult(final String text, final List<String> labels) throws OrtException {

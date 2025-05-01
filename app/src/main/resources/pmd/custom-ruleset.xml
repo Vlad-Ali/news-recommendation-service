@@ -27,6 +27,7 @@
         <exclude name="CallSuperInConstructor"/>
         <exclude name="PrematureDeclaration"/>
         <exclude name="UselessParentheses"/>
+        <exclude name="UnnecessaryFullyQualifiedName"/>
     </rule>
     <rule ref="category/java/design.xml">
         <exclude name="LawOfDemeter"/>
