@@ -60,14 +60,14 @@ public class ArticlesBotHandlers {
 
   @BotMapping(VIEW_UNWATCHED_ARTICLES_COMMAND)
   public Message viewUnwatchedArticles(final ChatId chatId) {
-    UserDto user = userService.findByChatId(chatId.value())
+    final UserDto user = userService.findByChatId(chatId.value())
         .orElseThrow(() -> new UserNotFoundException("User with chat id " + chatId.value() + " not found"));
 
     if (user.id() == null) {
       throw new RuntimeException();
     }
 
-    List<ArticleDto> articles = tempUserStates.get(chatId).getUnknownArticles();;
+    final List<ArticleDto> articles = tempUserStates.get(chatId).getUnknownArticles();
 
     if (articles.isEmpty()) {
       return Message.builder()
@@ -82,9 +82,9 @@ public class ArticlesBotHandlers {
           .build();
     }
 
-    ArticleDto article = articles.remove(0);
-    Integer likes = userArticlesService.getArticleLikeCount(article.articleId());
-    Integer dislikes = userArticlesService.getArticleDislikeCount(article.articleId());
+    final ArticleDto article = articles.remove(0);
+    final Integer likes = userArticlesService.getArticleLikeCount(article.articleId());
+    final Integer dislikes = userArticlesService.getArticleDislikeCount(article.articleId());
     tempUserStates.get(chatId).setArticle(article);
 
     articlesService.addToKnown(user.id().value(), article.articleId());
@@ -97,7 +97,7 @@ public class ArticlesBotHandlers {
 
   @BotMapping(VIEW_WATCHED_ARTICLES_COMMAND)
   public Message viewWatchedArticles(final ChatId chatId) {
-    List<ResponseUserArticleDto> userArticles = tempUserStates.get(chatId).getKnownArticles();
+    final List<ResponseUserArticleDto> userArticles = tempUserStates.get(chatId).getKnownArticles();
     Integer userIndex = tempUserStates.get(chatId).getCurrentIndex();
 
     if (userArticles.isEmpty()) {
@@ -113,18 +113,18 @@ public class ArticlesBotHandlers {
           .build();
     }
 
-    List<ArticleDto> articles = userArticles.stream().map(ResponseUserArticleDto::article).toList();
+    final List<ArticleDto> articles = userArticles.stream().map(ResponseUserArticleDto::article).toList();
 
     if (userIndex == null) {
       tempUserStates.get(chatId).setCurrentIndex(0);
       userIndex = 0;
     }
 
-    ArticleDto article = articles.get(userIndex);
+    final ArticleDto article = articles.get(userIndex);
     tempUserStates.get(chatId).setArticle(article);
 
-    Integer likes = userArticlesService.getArticleLikeCount(article.articleId());
-    Integer dislikes = userArticlesService.getArticleDislikeCount(article.articleId());
+    final Integer likes = userArticlesService.getArticleLikeCount(article.articleId());
+    final Integer dislikes = userArticlesService.getArticleDislikeCount(article.articleId());
 
     return Message.builder()
         .text(getArticleMessage(article, likes, dislikes))
@@ -146,7 +146,7 @@ public class ArticlesBotHandlers {
 
   @BotMapping(ARTICLES_MENU_COMMAND)
   public Message articlesMenu(final ChatId chatId) {
-    UserDto user = userService.findByChatId(chatId.value())
+    final UserDto user = userService.findByChatId(chatId.value())
         .orElseThrow(() -> new UserNotFoundException(String.valueOf(chatId.value())));
 
     if (user.id() == null) {
@@ -169,7 +169,7 @@ public class ArticlesBotHandlers {
     ).build();
   }
 
-  private List<InlineKeyboardButton> getArticleButtons(int size) {
+  private List<InlineKeyboardButton> getArticleButtons(final int size) {
     final List<InlineKeyboardButton> buttons = new ArrayList<>(List.of(
         InlineKeyboardButton.builder()
             .text("Поставить лайк")
@@ -204,7 +204,7 @@ public class ArticlesBotHandlers {
     return buttons;
   }
 
-  private List<InlineKeyboardButton> getArticleButtons(int size, int index, ArticleDto articleDto, UserDto userDto) {
+  private List<InlineKeyboardButton> getArticleButtons(final int size,final int index,final ArticleDto articleDto,final UserDto userDto) {
     final List<InlineKeyboardButton> buttons = new ArrayList<>(List.of(
         InlineKeyboardButton.builder()
             .text("Поставить лайк")
@@ -248,7 +248,7 @@ public class ArticlesBotHandlers {
     return buttons;
   }
 
-  private static InlineKeyboardMarkup articleMenuKeyboard(int knownCount, int unknownCount) {
+  private static InlineKeyboardMarkup articleMenuKeyboard(final int knownCount,final int unknownCount) {
     log.debug("Article menu method called");
 
     return new InlineKeyboardMarkup(List.of(
@@ -264,18 +264,18 @@ public class ArticlesBotHandlers {
     ));
   }
 
-  public String getArticleMessage(ArticleDto article, Integer likes, Integer dislikes) {
-    String articleTitle = article.title().toUpperCase(Locale.ROOT) + "\n\n";
-    List<String> topics = article.topics().stream().map(TopicDto::description).toList();
-    String articleUrl = article.url();
-    String grades = "Лайки \uD83D\uDC4D:    %d\nДизы \uD83D\uDCA9:   %d".formatted(likes, dislikes);
+  public String getArticleMessage(final ArticleDto article,final Integer likes,final Integer dislikes) {
+    final String articleTitle = article.title().toUpperCase(Locale.ROOT) + "\n\n";
+    final List<String> topics = article.topics().stream().map(TopicDto::description).toList();
+    final String articleUrl = article.url();
+    final String grades = "Лайки \uD83D\uDC4D:    %d\nДизы \uD83D\uDCA9:   %d".formatted(likes, dislikes);
     return articleTitle + String.join("   ", topics) + "\n\n" + articleUrl + "\n\n" + grades;
   }
 
   @BotMapping(LIKE_COMMAND)
   public void like(final ChatId chatId) {
-    UUID userId = tempUserStates.get(chatId).getUser().id().value();
-    UUID articleId = tempUserStates.get(chatId).getArticle().articleId();
+    final UUID userId = tempUserStates.get(chatId).getUser().id().value();
+    final UUID articleId = tempUserStates.get(chatId).getArticle().articleId();
     userArticlesService.likeUserArticle(
         new RequestUserArticleDto(articleId, userId, Grade.LIKE)
     );
@@ -283,8 +283,8 @@ public class ArticlesBotHandlers {
 
   @BotMapping(DISLIKE_COMMAND)
   public void dislike(final ChatId chatId) {
-    UUID userId = tempUserStates.get(chatId).getUser().id().value();
-    UUID articleId = tempUserStates.get(chatId).getArticle().articleId();
+    final UUID userId = tempUserStates.get(chatId).getUser().id().value();
+    final UUID articleId = tempUserStates.get(chatId).getArticle().articleId();
     userArticlesService.dislikeUserArticle(
         new RequestUserArticleDto(articleId, userId, Grade.DISLIKE)
     );
@@ -292,8 +292,8 @@ public class ArticlesBotHandlers {
 
   @BotMapping(REMOVE_GRADE_COMMAND)
   public void removeGrade(final ChatId chatId) {
-    UUID userId = tempUserStates.get(chatId).getUser().id().value();
-    UUID articleId = tempUserStates.get(chatId).getArticle().articleId();
+    final UUID userId = tempUserStates.get(chatId).getUser().id().value();
+    final UUID articleId = tempUserStates.get(chatId).getArticle().articleId();
     userArticlesService.removeMarkFromUserArticle(
         new RequestUserArticleDto(articleId, userId, Grade.NONE)
     );
