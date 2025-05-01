@@ -2,7 +2,7 @@ package org.hsse.news.tracker;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.hsse.news.bot.ArticlesBotHandlers;
+import org.hsse.news.bot.article.ArticlesBotHandlers;
 import org.hsse.news.bot.BotMapping;
 import org.hsse.news.bot.ChatId;
 import org.hsse.news.bot.Message;
@@ -60,7 +60,7 @@ public class ArticleTopTracker {
                 .build();
     }
 
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 30, timeUnit = TimeUnit.MINUTES)
     public void sendArticleTop() throws InterruptedException {
         final List<ArticleTopRecord> top = userArticlesService.findTopKArticles(5);
         for (int i = top.size() - 1; i >= 0; --i) {

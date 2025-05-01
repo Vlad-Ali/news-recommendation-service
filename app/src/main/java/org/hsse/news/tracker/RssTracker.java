@@ -107,7 +107,7 @@ public class RssTracker {
         }
         LOG.debug("{} is add with topics", parsedArticle.name());
     }
-    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000 * 1000)
+    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000)
     @Transactional
     public void addNewArticles() {
         LOG.debug("Searching for new articles");
