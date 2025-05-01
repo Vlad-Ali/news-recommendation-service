@@ -2,6 +2,7 @@ package org.hsse.news.bot;
 
 import lombok.Setter;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Configuration
 @Setter
 public class TelegramBotConfiguration implements ApplicationContextAware {
@@ -79,7 +81,7 @@ public class TelegramBotConfiguration implements ApplicationContextAware {
     }
 
     @Bean
-    public TelegramBot telegramBot(final @Value("${bot-token}") String token) {
+    public TelegramBot telegramBot(final @Value("${tg-bot.token}") String token) {
         final TelegramBot bot = new TelegramBot(token);
         for (final String beanName : applicationContext.getBeanDefinitionNames()) {
             if ("telegramBot".equals(beanName)) {

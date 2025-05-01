@@ -13,9 +13,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class UserState {
-  private UserDto user;
-  private ArticleDto article;
-  private Integer currentIndex;
-  private List<ResponseUserArticleDto> knownArticles;
-  private  List<ArticleDto> unknownArticles;
+    private UserDto user;
+    private ArticleDto article;
+    private Integer currentIndex;
+    private List<ResponseUserArticleDto> knownArticles;
+    private  List<ArticleDto> unknownArticles;
 }

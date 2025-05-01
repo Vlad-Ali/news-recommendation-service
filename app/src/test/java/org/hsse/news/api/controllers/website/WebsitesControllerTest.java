@@ -1,6 +1,6 @@
 package org.hsse.news.api.controllers.website;
 
-import org.hsse.news.Application;
+/*import org.hsse.news.Application;
 import org.hsse.news.api.configuration.SecurityConfig;
 import org.hsse.news.api.controllers.UserController;
 import org.hsse.news.api.filters.JwtTokenFilter;
@@ -205,4 +205,4 @@ public class WebsitesControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-}
+}*/

@@ -67,27 +67,23 @@ public class ArticlesService {
 
     @Transactional(readOnly = true)
     public List<ResponseUserArticleDto> getUserArticles(final UUID userId) {
-        final List<UserArticlesEntity> userArticles = articleRepository.getUserArticles(userId);
-
-        return userArticles.stream().map(UserArticlesEntity::toDto).toList();
+        final List<UserArticlesEntity> articles = articleRepository.getUserArticles(userId);
+        return articles.stream().map(UserArticlesEntity::toDto).toList();
     }
 
-    @Transactional()
+    @Transactional(readOnly = true)
     public List<ArticleDto> getAllUnknown(final UUID userId) {
         final UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(new UserId(userId)));
 
         final List<ArticleEntity> articles = articleRepository.getAllUnknown(userId);
+
         final List<ArticleDto> articleDtoList = new ArrayList<>();
 
         for (final ArticleEntity article : articles){
             final List<TopicEntity> topicEntities = articleRepository.getArticleTopicsForUser(article.getArticleId(),userId).stream().toList();
             articleDtoList.add(ArticleDto.fromArticle(article, TopicDto.getTopicDtoList(topicEntities)));
         }
-
-//        for (final ArticleEntity article : articles) {
-//            article.assignArticle(user, Grade.NONE);
-//        }
         return articleDtoList;
     }
 

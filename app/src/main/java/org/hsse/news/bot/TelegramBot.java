@@ -41,7 +41,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private record SendMessageData(MessageId id, String text, InlineKeyboardMarkup keyboard) {
     }
 
-    public TelegramBot(final @Value("${bot-token}") String token) {
+    public TelegramBot(final @Value("${tg-bot.token}") String token) {
         super(token);
     }
 
@@ -53,7 +53,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "HsseNewsTeam1Bot";
+        return "HsseNewsTeam2Bot";
     }
 
     private void editMessage(final ChatId chatId, final Message message, final MessageId replaced)
@@ -141,6 +141,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         editMessage(chatId, message, messageId);
     }
 
+    @SneakyThrows
+    public void sendArticle(final Function<MessageId, Message> messageIdToMessage) {
+        for (final ChatId chatId : activeChats) {
+            sendArticleTo(chatId, messageIdToMessage);
+        }
+    }
+
     private void deleteMessage(final ChatId chatId, final MessageId messageId)
             throws TelegramApiException {
         final DeleteMessage request = new DeleteMessage();
@@ -159,7 +166,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         final List<String> args = Arrays.stream(text.substring(largestPrefix.length()).split(" "))
                 .filter(string -> !string.isBlank()).toList();
-
         final Optional<Message> message = commands.get(largestPrefix).apply(args, chatId);
         if (message.isPresent()) {
             sendMenuMessage(chatId, message.get());
@@ -185,11 +191,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 final ChatId chatId = new ChatId(update.getMessage().getChatId());
                 final MessageId messageId = new MessageId(update.getMessage().getMessageId());
 
-                activeChats.add(chatId);
-                handleInput(chatId, update.getMessage().getText(), messageId);
-                deleteMessage(chatId, messageId);
-            } else if (update.hasCallbackQuery()) {
-                final ChatId chatId = new ChatId(update.getCallbackQuery().getMessage().getChatId());
+            activeChats.add(chatId);
+            handleInput(chatId, update.getMessage().getText(), messageId);
+            deleteMessage(chatId, messageId);
+        } else if (update.hasCallbackQuery()) {
+            final ChatId chatId = new ChatId(update.getCallbackQuery().getMessage().getChatId());
 
                 activeChats.add(chatId);
                 handleCommand(chatId, update.getCallbackQuery().getData());

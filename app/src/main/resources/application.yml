@@ -1,4 +1,19 @@
 spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: email
+    password: app-password
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
   application:
     name:
       news-recommendation-service
@@ -24,4 +39,6 @@ logging:
     org.hsse.news.api: DEBUG
     org.hsse.news.database: DEBUG
     org.hsse.news.tracker: DEBUG
-bot-token: 8101953229:AAHY8BZ9p4JrjIAR85lMJufQo5vJL4iVvoE
+    org.hsse.news: DEBUG
+tg-bot:
+  token: token

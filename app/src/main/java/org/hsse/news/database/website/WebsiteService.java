@@ -50,6 +50,18 @@ public class WebsiteService {
         return Optional.of(new WebsiteInfo(websiteEntity.getWebsiteId(), websiteDto.url(), websiteDto.description()));
     }
 
+    public Optional<WebsiteDto> getWebsiteDtoById(final WebsiteId websiteId){
+        LOG.debug("Method findById called");
+        final Optional<WebsiteEntity> optionalWebsite = websitesRepository.findById(websiteId.value());
+        if(optionalWebsite.isEmpty()){
+            throw new WebsiteNotFoundException("Website is not found with id = " + websiteId);
+        }
+        final WebsiteEntity websiteEntity = optionalWebsite.get();
+        final WebsiteDto websiteDto = websiteEntity.toWebsiteDto();
+        return Optional.of(websiteDto);
+
+    }
+
 
     @Transactional(readOnly = true)
     public List<WebsiteInfo> getSubscribedWebsitesByUserId(final UserId userId) {
@@ -85,6 +97,7 @@ public class WebsiteService {
     public WebsiteDto create(final WebsiteDto websiteDto) {
         LOG.debug("Method create called");
         if (!RSSValidator.isRSSFeedValid(websiteDto.url())){
+            LOG.debug("url not valid");
             throw new WebsiteRSSNotValidException("Not valid rss for website");
         }
         final Optional<WebsiteEntity> optionalWebsite = websitesRepository.findByUrl(websiteDto.url());

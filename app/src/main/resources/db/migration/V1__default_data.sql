@@ -11,21 +11,21 @@ INSERT INTO topics (name) VALUES ('Databases');
 
 INSERT INTO websites (url, description)
 VALUES ('https://www.computerworld.com/news/rss',
-       'Computerworld covers a range of technology topics, with a focus on these core areas of IT');
+        'Computerworld covers a range of technology topics, with a focus on these core areas of IT');
 
 INSERT INTO websites (url, description)
 VALUES ('https://www.itnews.com.au/RSS/rss.ashx', 'Australian tech news service');
 
 INSERT INTO websites (url, description)
 VALUES ('https://www.techradar.com/feeds.xml',
-       'Helping regular people navigate the world of technology');
+        'Helping regular people navigate the world of technology');
 
 INSERT INTO websites (url, description)
 VALUES ('https://techcrunch.com/feed/',
-       'Global online newspaper focusing on topics regarding high-tech and startup companies');
+        'Global online newspaper focusing on topics regarding high-tech and startup companies');
 
 INSERT INTO websites (url, description)
 VALUES ('https://habr.com/ru/rss/articles/',
-       'Russian service for news, blogs, analytical articles, tutorials and more - all in the field of technologies and business');
+        'Russian service for news, blogs, analytical articles, tutorials and more - all in the field of technologies and business');
 
 
