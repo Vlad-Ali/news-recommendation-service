@@ -57,11 +57,9 @@ public class TelegramBotConfiguration implements ApplicationContextAware {
             final Object object, final Method method,
             final List<String> args, final ChatId chatId) {
         final List<String> mutableArgs = new ArrayList<>(args);
-        log.debug("mutableArgs: {}", mutableArgs);
         final List<Object> methodArgs = new ArrayList<>();
         for (int i = 0; i < method.getParameterCount(); i++) {
             final Class<?> parameterType = parameterType(method, i);
-            log.debug("parameterType: {}", parameterType);
             if (parameterType == TelegramBot.class) {
                 methodArgs.add(this);
             } else if (parameterType == ChatId.class) {

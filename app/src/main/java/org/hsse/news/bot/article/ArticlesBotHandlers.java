@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ArticlesBotHandlers {
 
     private final static String MENU_COMMAND = "/menu";
+    private final static String ARTICLES_INFO = "/articles-info";
     private final static String ARTICLES_MENU_COMMAND = "/articles";
     private final static String VIEW_UNWATCHED_ARTICLES_COMMAND = "/view-unwatched-articles";
     private final static String VIEW_WATCHED_ARTICLES_COMMAND = "/view-watched-articles";
@@ -44,6 +45,15 @@ public class ArticlesBotHandlers {
     private final static String BACK_TEXT = "Назад";
     private static final String INCREASE_VIEW_WATCHED_ARTICLES_COMMAND = "/increase-view-watched-articles";
     private static final String DECREASE_VIEW_WATCHED_ARTICLES_COMMAND = "/decrease-view-watched-articles";
+
+    private final String articlesInfo = "📚 Твоя лента статей\n\n" +
+            "Здесь ты можешь:\n\n" +
+            "✨ Читать новые материалы из подписок\n" +
+            "📖 Возвращаться к прочитанным статьям\n" +
+            "👍 Отмечать понравившиеся публикации\n" +
+            "👎 Оценивать нерелевантный контент\n\n" +
+            "Каждую пятницу мы присылаем:\n" +
+            "🏆 Подборку самых популярных статей недели\n\n";
 
     @Autowired
     private ArticlesService articlesService;
@@ -61,6 +71,11 @@ public class ArticlesBotHandlers {
     private UserArticlesService userArticlesService;
 
     private final ConcurrentHashMap<ChatId, UserState> tempUserStates = new ConcurrentHashMap<>();
+
+    @BotMapping(ARTICLES_INFO)
+    public Message sendArticleInfo(final ChatId chatId){
+        return Message.builder().text(articlesInfo).keyboard(articlesMenu(chatId).keyboard()).build();
+    }
 
     @BotMapping(VIEW_UNWATCHED_ARTICLES_COMMAND)
     public Message viewUnwatchedArticles(final ChatId chatId) {
@@ -263,12 +278,15 @@ public class ArticlesBotHandlers {
                         .text(String.format("Непросмотренные статьи (%d)", unknownCount))
                         .callbackData(VIEW_UNWATCHED_ARTICLES_COMMAND).build()),
                 List.of(InlineKeyboardButton.builder()
+                        .text("Информация")
+                        .callbackData(ARTICLES_INFO).build()),
+                List.of(InlineKeyboardButton.builder()
                         .text(BACK_TEXT)
                         .callbackData(MENU_COMMAND).build())
         ));
     }
 
-    private String getArticleMessage(final ArticleDto article,final Integer likes,final Integer dislikes) {
+    public String getArticleMessage(final ArticleDto article,final Integer likes,final Integer dislikes) {
         final String articleTitle = article.title().toUpperCase(Locale.ROOT) + "\n\n";
         final List<String> topics = article.topics().stream().map(TopicDto::description).toList();
         final String articleUrl = article.url();

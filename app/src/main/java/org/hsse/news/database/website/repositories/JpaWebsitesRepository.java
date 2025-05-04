@@ -28,4 +28,6 @@ public interface JpaWebsitesRepository extends JpaRepository<WebsiteEntity, Long
             "WHERE ut.topic_id = :topicId " +
             "AND w.website_id NOT IN (SELECT uw2.website_id FROM user_websites uw2 WHERE uw2.user_id = :userId)", nativeQuery = true)
     List<WebsiteEntity> getWebsitesByUserTopic(@Param("topicId") Long topicId, @Param("userId") UUID userId);
+
+    Optional<WebsiteEntity> findByUrlStartingWith(String url);
 }

@@ -7,6 +7,7 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -20,13 +21,21 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public final class RssParser {
-
-  private RssParser() {
+@Slf4j
+public final class RssParser implements Parser {
+  @Override
+  public Optional<List<ParsedArticle>> parse(final URL url) {
+    try {
+      return Optional.of(parse(url, url.toExternalForm()));
+    } catch (Exception e) {
+      log.error("Error while parsing feed url {}", url);
+      return Optional.empty();
+    }
   }
 
   public static List<ParsedArticle> parse(final URL url, final String websiteUrl)
@@ -56,7 +65,6 @@ public final class RssParser {
       final String description = getDescription(entry);
       final Instant date = toInstantDate(entry.getPublishedDate());
       final String link = entry.getLink();
-      final Set<String> topics = getTopics(entry.getCategories());
       final String author = entry.getAuthor();
       articles.add(
               new ParsedArticle(
@@ -64,7 +72,6 @@ public final class RssParser {
                       description,
                       date,
                       link,
-                      topics,
                       author,
                       websiteUrl));
     }

@@ -24,7 +24,12 @@ public class SecurityConfig {
         http
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizeHttpRequests ->
-                        authorizeHttpRequests.requestMatchers("/**").permitAll())
+                        authorizeHttpRequests
+                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/user/sign-in").permitAll()
+                                .requestMatchers("/user/role/**").hasRole("ADMIN")
+                                .requestMatchers("/websites/requests/**").hasRole("ADMIN")
+                                .anyRequest().authenticated())
+                .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }

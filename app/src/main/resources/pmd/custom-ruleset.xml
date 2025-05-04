@@ -26,6 +26,8 @@
         <exclude name="TooManyStaticImports"/>
         <exclude name="CallSuperInConstructor"/>
         <exclude name="PrematureDeclaration"/>
+        <exclude name="UselessParentheses"/>
+        <exclude name="UnnecessaryFullyQualifiedName"/>
     </rule>
     <rule ref="category/java/design.xml">
         <exclude name="LawOfDemeter"/>
@@ -46,11 +48,15 @@
         <exclude name="AvoidFieldNameMatchingMethodName"/>
         <exclude name="MissingSerialVersionUID"/>
         <exclude name="AvoidDuplicateLiterals"/>
+        <exclude name="AvoidInstanceofChecksInCatchClause"/>
+        <exclude name="AvoidLiteralsInIfCondition"/>
     </rule>
     <rule ref="category/java/multithreading.xml">
     </rule>
     <rule ref="category/java/performance.xml">
         <exclude  name="AvoidInstantiatingObjectsInLoops"/>
+        <exclude name="InsufficientStringBufferDeclaration"/>
+        <exclude name="ConsecutiveLiteralAppends"/>
     </rule>
     <rule ref="category/java/security.xml">
     </rule>
