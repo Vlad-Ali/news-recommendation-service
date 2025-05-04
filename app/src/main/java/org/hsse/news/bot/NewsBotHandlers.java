@@ -24,8 +24,6 @@ public class NewsBotHandlers {
             "Больше не нужно переключаться между сайтами — все важное в одном месте! \uD83D\uDCA1\n\n" +
             "Начни сейчас — добавь первый источник! \uD83D\uDD17";
 
-    private final static String BACK_TEXT = "Назад";
-
     private final StubDataProvider dataProvider;
 
     public NewsBotHandlers(final StubDataProvider dataProvider) {

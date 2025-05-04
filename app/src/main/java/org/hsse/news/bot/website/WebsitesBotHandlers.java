@@ -48,7 +48,8 @@ public class WebsitesBotHandlers {
             "📋 Выбрать из популярных сайтов - база проверенных источников по разным темам\n\n" +
             "✨ Рекомендации - подборка сайтов на основе твоих интересов\n\n" +
             "🛎 Запросить добавление сайта - нет нужного источника? Отправь нам заявку!\n\n" +
-            "⚙️ Мои подписки - управление текущими источниками";
+            "⚙️ Мои подписки - управление текущими источниками\n\n" +
+            "📌 Максимальное количество источников для подписки - 10";
 
     private final static String BACK_TEXT = "Назад";
 
@@ -172,9 +173,13 @@ public class WebsitesBotHandlers {
         try {
             websitesDataProvider.createCustomWebsite(chatId, url, description);
             return Message.builder().text("Источник " + url + " добавлен").keyboard(websiteMenuKeyboard()).build();
-        } catch (WebsiteRSSNotValidException | WebsiteAlreadyExistsException e) {
-            log.debug("url not valid");
-            sendMessage(new ChatId(chatId), e.getMessage());
+        } catch (WebsiteRSSNotValidException e) {
+            log.error("url not valid");
+            sendMessage(new ChatId(chatId), "Некорректный RSS для сайта");
+            return Message.builder().text("Источник " + url + " не добавлен").keyboard(websiteMenuKeyboard()).build();
+        } catch (WebsiteAlreadyExistsException e) {
+            log.error("Website {} already exists",url);
+            sendMessage(new ChatId(chatId), "Сайт с URL: "+url+" уже существует");
             return Message.builder().text("Источник " + url + " не добавлен").keyboard(websiteMenuKeyboard()).build();
         }
     }
