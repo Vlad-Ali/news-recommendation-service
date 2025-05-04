@@ -31,8 +31,15 @@ public class TopicsBotHandlers {
     private final static String UNSUB_TOPIC_COMMAND = "/block-topic";
     private final static String SUB_CUSTOM_TOPIC_COMMAND = "/add-custom-topic";
     private final static String DELETE_CUSTOM_TOPIC = "/delete-custom-topic";
+    private final static String TOPICS_INFO = "topics-info";
 
     private final static String BACK_TEXT = "Назад";
+
+    private final String topicsInfo = "📰 Бот рекомендаций новостей поможет вам оставаться в курсе событий! Вы можете выбрать темы из списка популярных категорий или предложить свою.\n\n" +
+            "🔹 Как подписаться?\n" +
+            "✔ Выберите до 10 тем из доступных.\n" +
+            "✔ Или введите свою тему для подписки.\n\n" +
+            "📌 Максимальное количество активных подписок — 10. Чтобы изменить список, отпишитесь от ненужных тем и добавьте новые.";
 
     private final TopicsDataProvider topicsDataProvider;
     private TelegramBot bot;
@@ -63,8 +70,16 @@ public class TopicsBotHandlers {
                         .text("Добавить свою тему")
                         .callbackData(SUB_CUSTOM_TOPIC_COMMAND).build()),
                 List.of(InlineKeyboardButton.builder()
+                        .text("Информация")
+                        .callbackData(TOPICS_INFO).build()),
+                List.of(InlineKeyboardButton.builder()
                         .text(BACK_TEXT)
                         .callbackData(MENU_COMMAND).build())));
+    }
+
+    @BotMapping(TOPICS_INFO)
+    public Message sendTopicsInfo(){
+        return Message.builder().text(topicsInfo).keyboard(topicsMenuKeyboard()).build();
     }
 
     @BotMapping(TOPICS_MENU_COMMAND)
@@ -146,11 +161,16 @@ public class TopicsBotHandlers {
                     .text("Тема '" + description + "' добавлена")
                     .keyboard(topicsMenuKeyboard())
                     .build();
-        } catch (TopicAlreadyExistsException | QuantityLimitExceededTopicsPerUserException e) {
+        } catch (TopicAlreadyExistsException e) {
             log.error("Error creating topic: {}", e.getMessage());
-            sendMessage(new ChatId(chatId), e.getMessage());
+            sendMessage(new ChatId(chatId), "Тема '" + description + "' уже существует");
             return Message.builder()
                     .text("Не удалось добавить тему")
+                    .keyboard(topicsMenuKeyboard())
+                    .build();
+        } catch (QuantityLimitExceededTopicsPerUserException e){
+            return Message.builder()
+                    .text("Тема '" + description + "' добавлена")
                     .keyboard(topicsMenuKeyboard())
                     .build();
         }
