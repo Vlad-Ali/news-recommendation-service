@@ -56,8 +56,8 @@ public class TopicService {
         final TopicEntity topicEntity = optionalTopic.get();
         final TopicDto topicDto = topicEntity.toTopicDto();
         return Optional.of(topicDto);
+
     }
-    
     @Transactional(readOnly = true)
     public List<TopicInfo> getSubscribedTopicsByUserId(final UserId userId){
         LOG.debug("Method getSubscribedTopicsByUserId called");

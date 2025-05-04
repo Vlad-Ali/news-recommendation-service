@@ -18,5 +18,4 @@ public class Application {
         final TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         botsApi.registerBot(context.getBean("telegramBot", TelegramBot.class));
     }
-
 }
