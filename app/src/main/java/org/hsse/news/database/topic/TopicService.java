@@ -47,6 +47,17 @@ public class TopicService {
         return Optional.of(new TopicInfo(topicEntity.getTopicId(), topicDto.description()));
     }
 
+    public Optional<TopicDto> getTopicDtoById(final TopicId topicId){
+        LOG.debug("Method findById called");
+        final Optional<TopicEntity> optionalTopic = topicsRepository.findById(topicId.value());
+        if(optionalTopic.isEmpty()){
+            throw new TopicNotFoundException("Topic is not found with id = " + topicId);
+        }
+        final TopicEntity topicEntity = optionalTopic.get();
+        final TopicDto topicDto = topicEntity.toTopicDto();
+        return Optional.of(topicDto);
+    }
+    
     @Transactional(readOnly = true)
     public List<TopicInfo> getSubscribedTopicsByUserId(final UserId userId){
         LOG.debug("Method getSubscribedTopicsByUserId called");
