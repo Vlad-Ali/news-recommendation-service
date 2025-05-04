@@ -14,12 +14,6 @@ public class NewsBotHandlers {
     private final static String WEBSITES_MENU_COMMAND = "/websites";
     private static final String ARTICLES_MENU_COMMAND = "/articles";
     private final static String TOPICS_MENU_COMMAND = "/topics";
-    private final static String LIST_SUBBED_TOPICS_COMMAND = "/unblocked-topics";
-    private final static String LIST_NOT_SUBBED_TOPICS_COMMAND = "/blocked-topics";
-    private final static String VIEW_TOPIC_COMMAND = "/view-topic";
-    private final static String SUB_TOPIC_COMMAND = "/unblock-topic";
-    private final static String UNSUB_TOPIC_COMMAND = "/block-topic";
-    private final static String SUB_CUSTOM_TOPIC_COMMAND = "/add-custom-topic";
     private final static String START_INFO = "/start-info";
     private final String startMessage =  "Привет! 👋\n\n" +
             "Этот бот поможет тебе быть в курсе свежих новостей из любимых источников! 📰✨\n\n" +
