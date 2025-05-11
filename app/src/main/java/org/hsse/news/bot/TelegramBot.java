@@ -159,7 +159,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleCommand(final ChatId chatId, final String text)
             throws TelegramApiException {
         onNextMessage.remove(chatId);
-
         final String largestPrefix = commands.keySet().stream()
                 .filter(prefix -> text.toLowerCase(Locale.US).startsWith(prefix.toLowerCase(Locale.US)))
                 .max(Comparator.comparing(String::length)).orElseThrow();
