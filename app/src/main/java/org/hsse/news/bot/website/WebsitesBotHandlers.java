@@ -339,5 +339,17 @@ public class WebsitesBotHandlers {
                 text.concat(" " + chatId.value()))).build();
     }
 
+    @BotMapping(DELETE_CUSTOM_WEBSITE)
+    public Message deleteCustomWebsite(final String arg, final ChatId chatId){
+        final Long websiteId = Long.parseLong(arg);
+        if (websitesDataProvider.isSubbedWebsite(chatId.value(), websiteId)){
+            websitesDataProvider.deleteCustomWebsite(chatId.value(), websiteId);
+            return viewUserSubWebsites(chatId);
+        } else{
+            websitesDataProvider.deleteCustomWebsite(chatId.value(), websiteId);
+            return viewUserUnSubWebsites(chatId);
+        }
+    }
+
 }
 

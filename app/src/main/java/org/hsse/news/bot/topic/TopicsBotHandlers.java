@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -152,8 +153,9 @@ public class TopicsBotHandlers {
 
     private Message createCustomTopic(final String text) {
         final List<String> args = Arrays.stream(text.split(" ")).toList();
-        final long chatId = Long.parseLong(args.get(1));
-        final String description = args.get(0);
+        final long chatId = Long.parseLong(args.get(args.size() - 1));
+        final String description = args.stream().limit(args.size() - 1)
+                .collect(Collectors.joining(" "));
         
         try {
             topicsDataProvider.createCustomTopic(chatId, description);

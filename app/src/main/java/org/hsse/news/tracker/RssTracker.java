@@ -46,7 +46,7 @@ public class RssTracker {
     private final TopicService topicService;
     private final ArticlesService articlesService;
     private final WebsiteService websiteService;
-    private static final Float MINIMUM_PERCENT = 0.25F;
+    private static final Float MINIMUM_PERCENT = 0.2F;
     private static final Logger LOG = LoggerFactory.getLogger(RssTracker.class);
     private final List<Parser> parsers;
 
@@ -106,7 +106,7 @@ public class RssTracker {
         }
         LOG.debug("{} is add with topics", parsedArticle.name());
     }
-    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000 * 100)
+    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 10_000 * 1000)
     @Transactional
     public void addNewArticles() {
         LOG.debug("Searching for new articles");
