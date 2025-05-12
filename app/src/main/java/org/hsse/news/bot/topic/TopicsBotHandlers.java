@@ -55,10 +55,6 @@ public class TopicsBotHandlers {
         this.bot = bot;
     }
 
-    public void sendMessage(final ChatId chatId, final String text) {
-        bot.sendMessage(chatId, Message.builder().text(text).build());
-    }
-
     private InlineKeyboardMarkup topicsMenuKeyboard() {
         return new InlineKeyboardMarkup(List.of(
                 List.of(InlineKeyboardButton.builder()
@@ -146,7 +142,7 @@ public class TopicsBotHandlers {
             if (topicsDataProvider.subTopic(chatId.value(), topicId)) {
                 return viewUserUnsubTopics(chatId);
             }
-            sendMessage(chatId, "Превышен лимит подписок на темы");
+            bot.sendNotification(chatId, "Превышен лимит подписок на темы");
             return viewUserUnsubTopics(chatId);
         }
     }
@@ -165,7 +161,7 @@ public class TopicsBotHandlers {
                     .build();
         } catch (TopicAlreadyExistsException e) {
             log.error("Error creating topic: {}", e.getMessage());
-            sendMessage(new ChatId(chatId), "Тема '" + description + "' уже существует");
+            bot.sendNotification(new ChatId(chatId), "Тема '" + description + "' уже существует");
             return Message.builder()
                     .text("Не удалось добавить тему")
                     .keyboard(topicsMenuKeyboard())
