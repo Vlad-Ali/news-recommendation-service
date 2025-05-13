@@ -66,10 +66,6 @@ public class WebsitesBotHandlers {
         this.bot = bot;
     }
 
-    public void sendMessage(final ChatId chatId, final String text) {
-        bot.sendMessage(chatId, Message.builder().text(text).build());
-    }
-
     private InlineKeyboardMarkup websiteMenuKeyboard() {
         return new InlineKeyboardMarkup(List.of(
                 List.of(InlineKeyboardButton.builder()
@@ -160,7 +156,7 @@ public class WebsitesBotHandlers {
             if (websitesDataProvider.subWebsite(chatId.value(), websiteId)) {
                 return viewUserUnSubWebsites(chatId);
             }
-            sendMessage(chatId, "Превышен лимит по выбранным сайтам");
+            bot.sendNotification(chatId, "Превышен лимит по выбранным сайтам");
             return viewUserUnSubWebsites(chatId);
         }
     }
@@ -175,11 +171,11 @@ public class WebsitesBotHandlers {
             return Message.builder().text("Источник " + url + " добавлен").keyboard(websiteMenuKeyboard()).build();
         } catch (WebsiteRSSNotValidException e) {
             log.error("url not valid");
-            sendMessage(new ChatId(chatId), "Некорректный RSS для сайта");
+            bot.sendNotification(new ChatId(chatId), "Некорректный RSS для сайта");
             return Message.builder().text("Источник " + url + " не добавлен").keyboard(websiteMenuKeyboard()).build();
         } catch (WebsiteAlreadyExistsException e) {
             log.error("Website {} already exists",url);
-            sendMessage(new ChatId(chatId), "Сайт с URL: "+url+" уже существует");
+            bot.sendNotification(new ChatId(chatId), "Сайт с URL: "+url+" уже существует");
             return Message.builder().text("Источник " + url + " не добавлен").keyboard(websiteMenuKeyboard()).build();
         }
     }
@@ -200,7 +196,7 @@ public class WebsitesBotHandlers {
     private Message showRecommendedWebsites(final String text,final List<WebsiteInfo> websites) {
         final List<String> args = Arrays.stream(text.split(" ")).toList();
         final String viewText = args.get(0).concat(" " + args.get(1));
-        final Long topicId = Long.parseLong(args.get(2));
+        final long topicId = Long.parseLong(args.get(2));
         final List<InlineKeyboardButton> buttons = new ArrayList<>(
                 websites.stream().map(
                         website -> InlineKeyboardButton.builder()
@@ -233,7 +229,7 @@ public class WebsitesBotHandlers {
         if (websitesDataProvider.subWebsite(chatId, websiteId)) {
             return viewRecommendedWebsites(String.valueOf(topicId), new ChatId(chatId));
         }
-        sendMessage(new ChatId(chatId), "Превышен лимит по выбранным сайтам");
+        bot.sendNotification(new ChatId(chatId), "Превышен лимит по выбранным сайтам");
         return viewRecommendedWebsites(String.valueOf(topicId), new ChatId(chatId));
     }
 
@@ -246,19 +242,19 @@ public class WebsitesBotHandlers {
             return Message.builder().text("Запрос на "+url+" добавлен").keyboard(websiteMenuKeyboard()).build();
         } catch (TimeLimitException ex){
             log.debug("Limit of sending requests for user = {}", chatId);
-            sendMessage(new ChatId(chatId), "Превышен лимит по отправке запроса");
+            bot.sendNotification(new ChatId(chatId), "Превышен лимит по отправке запроса");
             return Message.builder().text("Запрос не был отправлен").keyboard(websiteMenuKeyboard()).build();
         } catch (WebsiteAlreadyExistsException ex){
             log.debug("Website already exists {}", ex.getMessage());
-            sendMessage(new ChatId(chatId), ex.getMessage());
+            bot.sendNotification(new ChatId(chatId), ex.getMessage());
             return Message.builder().text("Запрос не был отправлен").keyboard(websiteMenuKeyboard()).build();
         } catch (RequestAlreadyExistsException ex) {
             log.debug("Request already exists {}", ex.getMessage());
-            sendMessage(new ChatId(chatId), ex.getMessage());
+            bot.sendNotification(new ChatId(chatId), ex.getMessage());
             return Message.builder().text("Запрос не был отправлен").keyboard(websiteMenuKeyboard()).build();
         } catch (IncorrectURLException ex){
             log.debug("Incorrect URL {}", ex.getMessage());
-            sendMessage(new ChatId(chatId), ex.getMessage());
+            bot.sendNotification(new ChatId(chatId), ex.getMessage());
             return Message.builder().text("Запрос не был отправлен").keyboard(websiteMenuKeyboard()).build();
         }
     }
@@ -352,4 +348,3 @@ public class WebsitesBotHandlers {
     }
 
 }
-

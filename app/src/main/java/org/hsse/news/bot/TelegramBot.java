@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -32,6 +33,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final Set<ChatId> activeChats = new HashSet<>();
 
     private final Map<ChatId, SendMessageData> latestMenuMessage = new ConcurrentHashMap<>();
+    private final Map<ChatId, List<SendMessageData>> latestNotifications = new ConcurrentHashMap<>();
+    private final Map<ChatId, List<SendMessageData>> previousNotifications = new ConcurrentHashMap<>();
 
     private final Map<String, BiFunction<List<String>, ChatId, Optional<Message>>> commands
             = new ConcurrentHashMap<>();
@@ -68,6 +71,18 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void sendMenuMessage(final ChatId chatId, final Message message) throws TelegramApiException {
+        if (previousNotifications.containsKey(chatId)) {
+            for (final SendMessageData sent : previousNotifications.get(chatId)) {
+                deleteMessage(chatId, sent.id());
+            }
+            previousNotifications.remove(chatId);
+        }
+
+        if (latestNotifications.containsKey(chatId)) {
+            previousNotifications.put(chatId, latestNotifications.get(chatId));
+            latestNotifications.remove(chatId);
+        }
+
         if (message.replace().isPresent()) {
             editMessage(chatId, message, message.replace().get());
         } else if (latestMenuMessage.containsKey(chatId)) {
@@ -91,8 +106,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    @SneakyThrows
-    public void sendMessage(final ChatId chatId, final Message message) {
+    private SendMessageData sendMessageWithData(final ChatId chatId, final Message message)
+            throws TelegramApiException {
         if (message.replace().isPresent()) {
             editMessage(chatId, message, message.replace().get());
         }
@@ -112,6 +127,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             final MessageId id = new MessageId(execute(send).getMessageId());
             latestMenuMessage.put(chatId,
                     new SendMessageData(id, old.text(), old.keyboard()));
+
+            return new SendMessageData(old.id(), message.text(), message.keyboard());
         } else {
             final SendMessage send = new SendMessage();
             send.setChatId(chatId.value());
@@ -119,16 +136,41 @@ public class TelegramBot extends TelegramLongPollingBot {
             send.setText(message.text());
             send.setReplyMarkup(message.keyboard());
 
-            execute(send).getMessageId();
+            final MessageId id = new MessageId(execute(send).getMessageId());
+            return new SendMessageData(id, message.text(), message.keyboard());
         }
     }
 
     @SneakyThrows
-    public void sendArticleTo(final ChatId chatId,
-                               final Function<MessageId, Message> messageIdToMessage) {
+    public void sendMessage(final ChatId chatId, final Message message) {
+        sendMessageWithData(chatId, message);
+    }
 
+    @SneakyThrows
+    public void sendNotification(final ChatId chatId, final Message message) {
+        if (!latestNotifications.containsKey(chatId)) {
+            latestNotifications.put(chatId, new ArrayList<>());
+        }
+        latestNotifications.get(chatId).add(sendMessageWithData(chatId, message));
+    }
+
+    public void sendNotification(final ChatId chatId, final String text) {
+        sendNotification(chatId, Message.builder().text(text).build());
+    }
+
+    @SneakyThrows
+    public void sendArticleTo(final ChatId chatId,
+                              final Function<MessageId, Message> messageIdToMessage) {
         if (latestMenuMessage.containsKey(chatId)) {
             deleteMessage(chatId, latestMenuMessage.get(chatId).id());
+            latestMenuMessage.remove(chatId);
+        }
+
+        if (latestNotifications.containsKey(chatId)) {
+            for (final SendMessageData sent : latestNotifications.get(chatId)) {
+                deleteMessage(chatId, sent.id());
+            }
+            latestNotifications.remove(chatId);
         }
 
         final SendMessage send = new SendMessage();
@@ -190,11 +232,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 final ChatId chatId = new ChatId(update.getMessage().getChatId());
                 final MessageId messageId = new MessageId(update.getMessage().getMessageId());
 
-            activeChats.add(chatId);
-            handleInput(chatId, update.getMessage().getText(), messageId);
-            deleteMessage(chatId, messageId);
-        } else if (update.hasCallbackQuery()) {
-            final ChatId chatId = new ChatId(update.getCallbackQuery().getMessage().getChatId());
+                activeChats.add(chatId);
+                handleInput(chatId, update.getMessage().getText(), messageId);
+                deleteMessage(chatId, messageId);
+            } else if (update.hasCallbackQuery()) {
+                final ChatId chatId = new ChatId(update.getCallbackQuery().getMessage().getChatId());
 
                 activeChats.add(chatId);
                 handleCommand(chatId, update.getCallbackQuery().getData());
